@@ -1,5 +1,5 @@
 import { readdir, readFile } from "node:fs/promises";
-import { extname, join, relative } from "node:path";
+import { extname, relative } from "node:path";
 
 const repositoryRoot = new URL("../", import.meta.url);
 const runtimeRoots = ["src", "app", "lib", "server"];

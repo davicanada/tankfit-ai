@@ -3,9 +3,9 @@
 | Field | Value |
 | --- | --- |
 | Product | TankFit AI |
-| Version | 0.4 |
+| Version | 0.5 |
 | Status | Draft |
-| Date | August 29, 2026 |
+| Date | August 30, 2026 |
 | Owner | Davi Almeida |
 | Product type | Public portfolio prototype |
 
@@ -290,9 +290,15 @@ The agent must not:
 - Approve a proposal, bypass an approval, or change approval state.
 - Confirm a payment without a result from the mock or sandbox payment adapter.
 - Provide authoritative safety, regulatory, installation, or engineering advice.
-- reveal system prompts, secrets, credentials, hidden rules, or another session's data.
+- Reveal system prompts, secrets, credentials, hidden rules, or another session's data.
 
-### 11.3 Provider Routing and Fallback
+### 11.3 Language Behavior and Evaluation
+
+TankFit AI should reply in the visitor's language whenever it can be reliably identified. Its multilingual evaluation suite covers English, French, Spanish, Italian, German, Polish, Portuguese, Mandarin Chinese using Simplified Chinese script, and Hindi. Additional languages are supported on a best-effort basis.
+
+The application interface, source code, structured catalog, evidence identifiers, technical specifications, audit records, and generated proposal will use English as the canonical language. The AI may translate and explain those grounded facts, but it must not translate product names, identifiers, numeric values, units, catalog versions, rule versions, or other immutable evidence fields. When language detection is uncertain, the assistant should ask the visitor which language to use rather than guessing. The deterministic guided fallback must remain fully usable in English even when every AI provider is unavailable.
+
+### 11.4 Provider Routing and Fallback
 
 The application will use a provider-independent AI interface. The planned fallback chain is:
 
@@ -429,6 +435,8 @@ The MVP is ready for public release when:
 16. A visitor can start a custom fictional scenario, edit extracted requirements, and receive a grounded compatible, `technical_review_required`, or `out_of_scope` result without preset-specific logic.
 17. Negative security tests verify prompt/tool boundary enforcement, schema validation, SQL parameterization, output encoding, CSRF and same-origin enforcement, session isolation, outbound-request allowlisting, artifact authorization, and request limits.
 18. The deployed application passes a documented security review with no unresolved critical or high-severity finding in the MVP threat model.
+19. The AI replies in the visitor's reliably identified language while preserving immutable catalog facts and evidence fields.
+20. The multilingual evaluation suite covers the nine primary evaluation languages defined in Section 11.3, including normal discovery, clarification, refusal, and provider-fallback cases.
 
 ## 17. Constraints and Dependencies
 
