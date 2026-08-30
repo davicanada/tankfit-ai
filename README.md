@@ -48,6 +48,8 @@ Copy [`.env.example`](.env.example) to `.env.local` and place local development 
 
 Variables whose names begin with `NEXT_PUBLIC_` are exposed to the browser. AI provider keys, database credentials, and signing secrets must never use that prefix.
 
+The linked Vercel project provisions Neon variables for Production, Preview, and Development. Local Vercel-managed database values are pulled into `.env.development.local`, while manually managed AI-provider keys and the session-signing secret remain in `.env.local`. Both files are ignored by Git. Pulling directly into `.env.local` replaces that file and should be avoided unless the manual secrets have been backed up.
+
 ## Planned Stack
 
 - TypeScript, React, and Next.js App Router
