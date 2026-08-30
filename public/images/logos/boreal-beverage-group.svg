@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="512" height="512" role="img" aria-label="Boreal Beverage Group mark">
+  <!--
+    Boreal Beverage Group logomark
+    Deep indigo  #1A2450
+    Cool mint    #6FB8A8
+    Icy cyan     #7EE0D6
+    Flat vector. Transparent background. No type.
+  -->
+
+  <!-- Northern cap sitting on the horizon -->
+  <path
+    fill="#1A2450"
+    d="M20,188
+       A108,108 0 0 1 236,188
+       Z"/>
+
+  <!-- Three bubbles: process scale, icy-cyan as the small accent -->
+  <circle cx="92" cy="148" r="22" fill="#6FB8A8"/>
+  <circle cx="132" cy="122" r="14" fill="#6FB8A8"/>
+  <circle cx="162" cy="104" r="8" fill="#7EE0D6"/>
+</svg>

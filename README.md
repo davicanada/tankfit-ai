@@ -1,0 +1,65 @@
+# TankFit AI
+
+TankFit AI is a public, AI-assisted sales advisor for Tankroy Systems Inc., a fictional Canadian remote tank-monitoring company. A visitor may choose an editable sample scenario or describe an independent custom fictional situation. The application identifies compatible fictional products, explains a deterministic ROI estimate, creates a draft order, completes a simulated checkout, passes through a human approval gate, and produces a clearly marked demo proposal.
+
+This is an independent personal project by **Davi Almeida**, created with exclusively synthetic information for the **Jornada de Dados** competition. Every company, person, product, specification, price, inventory value, transaction, and document represented here is fictional.
+
+## Current Status
+
+The project is in discovery and engineering-foundation development. The PRD, first end-to-end scenario, initial catalog, architecture, ADRs, image prompts, and catalog validation are available. The Next.js application has not yet been scaffolded.
+
+## First End-to-End Scenario
+
+The initial implementation focuses on AirFlame Fuels, a fictional heating-oil distributor evaluating a five-tank monitoring pilot across a larger rural fleet. See [`docs/specs/airflame-pilot.md`](docs/specs/airflame-pilot.md).
+
+AirFlame, AgricuFlow, and Boreal Beverage are optional presets and repeatable tests. They do not restrict the application to three customers; custom fictional scenarios pass through the same discovery and deterministic rules.
+
+## Documentation
+
+- [Product Requirements Document](docs/prd.md)
+- [Architecture](docs/architecture.md)
+- [AirFlame Pilot SPEC](docs/specs/airflame-pilot.md)
+- [Architecture Decision Records](docs/adrs)
+- [Engineering Process](docs/engineering-process.md)
+- [Security Threat Model](docs/security-threat-model.md)
+- [Security Policy](SECURITY.md)
+- [Product Image Prompts](docs/product-image-prompts.md)
+- [Company Logo Prompts](docs/company-logo-prompts.md)
+- [Asset Provenance](docs/asset-provenance.md)
+- [Agent Harness](AGENTS.md)
+
+## Catalog
+
+- `data/catalog/products.json` contains descriptive product and compatibility data and may be used as a read-only fallback.
+- `data/catalog/demo-commerce.json` contains fictional database seed values for price, stock, availability, and delivery lead time. It must never be used to confirm a runtime transaction.
+- `data/companies/companies.json` maps fictional company records to their public logo asset paths.
+
+Validate the catalog with Node.js 22 or newer:
+
+```bash
+npm run validate
+```
+
+The validation checks catalog relationships, referenced asset existence, WebP dimensions, SVG safety, orphaned assets, and prohibited runtime capabilities.
+
+## Environment Variables
+
+Copy [`.env.example`](.env.example) to `.env.local` and place local development secrets only in `.env.local`. The local file is ignored by Git and must never be committed. Secrets used by deployed Preview and Production environments will be configured in the Vercel project settings rather than stored in the repository.
+
+Variables whose names begin with `NEXT_PUBLIC_` are exposed to the browser. AI provider keys, database credentials, and signing secrets must never use that prefix.
+
+## Planned Stack
+
+- TypeScript, React, and Next.js App Router
+- Vercel Node.js runtime and deployment
+- Neon Postgres with Drizzle ORM
+- Static product images served by Next.js
+- Server-side provider routing across free-tier AI APIs with deterministic guided fallback
+
+## Safety Boundary
+
+The AI controls the conversation, not technical truth or irreversible actions. Deterministic code controls compatibility, catalog claims, price, stock, lead time, calculations, order state, mock payment, approval, and proposal eligibility. No real payment or legally valid document is created.
+
+## License and Asset Note
+
+The source code and documentation are available under the [MIT License](LICENSE). The fictional visual assets were generated with Grok 4.6 under Davi Almeida's direction and were reviewed before inclusion. See [Asset Provenance](docs/asset-provenance.md) for details and applicable usage notes.

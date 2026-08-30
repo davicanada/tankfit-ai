@@ -1,0 +1,15 @@
+{
+  "name": "tankfit-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "npm run validate:catalog && npm run validate:assets && npm run validate:security-boundaries",
+    "validate:catalog": "node scripts/validate-catalog.mjs",
+    "validate:assets": "node scripts/validate-assets.mjs",
+    "validate:security-boundaries": "node scripts/validate-security-boundaries.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

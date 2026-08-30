@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="512" height="512" role="img" aria-label="Tankroy Systems mark">
+  <!--
+    Tankroy Systems Inc. logomark
+    Navy  #0A2342
+    Teal  #0C6B6A
+    Amber #E09B1F
+    Flat vector. Transparent background. No type or marks.
+  -->
+  <g>
+    <g fill="none" stroke="#0C6B6A" stroke-width="10" stroke-linecap="round">
+      <path d="M111.02,76.86 A24,24 0 0 1 144.98,76.86"/>
+      <path d="M99.70,65.10 A40,40 0 0 1 156.30,65.10"/>
+      <path d="M88.38,53.34 A56,56 0 0 1 167.62,53.34"/>
+    </g>
+
+    <path
+      fill="#0A2342"
+      d="M92,94
+         H164
+         A12,12 0 0 1 176,106
+         V210
+         H188
+         A10,10 0 0 1 198,220
+         V224
+         A10,10 0 0 1 188,234
+         H68
+         A10,10 0 0 1 58,224
+         V220
+         A10,10 0 0 1 68,210
+         H80
+         V106
+         A12,12 0 0 1 92,94
+         Z"/>
+
+    <circle cx="128" cy="148" r="16" fill="#E09B1F"/>
+  </g>
+</svg>

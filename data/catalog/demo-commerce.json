@@ -1,0 +1,21 @@
+{
+  "commerceVersion": "2026.08.1",
+  "currency": "CAD",
+  "lastReviewed": "2026-08-29",
+  "usage": "Database seed data only. Never use this file as a runtime fallback for checkout or transactional confirmation.",
+  "items": [
+    { "productId": "TR-FL100", "unitPriceCad": 189, "monthlyServiceCad": 4, "stockQuantity": 48, "availability": "in_stock", "leadTimeBusinessDays": 3 },
+    { "productId": "TR-FL110", "unitPriceCad": 139, "monthlyServiceCad": 2.5, "stockQuantity": 72, "availability": "in_stock", "leadTimeBusinessDays": 2 },
+    { "productId": "TR-PL500", "unitPriceCad": 229, "monthlyServiceCad": 4.5, "stockQuantity": 20, "availability": "in_stock", "leadTimeBusinessDays": 5 },
+    { "productId": "TR-RS200", "unitPriceCad": 429, "monthlyServiceCad": 6, "stockQuantity": 18, "availability": "in_stock", "leadTimeBusinessDays": 5 },
+    { "productId": "TR-RS210", "unitPriceCad": 349, "monthlyServiceCad": 3.5, "stockQuantity": 24, "availability": "in_stock", "leadTimeBusinessDays": 4 },
+    { "productId": "TR-HS300", "unitPriceCad": 319, "monthlyServiceCad": 5, "stockQuantity": 16, "availability": "in_stock", "leadTimeBusinessDays": 5 },
+    { "productId": "TR-HS310", "unitPriceCad": 259, "monthlyServiceCad": 3, "stockQuantity": 20, "availability": "in_stock", "leadTimeBusinessDays": 4 },
+    { "productId": "TR-GW400", "unitPriceCad": 389, "monthlyServiceCad": 5, "stockQuantity": 12, "availability": "limited", "leadTimeBusinessDays": 7 },
+    { "productId": "TR-GW420", "unitPriceCad": 699, "monthlyServiceCad": 8, "stockQuantity": 8, "availability": "limited", "leadTimeBusinessDays": 10 },
+    { "productId": "TR-CH10", "unitPriceCad": 249, "monthlyServiceCad": 8, "stockQuantity": 26, "availability": "in_stock", "leadTimeBusinessDays": 3 },
+    { "productId": "TR-CH20", "unitPriceCad": 549, "monthlyServiceCad": 12, "stockQuantity": 10, "availability": "limited", "leadTimeBusinessDays": 8 },
+    { "productId": "TR-SR50", "unitPriceCad": 279, "monthlyServiceCad": 0, "stockQuantity": 14, "availability": "in_stock", "leadTimeBusinessDays": 5 },
+    { "productId": "TR-SD5", "unitPriceCad": 159, "monthlyServiceCad": 0, "stockQuantity": 30, "availability": "in_stock", "leadTimeBusinessDays": 3 }
+  ]
+}

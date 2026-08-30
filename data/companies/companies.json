@@ -1,0 +1,43 @@
+{
+  "version": "2026.08.1",
+  "lastReviewed": "2026-08-29",
+  "disclaimer": "Every company, logo, and brand identity in this file is fictional and created exclusively for the Jornada de Dados competition.",
+  "companies": [
+    {
+      "id": "tankroy-systems",
+      "name": "Tankroy Systems Inc.",
+      "role": "fictional_solution_provider",
+      "description": "A fictional Canadian provider of remote tank-monitoring hardware and subscription services.",
+      "logoPath": "/images/logos/tankroy-systems.svg",
+      "logoAlt": "Tankroy Systems Inc. fictional logo",
+      "fictional": true
+    },
+    {
+      "id": "airflame-fuels",
+      "name": "AirFlame Fuels",
+      "role": "fictional_preset_customer",
+      "description": "A fictional regional heating-oil distributor evaluating a five-tank monitoring pilot.",
+      "logoPath": "/images/logos/airflame-fuels.svg",
+      "logoAlt": "AirFlame Fuels fictional logo",
+      "fictional": true
+    },
+    {
+      "id": "agricuflow-cooperative",
+      "name": "AgricuFlow Cooperative",
+      "role": "fictional_preset_customer",
+      "description": "A fictional agricultural cooperative managing remote water-storage sites.",
+      "logoPath": "/images/logos/agricuflow-cooperative.svg",
+      "logoAlt": "AgricuFlow Cooperative fictional logo",
+      "fictional": true
+    },
+    {
+      "id": "boreal-beverage-group",
+      "name": "Boreal Beverage Group",
+      "role": "fictional_preset_customer",
+      "description": "A fictional beverage-production and hospitality group monitoring industrial-gas inventory.",
+      "logoPath": "/images/logos/boreal-beverage-group.svg",
+      "logoAlt": "Boreal Beverage Group fictional logo",
+      "fictional": true
+    }
+  ]
+}

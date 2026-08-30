@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Test and coverage output
+coverage/
+playwright-report/
+test-results/
+
+# Local operating-system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Generated proposals and temporary demo artifacts
+tmp/
+generated/

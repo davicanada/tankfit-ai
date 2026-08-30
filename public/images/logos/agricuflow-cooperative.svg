@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="512" height="512" role="img" aria-label="AgricuFlow Cooperative mark">
+  <!--
+    AgricuFlow Cooperative logomark
+    Leaf green      #3A8F4A
+    Deep river blue #1B5278
+    Golden yellow   #E0A825
+  -->
+  <path
+    fill="#1B5278"
+    d="M120,34
+       A11,13 0 0 1 136,34
+       C188,98 216,142 216,180
+       A88,88 0 1 1 40,180
+       C40,142 68,98 120,34
+       Z"/>
+
+  <g fill="none" stroke="#3A8F4A" stroke-width="16" stroke-linecap="round">
+    <!-- Crop rows in light perspective, flowing forward -->
+    <path d="M64,152 C108,138 150,142 196,164"/>
+    <path d="M70,186 C116,172 156,176 194,196"/>
+  </g>
+
+  <!-- Shared-harvest accent at the forward point -->
+  <circle cx="196" cy="164" r="12" fill="#E0A825"/>
+</svg>

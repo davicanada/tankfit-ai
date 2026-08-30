@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="512" height="512" role="img" aria-label="AirFlame Fuels mark">
+  <!--
+    AirFlame Fuels logomark
+    Warm coral    #E2573F
+    Copper orange #C46B2A
+    Slate blue    #3D5A73
+    Flat vector. Transparent background. No type.
+  -->
+
+  <!-- Airflow ribbon wrapping the flame -->
+  <path
+    d="M70,224
+       C24,150 64,70 128,22
+       C192,70 232,150 186,224"
+    fill="none"
+    stroke="#E2573F"
+    stroke-width="34"
+    stroke-linecap="round"/>
+
+  <!-- Single stylized flame / ember -->
+  <path
+    fill="#C46B2A"
+    d="M128,88
+       C152,116 166,140 160,166
+       C156,184 142,196 128,200
+       C114,196 100,184 96,166
+       C90,140 104,116 128,88
+       Z"/>
+
+  <!-- Slate-blue accent: air intake -->
+  <circle cx="70" cy="224" r="15" fill="#3D5A73"/>
+</svg>
