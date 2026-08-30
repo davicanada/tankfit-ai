@@ -149,6 +149,18 @@ Before public release:
 - Rate-limit and provider-quota failure behavior is exercised.
 - An incident and rollback procedure is documented.
 
+### 11.1 Conversational Fallback Implementation Map
+
+The initial conversational milestone maps the controls above to executable code and tests:
+
+- `src/app/api/advisor/route.ts` accepts only bounded same-origin JSON requests, applies a request limit before provider work, validates a strict schema, and recalculates compatibility on the server.
+- `src/lib/ai/provider-router.ts` keeps credentials server-only, gives the model no mutation tools, treats the complete browser transcript as untrusted data, limits each provider to one bounded attempt, and ends in deterministic guided mode.
+- `src/lib/ai/prompt.ts` restricts conversation scope, grounded product evidence, language behavior, sensitive-data requests, and authoritative safety or installation advice. The prompt is defense in depth and grants no authority.
+- React renders provider output as escaped plain text; raw HTML and Markdown execution are not enabled.
+- `src/lib/ai/types.test.ts`, `request-security.test.ts`, `rate-limit.test.ts`, and `provider-router.test.ts` verify input bounds, unknown-field rejection, same-origin enforcement, content-type and body limits, per-instance request limiting, sequential fallback, circuit breaking, deterministic terminal behavior, and untrusted transcript handling.
+
+The current in-memory limiter and circuit breaker apply to one warm application instance. Distributed quota enforcement and staged Vercel Firewall rules remain release hardening for meaningful public traffic.
+
 ## 12. Residual Risks
 
 - Novel prompt injection may influence wording even though deterministic authority remains constrained.

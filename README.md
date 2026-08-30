@@ -6,7 +6,7 @@ This is an independent personal project by **Davi Almeida**, created with exclus
 
 ## Current Status
 
-The executable application foundation is under active development. It includes a responsive Next.js interface, a browsable 13-product catalog, product detail pages, an interactive compatibility laboratory, and a deterministic rules engine with regression tests. AI conversation, commerce, approval, and proposal generation remain later milestones.
+The executable application is under active development. It includes a responsive Next.js interface, a browsable 13-product catalog, product detail pages, an interactive compatibility laboratory, a deterministic rules engine with regression tests, and a multilingual conversational explanation layer with sequential provider fallback. Commerce, approval, and proposal generation remain later milestones.
 
 ## Run Locally
 
@@ -64,6 +64,8 @@ Copy [`.env.example`](.env.example) to `.env.local` and place local development 
 Variables whose names begin with `NEXT_PUBLIC_` are exposed to the browser. AI provider keys, database credentials, and signing secrets must never use that prefix.
 
 The linked Vercel project provisions Neon variables for Production, Preview, and Development. Local Vercel-managed database values are pulled into `.env.development.local`, while manually managed AI-provider keys and the session-signing secret remain in `.env.local`. Both files are ignored by Git. Pulling directly into `.env.local` replaces that file and should be avoided unless the manual secrets have been backed up.
+
+The conversational advisor tries Gemini, Cerebras, Groq, and OpenRouter in that order. Model IDs and routing limits have committed non-secret defaults in `.env.example`; real keys remain server-only. If a key is missing, a provider times out, or every provider is unavailable, the application skips safely to the next provider and ultimately returns deterministic English guidance. See [ADR-0005](docs/adrs/0005-ai-provider-fallback.md).
 
 ## Application Stack
 

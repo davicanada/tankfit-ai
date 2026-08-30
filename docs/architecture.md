@@ -50,6 +50,8 @@ The MVP uses one conversational agent rather than a group of autonomous agents.
 
 The single agent may interpret needs, request missing information, call narrowly scoped tools, and explain validated results. One agent reduces duplicated context, provider cost, coordination failure, and audit complexity. Independent deterministic modules perform the high-risk work.
 
+The first conversational implementation uses sequential, completed-response fallback rather than immediate token streaming. This allows a failed provider response to be discarded before another provider is selected. Provider order, model IDs, timeouts, and output limits are configuration; they do not alter domain behavior. See [`adrs/0005-ai-provider-fallback.md`](adrs/0005-ai-provider-fallback.md).
+
 The agent can call:
 
 - `searchCatalog`: read descriptive product fields.

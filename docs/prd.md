@@ -302,10 +302,10 @@ The application interface, source code, structured catalog, evidence identifiers
 
 The application will use a provider-independent AI interface. The planned fallback chain is:
 
-1. Gemini
-2. Cerebras
-3. Groq
-4. OpenRouter free-model router
+1. Gemini using `gemini-3.7-flash`
+2. Cerebras using `gpt-oss-120b`
+3. Groq using `Qwen/Qwen3.6-27B`
+4. OpenRouter using `openrouter/free`
 5. Deterministic guided-advisor mode
 
 Each provider call must have a timeout, limited retries, structured error classification, and circuit-breaker behavior. Provider model IDs and order must be configurable without changing business logic.
