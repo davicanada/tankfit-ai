@@ -6,7 +6,22 @@ This is an independent personal project by **Davi Almeida**, created with exclus
 
 ## Current Status
 
-The project is in discovery and engineering-foundation development. The PRD, first end-to-end scenario, initial catalog, architecture, ADRs, image prompts, and catalog validation are available. The Next.js application has not yet been scaffolded.
+The executable application foundation is under active development. It includes a responsive Next.js interface, a browsable 13-product catalog, product detail pages, an interactive compatibility laboratory, and a deterministic rules engine with regression tests. AI conversation, commerce, approval, and proposal generation remain later milestones.
+
+## Run Locally
+
+Requirements: Node.js 22 or newer.
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. The catalog and compatibility laboratory do not require database or AI credentials. To run every repository check:
+
+```bash
+npm run check
+```
 
 ## First End-to-End Scenario
 
@@ -50,11 +65,11 @@ Variables whose names begin with `NEXT_PUBLIC_` are exposed to the browser. AI p
 
 The linked Vercel project provisions Neon variables for Production, Preview, and Development. Local Vercel-managed database values are pulled into `.env.development.local`, while manually managed AI-provider keys and the session-signing secret remain in `.env.local`. Both files are ignored by Git. Pulling directly into `.env.local` replaces that file and should be avoided unless the manual secrets have been backed up.
 
-## Planned Stack
+## Application Stack
 
 - TypeScript, React, and Next.js App Router
 - Vercel Node.js runtime and deployment
-- Neon Postgres with Drizzle ORM
+- Neon Postgres with Drizzle ORM for later transactional features
 - Static product images served by Next.js
 - Server-side provider routing across free-tier AI APIs with deterministic guided fallback
 
