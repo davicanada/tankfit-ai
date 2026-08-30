@@ -24,3 +24,6 @@ Thumbs.db
 # Generated proposals and temporary demo artifacts
 tmp/
 generated/
+
+# Local Vercel project linkage
+.vercel/
