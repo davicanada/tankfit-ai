@@ -6,7 +6,7 @@ This is an independent personal project by **Davi Almeida**, created with exclus
 
 ## Current Status
 
-The executable application is under active development. It includes a responsive Next.js interface, a browsable 13-product catalog, product detail pages, an interactive compatibility laboratory, a deterministic rules engine with regression tests, and a multilingual conversational explanation layer with sequential provider fallback. Commerce, approval, and proposal generation remain later milestones.
+The release candidate includes a responsive Next.js interface, a browsable 13-product catalog, product detail pages, an interactive compatibility laboratory, multilingual AI explanations with sequential provider fallback, and the complete AirFlame journey. A public visitor can turn a natural-language brief into confirmed requirements, receive a deterministic recommendation and ROI estimate, create a database-backed order, complete a fictional checkout, enter session-scoped Demo Staff Mode, approve the order, and download a watermarked proposal.
 
 ## Run Locally
 
@@ -14,10 +14,12 @@ Requirements: Node.js 22 or newer.
 
 ```bash
 npm install
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
-Open `http://localhost:3000`. The catalog and compatibility laboratory do not require database or AI credentials. To run every repository check:
+Open `http://localhost:3000`. The catalog and compatibility laboratory do not require database or AI credentials. The complete AirFlame journey requires `DATABASE_URL` and `SESSION_SIGNING_SECRET`; AI keys are optional because discovery and advisor explanations have deterministic fallbacks. To run every repository check:
 
 ```bash
 npm run check
@@ -63,7 +65,7 @@ Copy [`.env.example`](.env.example) to `.env.local` and place local development 
 
 Variables whose names begin with `NEXT_PUBLIC_` are exposed to the browser. AI provider keys, database credentials, and signing secrets must never use that prefix.
 
-The linked Vercel project provisions Neon variables for Production, Preview, and Development. Local Vercel-managed database values are pulled into `.env.development.local`, while manually managed AI-provider keys and the session-signing secret remain in `.env.local`. Both files are ignored by Git. Pulling directly into `.env.local` replaces that file and should be avoided unless the manual secrets have been backed up.
+The linked Vercel project provisions Neon variables for Production, Preview, and Development. Local Vercel-managed database values are pulled into `.env.development.local`, while manually managed AI-provider keys and the session-signing secret remain in `.env.local`. Both files are ignored by Git. Vercel sensitive variables are write-only and are not restored by `vercel env pull`; pulling directly into `.env.local` replaces that file, so back up or re-enter local-only secrets afterward.
 
 The conversational advisor tries Gemini, Cerebras, Groq, and OpenRouter in that order. Model IDs and routing limits have committed non-secret defaults in `.env.example`; real keys remain server-only. If a key is missing, a provider times out, or every provider is unavailable, the application skips safely to the next provider and ultimately returns deterministic English guidance. See [ADR-0005](docs/adrs/0005-ai-provider-fallback.md).
 
@@ -71,9 +73,10 @@ The conversational advisor tries Gemini, Cerebras, Groq, and OpenRouter in that 
 
 - TypeScript, React, and Next.js App Router
 - Vercel Node.js runtime and deployment
-- Neon Postgres with Drizzle ORM for later transactional features
+- Neon Postgres with Drizzle ORM and versioned migrations for sessions, commerce, orders, approvals, audit events, proposal metadata, and shared AI usage caps
 - Static product images served by Next.js
 - Server-side provider routing across free-tier AI APIs with deterministic guided fallback
+- In-process PDF generation from approved database state; no file-storage service is required
 
 ## Safety Boundary
 

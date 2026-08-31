@@ -35,8 +35,8 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
-                <Link href="/advisor">
-                  Test compatibility <ArrowRight data-icon="inline-end" />
+                <Link href="/demo">
+                  Run the AirFlame journey <ArrowRight data-icon="inline-end" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
@@ -110,7 +110,7 @@ export default function Home() {
         </div>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {[
-            { icon: Bot, title: "Multilingual conversation", text: "The future AI layer will interpret needs and explain results in the visitor’s language." },
+            { icon: Bot, title: "Multilingual conversation", text: "The AI layer interprets needs and explains grounded results in the visitor’s language." },
             { icon: Database, title: "Structured catalog", text: "Product claims come from versioned synthetic records, never from model memory." },
             { icon: ShieldCheck, title: "Deterministic controls", text: "Compatibility, calculations, orders, and approval states remain under application code." },
           ].map((item) => (

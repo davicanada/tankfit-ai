@@ -3,8 +3,8 @@
 | Field | Value |
 | --- | --- |
 | Product | TankFit AI |
-| Version | 0.5 |
-| Status | Draft |
+| Version | 0.6 |
+| Status | Release candidate |
 | Date | August 30, 2026 |
 | Owner | Davi Almeida |
 | Product type | Public portfolio prototype |
@@ -304,7 +304,7 @@ The application will use a provider-independent AI interface. The planned fallba
 
 1. Gemini using `gemini-3.7-flash`
 2. Cerebras using `gpt-oss-120b`
-3. Groq using `Qwen/Qwen3.6-27B`
+3. Groq using `qwen/qwen3.6-27b`
 4. OpenRouter using `openrouter/free`
 5. Deterministic guided-advisor mode
 
@@ -512,11 +512,15 @@ Any future decision to split the backend into independently deployed services mu
 - Add ROI calculation, draft order, simulated checkout, approval dashboard, and proposal generation.
 - Add audit timeline, security controls, and cost metrics.
 
+**Implementation status:** Complete for the AirFlame golden path. Anonymous sessions, commercial revalidation, deterministic ROI, order state, fictional deposit authorization, signed Demo Staff Mode, approval decisions, audit events, and on-demand proposal generation are implemented.
+
 ### Phase 5: Public Release
 
 - Deploy to Vercel.
 - Complete end-to-end, accessibility, mobile, and failure-mode testing.
 - Publish the repository, demo URL, screenshots, architecture diagram, and optional demo video.
+
+**Implementation status:** In progress. Production deployment verification and competition publication remain release activities.
 
 ## 20. Preset Demo Scenarios and Rationale
 
