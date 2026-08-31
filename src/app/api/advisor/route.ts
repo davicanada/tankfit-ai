@@ -1,11 +1,15 @@
 import { evaluateCompatibility } from "@/domain/compatibility/evaluate";
-import { generateAdvisorResponse } from "@/lib/ai/provider-router";
+import {
+  createDeterministicAdvisorReply,
+  generateAdvisorResponse,
+} from "@/lib/ai/provider-router";
 import { consumeAdvisorRateLimit } from "@/lib/ai/rate-limit";
 import {
   readBoundedJsonBody,
   validateAdvisorRequestHeaders,
 } from "@/lib/ai/request-security";
 import { advisorRequestSchema } from "@/lib/ai/types";
+import { reserveDailyAiRequest } from "@/lib/ai/usage-budget";
 import { catalog } from "@/lib/catalog";
 
 export const runtime = "nodejs";
@@ -63,11 +67,14 @@ export async function POST(request: Request) {
     catalog.products,
     parsed.data.requirements,
   );
-  const reply = await generateAdvisorResponse({
-    messages: parsed.data.messages,
-    compatibility,
-    abortSignal: request.signal,
-  });
+  const aiAllowed = await reserveDailyAiRequest("advisor").catch(() => false);
+  const reply = aiAllowed
+    ? await generateAdvisorResponse({
+        messages: parsed.data.messages,
+        compatibility,
+        abortSignal: request.signal,
+      })
+    : createDeterministicAdvisorReply(compatibility);
 
   return noStoreJson(reply);
 }

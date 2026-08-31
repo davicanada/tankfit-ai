@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788100000000,
+      "tag": "0000_airflame_journey",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788139000000,
+      "tag": "0001_ai_usage_budget",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788140000000,
+      "tag": "0002_order_commerce_snapshot",
+      "breakpoints": true
+    }
+  ]
+}

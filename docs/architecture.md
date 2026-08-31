@@ -1,8 +1,8 @@
 # TankFit AI Architecture
 
-**Status:** Draft  
+**Status:** Implemented release-candidate architecture
 **Owner:** Davi Almeida  
-**Last updated:** August 29, 2026
+**Last updated:** August 30, 2026
 
 ## 1. Architectural Objective
 
@@ -27,7 +27,7 @@ flowchart LR
     Web --> Catalog[Versioned JSON catalog and static images]
     Web --> Approval[Session-scoped Demo Staff Mode]
     Approval --> Tools
-    Tools --> Store[Temporary proposal object storage]
+    Tools --> PDF[In-process proposal generator]
 ```
 
 All organizations, products, people, transactions, prices, and documents represented by the system are fictional and synthetic.
@@ -74,7 +74,7 @@ Custom-scenario text cannot create new product categories, tools, URLs, file pat
 | Price, stock, availability, delivery lead time | Postgres | No transactional confirmation; order and checkout pause |
 | Requirements, conversation summary, order and audit events | Postgres, scoped to anonymous session | No cross-session fallback |
 | Compatibility and ROI outputs | Deterministic code plus versioned inputs | Recalculate from available validated inputs |
-| Proposal document | Temporary object storage with Postgres metadata | Regenerate only from an approved, unexpired order |
+| Proposal document | Generated on demand from approved Postgres state; Postgres stores only scoped metadata | Regenerate only from an approved, unexpired order |
 | AI response | Selected provider | Try configured providers, then deterministic guided mode |
 
 ## 6. Human Approval Boundary
@@ -94,7 +94,7 @@ The agent cannot issue the token, assume the role, approve an order, or generate
 | Compatibility is unknown | Return `technical_review_required` |
 | Mock payment fails | Keep the order out of `pending_approval` and record the failure |
 | Approval token is invalid or expired | Deny the action without revealing session data |
-| Proposal storage fails | Preserve approved state, record failure, and allow a safe retry |
+| Proposal generation fails | Preserve approved state and allow a safe retry from the same approved record |
 | Malicious or malformed input fails validation | Reject before database, provider, file, or state-transition work and record a bounded security event |
 | Cross-origin state-changing request | Reject before mutation |
 | Outbound destination is not configured | Reject without making a network request |
@@ -121,8 +121,9 @@ The MVP has one deployable application plus managed dependencies:
 
 1. Vercel project for the Next.js application.
 2. Neon Postgres for relational data.
-3. Vercel-compatible object storage for temporary proposals.
-4. Optional distributed rate-limit store if local and provider limits prove insufficient.
-5. External free-tier AI providers accessed only through the server-side router.
+3. Postgres-backed daily AI usage budgets shared across Vercel instances, plus a short per-instance burst limiter for the advisor.
+4. External free-tier AI providers accessed only through the server-side router.
+
+Proposal files are not stored. The Node.js route generates a two-page PDF in process from an approved, unexpired, session-scoped order and returns it with private, no-store headers. This removes a storage dependency and prevents orphaned public document URLs.
 
 This boundary keeps the initial system understandable and portable while leaving domain modules separable if future scale requires independent services.

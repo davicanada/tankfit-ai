@@ -8,6 +8,7 @@ const navigation = [
   { href: "/", label: "Overview" },
   { href: "/catalog", label: "Catalog" },
   { href: "/advisor", label: "Compatibility advisor" },
+  { href: "/demo", label: "AirFlame demo" },
 ];
 
 export function SiteHeader() {
@@ -44,8 +45,8 @@ export function SiteHeader() {
 
         <div className="hidden md:block">
           <Button asChild size="sm">
-            <Link href="/advisor">
-              Test the rules <ArrowUpRight data-icon="inline-end" />
+            <Link href="/demo">
+              Run the full demo <ArrowUpRight data-icon="inline-end" />
             </Link>
           </Button>
         </div>

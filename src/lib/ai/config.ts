@@ -4,7 +4,7 @@ import { providerIds, type ProviderId } from "./types";
 export const defaultProviderModels: Record<ProviderId, string> = {
   gemini: "gemini-3.7-flash",
   cerebras: "gpt-oss-120b",
-  groq: "Qwen/Qwen3.6-27B",
+  groq: "qwen/qwen3.6-27b",
   openrouter: "openrouter/free",
 };
 

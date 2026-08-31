@@ -1,6 +1,6 @@
 # SPEC: AirFlame Fuels Pilot Journey
 
-**Status:** Draft  
+**Status:** Implemented and under release validation
 **Scenario:** AirFlame Fuels  
 **Primary user:** Jordan Blake, Operations Manager  
 **Purpose:** Define the first complete, testable TankFit AI journey.
@@ -125,7 +125,7 @@ Application code calculates avoided costs, estimated annual benefit, estimated f
 
 ## 9. Proposal
 
-Every page must display `DEMO - NOT A VALID QUOTE OR CONTRACT`. The proposal includes the fictional parties, pilot scope, products, database-validated commercial values, estimated lead time, assumptions, unresolved issues, approval event, catalog version, and generation timestamp.
+Every page must display `DEMO - NOT A VALID QUOTE` and state that the document is a synthetic demo, not a valid quote or contract. The proposal includes the fictional parties, pilot scope, products, database-validated commercial values and lead time, assumptions, approval note, catalog/rule/commerce versions, proposal identifier, generation date, and synthetic-demo terms. It is generated on demand only from an approved, unexpired, session-scoped order.
 
 ## 10. Acceptance Tests
 

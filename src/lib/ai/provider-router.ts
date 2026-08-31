@@ -93,7 +93,7 @@ function recordSuccess(provider: ProviderId) {
   circuitStates.delete(provider);
 }
 
-function createProviderCandidate(
+export function createProviderCandidate(
   configuration: ProviderConfiguration,
 ): ProviderCandidate {
   const { id, apiKey, model } = configuration;
@@ -265,17 +265,24 @@ export async function routeAdvisorResponse(input: {
     }
   }
 
+  return createDeterministicAdvisorReply(input.compatibility, attempts);
+}
+
+export function createDeterministicAdvisorReply(
+  compatibility: CompatibilityResult,
+  attempts: ProviderAttempt[] = [],
+): AdvisorReply {
   return {
-    answer: createDeterministicAdvisorResponse(input.compatibility),
+    answer: createDeterministicAdvisorResponse(compatibility),
     mode: "deterministic",
     provider: null,
     model: null,
     attempts,
     compatibility: {
-      status: input.compatibility.status,
-      ruleVersion: input.compatibility.ruleVersion,
+      status: compatibility.status,
+      ruleVersion: compatibility.ruleVersion,
       primaryProductId:
-        input.compatibility.primaryRecommendation?.product.id ?? null,
+        compatibility.primaryRecommendation?.product.id ?? null,
     },
   };
 }

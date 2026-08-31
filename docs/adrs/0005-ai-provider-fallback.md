@@ -13,7 +13,7 @@ Use the Vercel AI SDK behind a server-only provider router. Try one complete, bo
 
 1. Gemini using `gemini-3.7-flash`
 2. Cerebras using `gpt-oss-120b`
-3. Groq using `Qwen/Qwen3.6-27B`
+3. Groq using `qwen/qwen3.6-27b`
 4. OpenRouter using `openrouter/free`
 5. Deterministic guided mode
 
