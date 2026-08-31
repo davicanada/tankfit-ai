@@ -520,7 +520,7 @@ Any future decision to split the backend into independently deployed services mu
 - Complete end-to-end, accessibility, mobile, and failure-mode testing.
 - Publish the repository, demo URL, screenshots, architecture diagram, and optional demo video.
 
-**Implementation status:** In progress. Production deployment verification and competition publication remain release activities.
+**Implementation status:** Production deployment and release verification are complete. Competition publication and submission remain intentionally pending.
 
 ## 20. Preset Demo Scenarios and Rationale
 

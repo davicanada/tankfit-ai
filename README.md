@@ -40,6 +40,7 @@ AirFlame, AgricuFlow, and Boreal Beverage are optional presets and repeatable te
 - [Engineering Process](docs/engineering-process.md)
 - [Security Threat Model](docs/security-threat-model.md)
 - [Security Policy](SECURITY.md)
+- [Release Readiness](docs/release-readiness.md)
 - [Product Image Prompts](docs/product-image-prompts.md)
 - [Company Logo Prompts](docs/company-logo-prompts.md)
 - [Asset Provenance](docs/asset-provenance.md)
