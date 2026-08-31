@@ -15,7 +15,14 @@ Showing both audiences the same unstructured entry point weakens the product nar
 Use two clearly separated experience surfaces inside the same Next.js application and deployment:
 
 1. **Public Tankroy website:** the customer-facing home page, use-case content, catalog, product details, and an embedded TankFit AI assistant. It is safe for anonymous visitors and contains no staff controls or cross-session data.
-2. **Internal sales workspace:** the review, approval, audit, order, and proposal experience. In the public competition MVP this remains a deliberately labeled, session-scoped `Demo Staff Mode` reached from the guided demonstration. A real deployment would protect the equivalent staff route with separately authenticated identities and authorization.
+2. **Internal sales workspace:** the review, approval, audit, order, and proposal experience. In the public competition MVP this remains a deliberately labeled, session-scoped Sales Team Experience. A real deployment would protect the equivalent staff route with separately authenticated identities and authorization.
+
+Add a competition-only Demo Hub with two explicit choices:
+
+- `/demo/customer` tests Customer Experience using the same public-site components, TankFit AI chatbox, catalog, session contract, and deterministic pipeline.
+- `/demo/sales` tests Sales Team Experience. It may continue the evaluator's current eligible opportunity or, through an explicit validated server mutation, create a private prepared AirFlame opportunity in the evaluator's own session.
+
+`/demo` is the selector for these perspectives. Route selection changes presentation only. It cannot create a staff token, approve an order, or weaken object authorization. Sales mutations still require the existing short-lived token scoped to the current session and order.
 
 Both surfaces share the same versioned catalog, deterministic compatibility and ROI modules, provider router, database schema, audit events, proposal generator, security controls, and synthetic-data policy. The public widget and full-page advisor are two entry points to the same conversational capability, not separate agents.
 
@@ -41,6 +48,8 @@ This could help non-developers edit marketing content, but introduces another se
 - The challenge still demonstrates the complete sales lifecycle through the explicitly labeled demo workspace.
 - One deployment keeps the security and deterministic-control boundary auditable.
 - The same customer session can move from the public advisor to the guided demo, but only an explicit, short-lived server-signed token can expose approval controls.
+- Evaluators can test either perspective independently without requiring a second application or access to another visitor's data.
+- A prepared sales fixture is created as new session-owned state, passes through normal deterministic and commercial validation, and is identified in the audit trail; it is not a shared privileged shortcut.
 - The implementation needs route-aware navigation, mobile widget behavior, clear role labels, and tests that prove public pages cannot expose staff actions.
 - A future authenticated staff portal, CMS, or separate service would require a new ADR and threat-model review.
 
@@ -49,4 +58,5 @@ This could help non-developers edit marketing content, but introduces another se
 - Keep all source code, UI copy, catalog records, and generated documents in English; the assistant may reply in the visitor's reliably identified language.
 - Keep Tankroy, TankFit AI, all customer scenarios, products, prices, and documents fictional and synthetic.
 - Do not add real payment, personal-data collection, arbitrary embeds, user uploads, or an unauthenticated general staff listing.
+- Do not use a shared mutable demo order or create prepared opportunity state during a page read; fixture creation must be explicit, validated, auditable, and session-owned.
 - Preserve deterministic authority over compatibility, product facts, commerce, ROI, payment simulation, approval, and proposal eligibility.

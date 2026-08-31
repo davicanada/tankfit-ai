@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Product | TankFit AI |
-| Version | 0.7 |
+| Version | 0.8 |
 | Status | Public-experience revision approved for implementation |
 | Date | August 31, 2026 |
 | Owner | Davi Almeida |
@@ -39,7 +39,7 @@ Maya wants customers to receive useful guidance at any time without allowing an 
 
 **TankFit AI** is the embedded public solution advisor and full-page `/advisor` experience. Its conversational style is clear, practical, neutral, and cautious. It asks only questions that materially affect the recommendation and explains why each question matters when necessary.
 
-The same application includes a separate sales workspace for the competition demonstration. The workspace represents a fictional Tankroy solution specialist reviewing requirements, order state, approval evidence, and a synthetic proposal. In the anonymous MVP it is protected by the existing session-scoped `Demo Staff Mode`, not by a general public staff account.
+The same application includes a Demo Hub with separate Customer Experience and Sales Team Experience modes. Customer Experience demonstrates the public Tankroy website and TankFit AI chatbox. Sales Team Experience represents a fictional Tankroy solution specialist reviewing requirements, order state, approval evidence, and a synthetic proposal. In the anonymous MVP, sales mutations remain protected by the existing session-scoped `Demo Staff Mode`, not by a general public staff account.
 
 ## 3. Problem Statement
 
@@ -161,7 +161,8 @@ The primary catalog will be stored in the application database. A read-only JSON
 The MVP is one responsive public web application with two intentionally separated surfaces:
 
 1. **Public Tankroy website:** home, use cases, catalog, product details, and an embedded TankFit AI assistant. Anonymous visitors can browse without an account and start a custom or preset discovery flow.
-2. **Sales workspace:** requirements review, deterministic evidence, draft order, simulated checkout, approval, audit, and proposal generation. The public competition build exposes this only as an explicitly labeled, session-scoped `/demo` journey with `Demo Staff Mode`.
+2. **Demo Hub:** an explicitly labeled `/demo` entry point lets evaluators choose Customer Experience or Sales Team Experience.
+3. **Sales workspace:** requirements review, deterministic evidence, draft order, simulated checkout, approval, audit, and proposal generation. The public competition build exposes this through `/demo/sales`; state-changing staff controls still require session- and order-scoped `Demo Staff Mode`.
 
 Both surfaces share one Next.js deployment, database, catalog, compatibility engine, provider router, and security boundary. They are not separate products or backends. Telegram, WhatsApp, native mobile applications, a CMS, and a real authenticated staff portal are future possibilities, not MVP requirements.
 
@@ -184,16 +185,19 @@ The presets are onboarding aids, portfolio demonstrations, and repeatable test f
 6. The rules engine filters the catalog and returns only compatible products.
 7. The AI explains the primary recommendation, constraints, evidence, and compatible alternatives.
 8. The visitor adjusts operational assumptions and views a deterministic ROI estimate.
-9. The visitor continues to the guided `/demo` workspace to configure a demo kit or draft order.
+9. In Customer Experience, the visitor configures a demo kit or draft order.
 10. The application validates price, fictional availability, compatibility, and required fields again.
 11. The visitor completes a simulated payment or checkout step using test data only.
 12. The order enters `pending_approval`; no final proposal is issued yet.
-13. The visitor explicitly enters `Demo Staff Mode` using a short-lived signed token restricted to the current synthetic session.
-14. Acting as a fictional Tankroy Systems solution specialist, the visitor reviews the conversation summary, requirements, recommendation, assumptions, and order.
-15. The demo approver approves, rejects, or requests changes; the role change and decision are recorded in the audit timeline.
-16. After approval, the application generates a clearly marked, non-binding proposal document.
-17. The visitor returns to the customer view, checks the final status, and downloads the simulated proposal.
-18. The anonymous demo session and its generated artifacts expire automatically after 24 hours.
+13. The visitor returns to the Demo Hub and opens Sales Team Experience with the same session-scoped opportunity.
+14. The visitor explicitly enters `Demo Staff Mode` using a short-lived signed token restricted to the current synthetic session and order.
+15. Acting as a fictional Tankroy Systems solution specialist, the visitor reviews the conversation summary, requirements, recommendation, assumptions, and order.
+16. The demo approver approves, rejects, or requests changes; the role change and decision are recorded in the audit timeline.
+17. After approval, the application generates a clearly marked, non-binding proposal document.
+18. The visitor returns to Customer Experience, checks the final status, and downloads the simulated proposal.
+19. The anonymous demo session and its generated artifacts expire automatically after 24 hours.
+
+An evaluator may also open the Demo Hub first. Customer Experience starts the public journey. Sales Team Experience either continues the evaluator's current synthetic opportunity or, after an explicit action, creates a private AirFlame fixture in that evaluator's own session. A prepared fixture is never a shared mutable customer or a shortcut around deterministic validation.
 
 ## 10. Functional Requirements
 
@@ -289,9 +293,19 @@ The presets are onboarding aids, portfolio demonstrations, and repeatable test f
 ### FR-12: Sales Workspace Surface
 
 - The guided workspace must present structured requirements, recommendation evidence, ROI assumptions, commercial validation, order state, approval state, audit events, and proposal eligibility in a clear sequence.
-- The competition MVP must label the workspace as a demonstration and require explicit entry into session-scoped `Demo Staff Mode` before approval actions appear.
+- The competition MVP must label `/demo/sales` as Sales Team Experience and require explicit entry into session-scoped `Demo Staff Mode` before approval actions appear.
 - Staff actions must be explicit interface mutations checked on the server; the conversational agent must not approve, authorize payment, or generate a proposal.
 - A future production staff surface may use separate authentication and authorization, but that is not required for the anonymous competition MVP.
+
+### FR-13: Demo Hub and Experience Selection
+
+- `/demo` must explain the two fictional perspectives and offer `Experience the Customer Journey` and `Experience the Sales Team Workspace` as distinct choices.
+- `/demo/customer` must exercise the same public Tankroy components, embedded TankFit AI behavior, catalog, session, and deterministic domain pipeline as the normal customer surface.
+- `/demo/sales` must show only the current anonymous session's synthetic opportunity.
+- If the current session has an eligible customer-created opportunity, Sales Team Experience must offer to continue it.
+- If no eligible opportunity exists, the evaluator may explicitly create a prepared AirFlame opportunity scoped to the current session. Loading the fixture must use a validated server-side mutation, run the normal deterministic and commercial validation, and record its origin in the audit trail.
+- Selecting a mode, changing a route, or modifying a query parameter must never grant staff authorization. Approval controls still require a short-lived token scoped to the current session and order.
+- Both modes must provide a clear path back to the Demo Hub without mixing customer and staff navigation.
 
 ## 11. AI and Agent Requirements
 
@@ -467,9 +481,13 @@ The MVP is ready for public release when:
 21. The root route is recognizable as the fictional Tankroy customer website and provides clear paths to the catalog and TankFit AI.
 22. A public product page can launch the same advisor session as the full-page `/advisor` route without duplicating agent or deterministic logic.
 23. Public pages contain no approval, audit, order-mutation, staff-role, provider, database, or cross-session controls.
-24. The `/demo` workspace remains explicitly labeled as a synthetic competition demonstration and exposes approval actions only after scoped `Demo Staff Mode` entry.
+24. The `/demo/sales` workspace remains explicitly labeled as a synthetic Sales Team Experience and exposes approval actions only after scoped `Demo Staff Mode` entry.
 25. Desktop and mobile public experiences pass keyboard-accessibility and responsive smoke tests.
 26. The public and workspace surfaces share one deployment and one authoritative catalog and deterministic domain pipeline.
+27. `/demo` offers separate Customer Experience and Sales Team Experience entry points with clear fictional-role labels.
+28. Sales Team Experience can continue the current session's eligible customer-created opportunity without copying or exposing another session.
+29. An evaluator without an eligible opportunity can explicitly create a private prepared AirFlame opportunity that passes through normal deterministic and commercial validation.
+30. Direct navigation or a client-controlled mode value cannot grant staff authorization or expose approval controls.
 
 ## 17. Constraints and Dependencies
 
@@ -498,7 +516,7 @@ The MVP is ready for public release when:
 | Neon Postgres with Drizzle ORM | Orders, approval state, sessions, audit events, and proposal metadata are relational. Postgres provides transactions and portability, while Drizzle provides typed queries and versioned migrations that align with the TypeScript application. | Reconsider the data layer if usage patterns become primarily document-based, globally distributed, or high-volume event streaming. |
 | Versioned JSON catalog and static images | The public catalog remains available if the database is unavailable or sleeping. The fallback is inexpensive, reviewable in Git, and capable of associating each fictional product with an AI-generated image through a stable asset path. | Move catalog media to managed storage or a CMS if non-developers must edit products or the asset volume becomes large. |
 | Provider-independent AI adapter | A common interface enables fallback among Gemini, Cerebras, Groq, OpenRouter, and deterministic guided mode without exposing provider credentials to the browser. | Revisit routing when real traffic, quality measurements, latency, and provider costs reveal a better ordering or a need for a managed AI gateway. |
-| Two experience surfaces in one Next.js app | Tankroy's public website gives customers the right context, while the session-scoped sales workspace demonstrates review and approval. Sharing one app avoids duplicated catalog, session, security, and deterministic logic. | Add separately authenticated staff infrastructure or split deployments only when ownership, compliance, scaling, or lifecycle boundaries justify them. |
+| Demo Hub with two experience modes in one Next.js app | Customer Experience gives evaluators the public Tankroy context, while Sales Team Experience demonstrates review and approval. Sharing one app and session contract avoids duplicated catalog, agent, security, and deterministic logic. | Add separately authenticated staff infrastructure or split deployments only when ownership, compliance, scaling, or lifecycle boundaries justify them. |
 
 Any future decision to split the backend into independently deployed services must be documented in an architecture decision record (ADR) with its alternatives, trade-offs, and migration triggers.
 
@@ -520,6 +538,7 @@ Any future decision to split the backend into independently deployed services mu
 | Automated abuse exhausts compute or AI quotas | Demo outage or unexpected cost | Request limits, body limits, provider caps, timeouts, circuit breakers, staged firewall rules |
 | Vulnerable dependency or leaked secret enters the repository | Supply-chain compromise or account exposure | Minimal dependencies, automated updates and scanning, secret scanning, review gates, server-only secrets |
 | Customer and staff experiences are confused | Visitors may see internal controls or misunderstand the synthetic demo | Separate route and navigation contracts, explicit role labels, server authorization, surface-specific E2E checks, and visible fiction notices |
+| Prepared sales fixture becomes a privileged shortcut or shared record | Evaluation could bypass deterministic controls or leak state between visitors | Create the fixture only through an explicit server mutation, clone it into the current session, run normal validation, record provenance, and forbid shared mutable demo opportunities |
 
 ## 19. Release Strategy
 
@@ -561,8 +580,9 @@ Any future decision to split the backend into independently deployed services mu
 
 - Reframe the root and catalog routes as the fictional Tankroy customer website.
 - Add a responsive, keyboard-accessible TankFit AI entry point that can be embedded on public pages and hand off to `/advisor`.
-- Keep `/demo` as the explicitly labeled session-scoped sales-workspace demonstration for the complete AirFlame journey.
+- Turn `/demo` into the experience-selection hub, use `/demo/customer` for Customer Experience, and use `/demo/sales` for the session-scoped Sales Team Experience.
 - Add surface-aware navigation, disclaimers, accessibility coverage, and E2E tests proving that public pages cannot expose staff actions.
+- Support both continuation of the evaluator's own customer-created opportunity and explicit creation of a private prepared AirFlame sales fixture.
 
 **Implementation status:** Documentation and architecture approved on this branch; UI implementation and release verification are pending.
 
@@ -608,4 +628,5 @@ Together, these scenarios cover three materially different stored resources, cus
 - The three named scenarios are editable presets and test fixtures; public visitors may also start an independent custom fictional scenario governed by the same rules.
 - The project will not depend on Wix or any real organization's system.
 - Tankroy's public website and the sales workspace will share one Next.js deployment, one database, one catalog, one agent, and one deterministic domain pipeline.
-- TankFit AI will be available as an embedded public assistant and as a full-page advisor; the current `/demo` route will remain the explicit competition workspace until a future authenticated staff portal is justified.
+- TankFit AI will be available as an embedded public assistant and as a full-page advisor; `/demo` will be the competition Demo Hub with separate Customer Experience and Sales Team Experience routes.
+- Sales Team Experience may continue the current session's opportunity or create a private prepared AirFlame fixture, but mode selection alone never grants staff authorization.

@@ -27,7 +27,7 @@ The public surface represents the fictional Tankroy website:
 
 The widget is a compact entry point. It may collect a free-text operational brief, ask discovery questions, show a grounded recommendation, and link the visitor to the full journey. It must not expose staff actions, arbitrary catalog mutation, provider credentials, or another session's order.
 
-### 2.2 Internal and demonstration surface
+### 2.2 Sales Team Experience
 
 The sales workspace represents a Tankroy solution specialist reviewing a synthetic opportunity:
 
@@ -37,7 +37,21 @@ The sales workspace represents a Tankroy solution specialist reviewing a synthet
 - Approval, rejection, or change-request controls with a reason and audit record.
 - Approved proposal download with the existing watermark and expiry controls.
 
-For the competition MVP, the current `/demo` journey remains the safe demonstration workspace. It is reached intentionally and grants only a short-lived, session- and order-scoped `Demo Staff Mode` token. It is not a general public staff dashboard. A production-equivalent route would require separately authenticated staff identities and is outside this public anonymous MVP.
+For the competition MVP, `/demo/sales` is the safe Sales Team Experience. It is reached intentionally and grants no authority by itself. Approval controls require a separate, short-lived, session- and order-scoped `Demo Staff Mode` token. It is not a general public staff dashboard. A production-equivalent route would require separately authenticated staff identities and is outside this public anonymous MVP.
+
+### 2.3 Competition Demo Hub
+
+`/demo` is a neutral demonstration hub with two choices:
+
+1. **Experience the Customer Journey:** opens `/demo/customer` and demonstrates the public Tankroy website, catalog, embedded TankFit AI chatbox, discovery, recommendation, ROI, and customer-originated order flow.
+2. **Experience the Sales Team Workspace:** opens `/demo/sales` and demonstrates structured opportunity review, commercial state, approval, audit, and proposal generation.
+
+Sales Team Experience supports two safe starting conditions:
+
+- Continue an eligible synthetic opportunity previously created by the same anonymous session in Customer Experience.
+- If none exists, show an explicit `Load prepared AirFlame opportunity` action. The action creates new session-owned records, runs normal deterministic and current commercial validation, and records `prepared_sales_fixture` provenance. It must not use a global shared order, mutate seed data, run automatically on `GET`, or bypass the approval state machine.
+
+The hub and mode routes are presentation controls. They are not roles, authentication, or authorization.
 
 ## 3. Route and Navigation Contract
 
@@ -47,23 +61,28 @@ For the competition MVP, the current `/demo` journey remains the safe demonstrat
 | `/catalog` | Public Tankroy | Browse the fictional catalog | Anonymous session or no session |
 | `/catalog/[slug]` | Public Tankroy | Inspect one product's grounded facts, image, constraints, and advisor entry point | Anonymous session or no session |
 | `/advisor` | Public TankFit AI | Full-page conversational discovery and compatibility explanation | Anonymous signed session |
-| `/demo` | Demonstration workspace | Complete customer-to-approval competition journey | Anonymous signed session; staff actions require scoped Demo Staff Mode |
+| `/demo` | Demo Hub | Explain and select Customer Experience or Sales Team Experience | Anonymous; no role granted |
+| `/demo/customer` | Customer Experience | Test the public Tankroy site, chatbox, discovery, recommendation, ROI, and customer actions | Anonymous signed session for stateful actions |
+| `/demo/sales` | Sales Team Experience | Continue the current opportunity or explicitly create a private prepared AirFlame opportunity, then review approval and proposal state | Anonymous signed session; staff mutations require scoped Demo Staff Mode |
 | `/api/advisor` | Server boundary | AI-assisted discovery and grounded explanation | Same-origin, session-scoped request |
 | `/api/proposals/[id]` | Server boundary | Generate an approved synthetic proposal on demand | Same-origin, current-session authorization, unexpired record |
 
-The public navigation should describe the customer experience in Tankroy language. Internal labels such as `Demo Staff Mode`, `approval`, and `audit` belong inside the deliberate demonstration workspace, not in the primary public navigation.
+The public navigation should describe the customer experience in Tankroy language. Internal labels such as `Demo Staff Mode`, `approval`, and `audit` belong inside Sales Team Experience, not in the primary public navigation. Both experience routes must provide a clear return to the Demo Hub. A mode switch may preserve the current session but must not encode a session identifier, order identifier, or authorization claim in a client-controlled URL.
 
 ## 4. Customer Journey
 
 1. A visitor lands on the fictional Tankroy website and understands the synthetic-demo disclaimer.
-2. The visitor browses products or opens `Ask TankFit AI` from the home page, a solution page, or a product page.
+2. The visitor browses products or opens `Ask TankFit AI` from the home page, a use-case section, or a product page.
 3. TankFit AI asks only compatibility-relevant discovery questions and accepts a custom fictional situation or an editable preset.
 4. Deterministic code evaluates compatibility against the versioned catalog and returns a recommendation, alternatives, or `technical_review_required` / `out_of_scope`.
 5. The visitor reviews facts, evidence, assumptions, and the illustrative ROI estimate.
-6. The visitor may continue to the full `/demo` journey to create a synthetic draft order, authorize the fictional deposit, and enter the explicit approval demonstration.
-7. The visitor returns to the customer view and downloads the approved, watermarked demo proposal.
+6. The visitor may continue through Customer Experience to create a synthetic draft order and authorize the fictional deposit.
+7. The visitor returns to the Demo Hub and opens Sales Team Experience with the same session-scoped opportunity.
+8. The visitor explicitly enters Demo Staff Mode, records a decision, and returns to the customer perspective to download the approved, watermarked demo proposal.
 
-The widget may hand off to `/advisor` or `/demo` with a server-managed session reference. It must not put secrets, raw database identifiers, or authorization claims in a client-controlled query string.
+The widget may hand off to `/advisor` or Customer Experience through server-managed session state. It must not put secrets, raw database identifiers, or authorization claims in a client-controlled query string.
+
+An evaluator who wants to inspect only the Sales Team Experience may open it directly and explicitly create the prepared AirFlame opportunity. That path must produce the same deterministic recommendation and commercial checks as equivalent Customer Experience inputs.
 
 ## 5. Deterministic and AI Boundaries
 
@@ -82,6 +101,11 @@ The widget may hand off to `/advisor` or `/demo` with a server-managed session r
 - A visitor can begin with a custom scenario from the public site and reach the same deterministic result as the equivalent `/advisor` flow.
 - Public pages do not render approval, audit, order mutation, or proposal-download controls for another session.
 - The complete AirFlame golden path still reaches recommendation, ROI, simulated checkout, Demo Staff Mode, approval, and proposal download.
+- The Demo Hub presents both modes clearly and neither mode choice grants staff authorization.
+- Customer Experience uses the same public components and behavior as the Tankroy website rather than a second customer implementation.
+- Sales Team Experience continues only an eligible opportunity belonging to the current session.
+- Loading the prepared AirFlame opportunity requires an explicit mutation, creates session-private records, runs normal validation, and records fixture provenance.
+- Direct navigation to `/demo/sales` does not reveal approval controls or data from another session.
 - A session-scoped Demo Staff Mode token cannot be created by the model, reused for another order, or used after expiry.
 - AI-provider failure still leaves catalog browsing and deterministic guided discovery usable.
 - No real company, catalog, customer record, payment, personal information, or legally valid document is introduced.
@@ -90,6 +114,7 @@ The widget may hand off to `/advisor` or `/demo` with a server-managed session r
 
 - A real authenticated employee portal.
 - A second repository, backend, database, agent, or deployment.
+- A shared mutable sales-demo opportunity or automatic fixture creation during page load.
 - Wix, a CMS, or external catalog synchronization.
 - Real checkout, subscriptions, customer accounts, CRM integration, or lead email delivery.
 - A requirement that every public visitor create a database record before browsing.

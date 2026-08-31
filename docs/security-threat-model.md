@@ -3,11 +3,11 @@
 **Status:** Required for MVP  
 **Owner:** Davi Almeida  
 **Baseline:** OWASP ASVS 5.0 principles and OWASP guidance for web and LLM applications  
-**Last updated:** August 30, 2026
+**Last updated:** August 31, 2026
 
 ## 1. Scope
 
-This threat model covers the public Tankroy Systems Inc. website, the embedded and full-page TankFit AI advisor, anonymous demo sessions, the session-scoped sales workspace, conversational AI routing, deterministic tools, Neon Postgres, on-demand proposal generation, simulated checkout, Demo Staff Mode, and the Vercel deployment boundary.
+This threat model covers the public Tankroy Systems Inc. website, the embedded and full-page TankFit AI advisor, the Customer Experience and Sales Team Experience routes under the Demo Hub, anonymous demo sessions, prepared sales fixtures, the session-scoped sales workspace, conversational AI routing, deterministic tools, Neon Postgres, on-demand proposal generation, simulated checkout, Demo Staff Mode, and the Vercel deployment boundary.
 
 The MVP intentionally excludes user file uploads, arbitrary remote-URL ingestion, XML input, operating-system command execution, dynamically loaded user templates, real payments, real customer data, and a public general-purpose administration area. Adding any excluded capability requires updating this threat model before implementation.
 
@@ -38,7 +38,7 @@ The following are always untrusted:
 
 The browser is not an authorization boundary. Every permission and state transition must be rechecked on the server.
 
-The public Tankroy surface and the sales workspace are presentation boundaries, not independent security domains. Public routes may browse descriptive catalog data and start an advisor session, but they must not expose order mutation, approval, audit, staff-role, provider, database, or cross-session controls. The `/demo` workspace may show those controls only after the current session has explicitly obtained a valid, short-lived `Demo Staff Mode` token. A production staff deployment would add authenticated identity and authorization rather than treating the demo token as employee authentication.
+The public Tankroy surface, `/demo/customer`, and `/demo/sales` are presentation boundaries, not independent security domains. Public routes may browse descriptive catalog data and start an advisor session, but they must not expose order mutation, approval, audit, staff-role, provider, database, or cross-session controls. `/demo/sales` may show mutation controls only after the current session has explicitly obtained a valid, short-lived `Demo Staff Mode` token. Selecting a mode or navigating directly to a route cannot grant authority. A production staff deployment would add authenticated identity and authorization rather than treating the demo token as employee authentication.
 
 ## 4. Security Principles
 
@@ -58,6 +58,7 @@ The public Tankroy surface and the sales workspace are presentation boundaries, 
 | Prompt injection and tool manipulation | Public chat can contain instructions to ignore rules, reveal secrets, alter price, approve orders, or call unauthorized tools | Narrow tool schemas; deterministic authorization inside every tool; no secrets in model context; provider output treated as data; model cannot mutate approval or payment; explicit catalog and session scope; output schema validation | Adversarial prompt suite verifies that injected instructions cannot change tools, catalog facts, session scope, price, order, payment, or approval |
 | Broken access control and IDOR | Anonymous visitors could guess another session, order, or proposal identifier | Cryptographically random opaque IDs; every query scoped to session; signed role token scoped to session, order, purpose, and expiry; no public admin listing; generic not-found responses | Two-session integration tests attempt cross-read, cross-write, cross-approval, replay, and artifact download |
 | Customer/staff surface confusion | A public Tankroy page could accidentally expose order, approval, audit, or staff controls, or a demo label could be mistaken for production authorization | Separate route and navigation contracts; public components receive no staff actions; server-side authorization on every mutation; explicit synthetic and demo-role labels; no general staff listing; surface-specific E2E tests | Anonymous browser tests inspect public pages for forbidden controls and attempt direct staff mutations without a scoped token |
+| Prepared fixture isolation failure | A direct Sales Team Experience could reuse a global order, inherit another session's state, or bypass recommendation and commercial validation | No fixture creation on `GET`; explicit same-origin Server Action; new opaque session-owned records; normal deterministic and current commercial validation; provenance audit event; idempotency guard; no shared mutable opportunity | Two-session tests create prepared fixtures concurrently, attempt cross-read and cross-approval, verify distinct identifiers and provenance, and confirm normal validation failures remain enforced |
 | SQL injection | Free text and identifiers reach database-backed flows | Drizzle parameter binding; no concatenated SQL; prohibit user-influenced `sql.raw`; schema validation; least-privileged application role; migrations use a separate role | Unit and integration tests with injection payloads; static check for prohibited raw-query sinks; review generated SQL where necessary |
 | Stored, reflected, and DOM XSS | Chat messages, model output, catalog notes, audit reasons, and proposal fields are rendered | React text escaping; sanitized allowlisted Markdown if Markdown is enabled; no raw HTML; prohibit unsanitized `dangerouslySetInnerHTML`; contextual encoding in HTML and PDF; restrictive CSP | Render malicious HTML, URI, SVG, and Markdown fixtures; verify no script, event handler, unsafe URL, or markup execution |
 | CSRF | Cookies accompany state-changing Server Actions and Route Handler requests | No mutations through GET; host-only `SameSite` cookies; Next.js same-origin Server Action checks; server authorization on every action; Origin and Fetch Metadata verification for state-changing Route Handlers; session-bound CSRF token when a route cannot rely on framework protection | Cross-origin POST tests, missing/invalid Origin tests, missing token tests where applicable, and confirmation that safe navigation remains usable |
@@ -86,6 +87,8 @@ Every state-changing Server Action or Route Handler must:
 6. Enforce same-origin or documented CSRF protection.
 7. Apply rate and cost limits before invoking external providers.
 8. Return a generic error to the client and a structured, redacted event to logs.
+
+Creating a prepared Sales Team Experience opportunity is a state-changing action and follows this complete baseline. It cannot be triggered by page rendering, a `GET` request, a query parameter, or model output.
 
 Server Actions are public endpoints even when invoked only by application components. They require the same input validation and authorization as Route Handlers.
 
@@ -144,6 +147,7 @@ Before public release:
 - Threat controls have linked automated or manual tests.
 - The AirFlame happy path still works with security controls enabled.
 - Public Tankroy pages do not expose staff controls, and direct calls to workspace mutations fail without a valid session-scoped role token.
+- Demo mode selection grants no role; prepared AirFlame opportunities are session-private, explicitly created, normally validated, and distinguishable in the audit trail.
 - A custom-scenario adversarial suite covers web and prompt-injection payloads.
 - Cross-session tests pass.
 - Dependency, code, and secret scans have no unresolved critical or high finding.
@@ -165,7 +169,7 @@ The initial conversational milestone maps the controls above to executable code 
 
 The short burst limiter and circuit breaker apply to one warm application instance. Postgres-backed daily budgets cap advisor and discovery AI requests across all Vercel instances; staged Vercel Firewall rules remain release hardening for meaningful public traffic.
 
-The public widget, `/advisor`, and `/demo` must use the same server-managed session scope. A client-controlled route, query parameter, or widget state cannot promote a visitor to staff mode or select another order.
+The public widget, `/advisor`, `/demo/customer`, and `/demo/sales` must use the same server-managed session scope. A client-controlled route, query parameter, or widget state cannot promote a visitor to staff mode, select another order, or mark an opportunity as prepared.
 
 ## 12. Residual Risks
 

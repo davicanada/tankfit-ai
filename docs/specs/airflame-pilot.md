@@ -5,7 +5,7 @@
 **Primary user:** Jordan Blake, Operations Manager  
 **Purpose:** Define the first complete, testable TankFit AI journey.
 
-AirFlame is an editable preset and regression fixture, not a hard-coded customer-only workflow. The public Tankroy website, embedded TankFit AI assistant, full-page `/advisor`, and guided `/demo` workspace must all use the same schemas, discovery logic, compatibility rules, tools, commerce validation, security controls, and approval state machine for independently entered custom scenarios.
+AirFlame is an editable preset and regression fixture, not a hard-coded customer-only workflow. The public Tankroy website, embedded TankFit AI assistant, full-page `/advisor`, `/demo/customer`, and `/demo/sales` must all use the same schemas, discovery logic, compatibility rules, tools, commerce validation, security controls, and approval state machine for independently entered custom scenarios.
 
 ## 1. Scenario
 
@@ -123,7 +123,9 @@ Application code calculates avoided costs, estimated annual benefit, estimated f
 7. Approval, rejection, or change request records the role, reason, and timestamp.
 8. Only approval permits proposal generation.
 
-The order and approval controls belong to the explicitly labeled `/demo` sales workspace. The public Tankroy catalog and advisor surfaces may explain the journey and hand off to the workspace, but must not display approval controls or another session's order.
+Customer order controls belong to Customer Experience. Approval and audit controls belong to the explicitly labeled `/demo/sales` Sales Team Experience. The public Tankroy catalog and advisor surfaces may explain the journey and hand off to the demo modes, but must not display approval controls or another session's order.
+
+If an evaluator opens Sales Team Experience without an eligible current-session opportunity, `Load prepared AirFlame opportunity` may create a new private fixture through a validated server mutation. The fixture must reproduce the documented AirFlame requirements, run the normal deterministic and current commercial validation, record its provenance, and remain isolated to the evaluator's anonymous session.
 
 ## 9. Proposal
 
@@ -146,3 +148,6 @@ Every page must display `DEMO - NOT A VALID QUOTE` and state that the document i
 - The complete happy path produces a downloadable, clearly marked demo proposal.
 - A visitor can start the same AirFlame journey from the public Tankroy website or the full-page advisor without changing the deterministic recommendation.
 - Public pages do not expose Demo Staff Mode, approval, audit, or order-mutation controls before the deliberate workspace handoff.
+- The Demo Hub lets an evaluator choose Customer Experience or Sales Team Experience without granting a role.
+- Sales Team Experience can continue the current session's AirFlame opportunity or explicitly create a distinct session-private prepared fixture.
+- A prepared fixture cannot bypass deterministic compatibility, commercial revalidation, approval authorization, or cross-session isolation.

@@ -14,6 +14,8 @@ The model may interpret needs, extract structured requirements, ask questions, c
 
 AirFlame, AgricuFlow, and Boreal Beverage are editable presets and test fixtures. Never implement a special compatibility shortcut for a named scenario. A custom fictional scenario with equivalent normalized requirements must receive the same deterministic result.
 
+Customer Experience and Sales Team Experience are competition presentation modes, not authorization roles. A prepared sales opportunity must be created only through an explicit validated server mutation as new session-owned state, pass through normal deterministic and commercial validation, and record fixture provenance. Never use a shared mutable demo order or create one automatically during a page read.
+
 ## Architecture Rules
 
 - Use TypeScript and the Next.js App Router with the Node.js runtime.

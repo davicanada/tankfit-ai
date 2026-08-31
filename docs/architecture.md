@@ -17,7 +17,11 @@ flowchart LR
     Public --> Widget[Embedded TankFit AI assistant]
     Public --> Catalog[Catalog and product pages]
     Widget --> Agent[Conversational agent]
-    Staff[Explicit demo user] --> Workspace[Session-scoped sales workspace]
+    Evaluator[Competition evaluator] --> Hub[Demo Hub]
+    Hub --> CustomerMode[Customer Experience]
+    Hub --> SalesMode[Sales Team Experience]
+    CustomerMode --> Public
+    SalesMode --> Workspace[Session-scoped sales workspace]
     Workspace --> Agent
     Agent --> Tools[Validated application tools]
     Tools --> Rules[Compatibility and ROI rules]
@@ -44,7 +48,9 @@ The MVP is one Next.js application deployed to Vercel using the Node.js runtime.
 
 - **Public Tankroy surface:** `/`, `/catalog`, and `/catalog/[slug]` provide the fictional company context, solution content, catalog, product facts, images, and entry points to TankFit AI. These routes must not render staff controls or cross-session data.
 - **Embedded advisor surface:** a compact TankFit AI widget may appear on public pages, while `/advisor` provides the full-page accessible conversation. Both use the same session and server-side advisor route.
-- **Sales workspace surface:** `/demo` remains the explicitly labeled competition journey for requirements review, commercial validation, simulated checkout, Demo Staff Mode, approval, audit, and proposal generation. It is a session-scoped demonstration, not a general staff dashboard.
+- **Demo Hub:** `/demo` explains the fictional perspectives and links to `/demo/customer` and `/demo/sales`. Choosing a route changes presentation only and grants no permission.
+- **Customer Experience:** `/demo/customer` demonstrates the same Tankroy site, chatbox, catalog, advisor, session contract, and deterministic modules used by the public customer surface.
+- **Sales Team Experience:** `/demo/sales` presents requirements review, commercial validation, simulated checkout state, Demo Staff Mode, approval, audit, and proposal generation. It can continue the current session's opportunity or explicitly create a session-private prepared AirFlame opportunity through normal server validation. It is not a general staff dashboard.
 - **Server Components** read internal catalog and session data directly on the server and pass serializable results to interactive components.
 - **Server Actions** handle interface-originated mutations such as editing requirements, creating a draft order, changing demo roles, and recording approval decisions.
 - **Route Handlers** are reserved for streaming conversational responses, AI-provider calls, simulated external callbacks, and proposal downloads.
@@ -82,13 +88,16 @@ Custom-scenario text cannot create new product categories, tools, URLs, file pat
 | Fictional company names and logo paths | Versioned company registry | Local reviewed logo assets and registry remain available without a database |
 | Price, stock, availability, delivery lead time | Postgres | No transactional confirmation; order and checkout pause |
 | Requirements, conversation summary, order and audit events | Postgres, scoped to anonymous session | No cross-session fallback |
+| Prepared Sales Team Experience opportunity | Newly created Postgres records scoped to the evaluator's anonymous session, with fixture provenance | Create only after an explicit validated action; never use a shared mutable opportunity |
 | Compatibility and ROI outputs | Deterministic code plus versioned inputs | Recalculate from available validated inputs |
 | Proposal document | Generated on demand from approved Postgres state; Postgres stores only scoped metadata | Regenerate only from an approved, unexpired order |
 | AI response | Selected provider | Try configured providers, then deterministic guided mode |
 
 ## 6. Human Approval Boundary
 
-The public demonstration uses a short-lived, server-signed token that lets a visitor explicitly enter Demo Staff Mode for only the current synthetic session. This proves the approval state transition without exposing a general administrative area.
+The public demonstration uses a short-lived, server-signed token that lets an evaluator explicitly enter Demo Staff Mode for only the current synthetic session and order. Opening `/demo/sales`, selecting Sales Team Experience, or loading a prepared fixture does not grant this token. This proves the approval state transition without exposing a general administrative area.
+
+If Sales Team Experience is opened without an eligible opportunity, an explicit Server Action may create a prepared AirFlame opportunity. The action validates same-origin request context, creates new session-owned records, runs the same deterministic recommendation and current commercial validation as Customer Experience, and records `prepared_sales_fixture` provenance in the audit timeline. The fixture is never a shared mutable order and cannot be used to access another session.
 
 The agent cannot issue the token, assume the role, approve an order, or generate the final proposal. A production system would replace this demonstration mechanism with authenticated staff identities and separate authorization.
 
@@ -102,6 +111,8 @@ The agent cannot issue the token, assume the role, approve an order, or generate
 | Stock changes before checkout | Reject or revise the draft; never silently oversell |
 | Compatibility is unknown | Return `technical_review_required` |
 | Mock payment fails | Keep the order out of `pending_approval` and record the failure |
+| Sales Team Experience has no eligible opportunity | Show an empty state and an explicit prepared-fixture action; do not enumerate or reuse another session's data |
+| Prepared fixture creation fails | Roll back partial records, grant no role, and leave the workspace in its safe empty state |
 | Approval token is invalid or expired | Deny the action without revealing session data |
 | Proposal generation fails | Preserve approved state and allow a safe retry from the same approved record |
 | Malicious or malformed input fails validation | Reject before database, provider, file, or state-transition work and record a bounded security event |

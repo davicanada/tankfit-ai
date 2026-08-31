@@ -21,9 +21,10 @@
 The next release will present the same application through two surfaces:
 
 - A public Tankroy Systems Inc. website with home, catalog, product pages, and an embedded `Ask TankFit AI` entry point.
-- The explicitly labeled `/demo` sales-workspace demonstration for requirements review, simulated checkout, Demo Staff Mode, approval, audit, and proposal generation.
+- A `/demo` evaluation hub with separate `/demo/customer` Customer Experience and `/demo/sales` Sales Team Experience routes.
+- Sales Team Experience that can continue the evaluator's own eligible opportunity or explicitly create a private, normally validated AirFlame fixture with audit provenance.
 
-The surfaces share one deployment, database, catalog, agent, deterministic domain pipeline, and security boundary. The implementation must pass the route, accessibility, session-isolation, and public-control exposure checks in [`specs/tankroy-public-experience.md`](specs/tankroy-public-experience.md) before this revision can be called release-ready.
+The surfaces share one deployment, database, catalog, agent, deterministic domain pipeline, and security boundary. Mode selection grants no role. The implementation must pass the route, accessibility, fixture-provenance, session-isolation, and public-control exposure checks in [`specs/tankroy-public-experience.md`](specs/tankroy-public-experience.md) before this revision can be called release-ready.
 
 ## Final Owner Actions Before Competition Submission
 
