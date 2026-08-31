@@ -1,11 +1,11 @@
 # SPEC: AirFlame Fuels Pilot Journey
 
-**Status:** Implemented and under release validation
+**Status:** Implemented and under release validation; public-surface handoff approved
 **Scenario:** AirFlame Fuels  
 **Primary user:** Jordan Blake, Operations Manager  
 **Purpose:** Define the first complete, testable TankFit AI journey.
 
-AirFlame is an editable preset and regression fixture, not a hard-coded customer-only workflow. The same schemas, discovery logic, compatibility rules, tools, commerce validation, security controls, and approval state machine must serve independently entered custom scenarios.
+AirFlame is an editable preset and regression fixture, not a hard-coded customer-only workflow. The public Tankroy website, embedded TankFit AI assistant, full-page `/advisor`, and guided `/demo` workspace must all use the same schemas, discovery logic, compatibility rules, tools, commerce validation, security controls, and approval state machine for independently entered custom scenarios.
 
 ## 1. Scenario
 
@@ -15,7 +15,7 @@ The public demonstration represents a five-tank pilot. It does not represent a p
 
 ## 2. Starting Request
 
-The visitor may select the AirFlame preset or enter an equivalent request:
+The visitor may open TankFit AI from the public Tankroy website, select the AirFlame preset in the guided demo, or enter an equivalent request:
 
 > We manage 500 rural heating-oil tanks. Most are above ground and already have float gauges. We want fewer run-outs and unnecessary deliveries, but we want to test the solution on five tanks first.
 
@@ -123,6 +123,8 @@ Application code calculates avoided costs, estimated annual benefit, estimated f
 7. Approval, rejection, or change request records the role, reason, and timestamp.
 8. Only approval permits proposal generation.
 
+The order and approval controls belong to the explicitly labeled `/demo` sales workspace. The public Tankroy catalog and advisor surfaces may explain the journey and hand off to the workspace, but must not display approval controls or another session's order.
+
 ## 9. Proposal
 
 Every page must display `DEMO - NOT A VALID QUOTE` and state that the document is a synthetic demo, not a valid quote or contract. The proposal includes the fictional parties, pilot scope, products, database-validated commercial values and lead time, assumptions, approval note, catalog/rule/commerce versions, proposal identifier, generation date, and synthetic-demo terms. It is generated on demand only from an approved, unexpired, session-scoped order.
@@ -142,3 +144,5 @@ Every page must display `DEMO - NOT A VALID QUOTE` and state that the document i
 - Proposal generation fails without approval.
 - One session cannot view or approve another session's order.
 - The complete happy path produces a downloadable, clearly marked demo proposal.
+- A visitor can start the same AirFlame journey from the public Tankroy website or the full-page advisor without changing the deterministic recommendation.
+- Public pages do not expose Demo Staff Mode, approval, audit, or order-mutation controls before the deliberate workspace handoff.

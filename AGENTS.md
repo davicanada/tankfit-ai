@@ -65,6 +65,7 @@ AirFlame, AgricuFlow, and Boreal Beverage are editable presets and test fixtures
 - Product requirements: `docs/prd.md`
 - Architecture: `docs/architecture.md`
 - AirFlame pilot SPEC: `docs/specs/airflame-pilot.md`
+- Tankroy public experience SPEC: `docs/specs/tankroy-public-experience.md`
 - Architectural decisions: `docs/adrs/`
 - Engineering process: `docs/engineering-process.md`
 - Image prompts: `docs/product-image-prompts.md`

@@ -1,20 +1,24 @@
 # TankFit AI Architecture
 
-**Status:** Implemented release-candidate architecture
+**Status:** Implemented release-candidate architecture with approved public-experience revision
 **Owner:** Davi Almeida  
-**Last updated:** August 30, 2026
+**Last updated:** August 31, 2026
 
 ## 1. Architectural Objective
 
-TankFit AI must provide a conversational sales experience without allowing a language model to control technical truth, transactional values, payment state, or approval. The public demonstration must remain useful when AI providers or the database are temporarily unavailable, while failing safely when current transactional data cannot be confirmed.
+TankFit AI must provide a conversational sales experience through the fictional Tankroy Systems Inc. public website without allowing a language model to control technical truth, transactional values, payment state, or approval. A clearly separated sales workspace must demonstrate review and approval without becoming a general public administration area. The public experience must remain useful when AI providers or the database are temporarily unavailable, while failing safely when current transactional data cannot be confirmed.
 
 ## 2. System Context
 
 ```mermaid
 flowchart LR
     Visitor[Public visitor] --> Firewall[Vercel platform protection and staged WAF]
-    Firewall --> Web[TankFit AI web application]
-    Web --> Agent[Conversational agent]
+    Firewall --> Public[Tankroy public website]
+    Public --> Widget[Embedded TankFit AI assistant]
+    Public --> Catalog[Catalog and product pages]
+    Widget --> Agent[Conversational agent]
+    Staff[Explicit demo user] --> Workspace[Session-scoped sales workspace]
+    Workspace --> Agent
     Agent --> Tools[Validated application tools]
     Tools --> Rules[Compatibility and ROI rules]
     Tools --> DB[(Neon Postgres)]
@@ -24,8 +28,8 @@ flowchart LR
     Router --> Groq[Groq]
     Router --> OpenRouter[OpenRouter]
     Router --> Guided[Deterministic guided mode]
-    Web --> Catalog[Versioned JSON catalog and static images]
-    Web --> Approval[Session-scoped Demo Staff Mode]
+    Public --> Static[Versioned JSON catalog and static images]
+    Workspace --> Approval[Session-scoped Demo Staff Mode]
     Approval --> Tools
     Tools --> PDF[In-process proposal generator]
 ```
@@ -38,11 +42,16 @@ The visitor may begin with an editable preset or an independent custom fictional
 
 The MVP is one Next.js application deployed to Vercel using the Node.js runtime.
 
+- **Public Tankroy surface:** `/`, `/catalog`, and `/catalog/[slug]` provide the fictional company context, solution content, catalog, product facts, images, and entry points to TankFit AI. These routes must not render staff controls or cross-session data.
+- **Embedded advisor surface:** a compact TankFit AI widget may appear on public pages, while `/advisor` provides the full-page accessible conversation. Both use the same session and server-side advisor route.
+- **Sales workspace surface:** `/demo` remains the explicitly labeled competition journey for requirements review, commercial validation, simulated checkout, Demo Staff Mode, approval, audit, and proposal generation. It is a session-scoped demonstration, not a general staff dashboard.
 - **Server Components** read internal catalog and session data directly on the server and pass serializable results to interactive components.
 - **Server Actions** handle interface-originated mutations such as editing requirements, creating a draft order, changing demo roles, and recording approval decisions.
 - **Route Handlers** are reserved for streaming conversational responses, AI-provider calls, simulated external callbacks, and proposal downloads.
 - **Domain modules** contain deterministic compatibility, ROI, commerce, payment, approval, retention, and audit behavior. They must not depend on React.
 - **Client Components** provide the interactive chat, forms, comparison controls, and role-switching interface. They receive no provider or database secret.
+
+The route and navigation contract is defined in [`specs/tankroy-public-experience.md`](specs/tankroy-public-experience.md). A future production staff surface would require separate authentication and authorization; the anonymous competition build does not pretend that `Demo Staff Mode` is equivalent to production identity management.
 
 ## 4. Agent Model
 

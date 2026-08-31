@@ -1,10 +1,10 @@
 # Release Readiness
 
-**Status:** Technically release-ready; competition publication and submission are intentionally pending.
+**Status:** Current production baseline is technically release-ready; the Tankroy public-experience revision is documented on `feat/tankroy-public-experience` and is not yet deployed. Competition publication and submission are intentionally pending.
 
 ## Verified Release Candidate
 
-- Production deployment is live at [tankfit-ai.vercel.app](https://tankfit-ai.vercel.app/), aliased from `main` at commit `8f9ae99`.
+- Production deployment is live at [tankfit-ai.vercel.app](https://tankfit-ai.vercel.app/), aliased from `main` at the release-readiness commit `e61bf75`.
 - Production environment variables are configured for Neon, the session-signing secret, and the four server-side AI providers.
 - Neon migrations were applied and the 13 synthetic commerce records were seeded.
 - The public routes `/`, `/catalog`, `/advisor`, and `/demo` returned HTTP 200.
@@ -15,6 +15,15 @@
 - `npm audit --audit-level=high` reported zero vulnerabilities.
 - GitHub CI and CodeQL checks passed before the production merge.
 - Vercel production logs showed successful route and action responses with no error-level entries during verification. A provider timeout was handled by the configured AI fallback chain.
+
+## Approved Revision Not Yet Deployed
+
+The next release will present the same application through two surfaces:
+
+- A public Tankroy Systems Inc. website with home, catalog, product pages, and an embedded `Ask TankFit AI` entry point.
+- The explicitly labeled `/demo` sales-workspace demonstration for requirements review, simulated checkout, Demo Staff Mode, approval, audit, and proposal generation.
+
+The surfaces share one deployment, database, catalog, agent, deterministic domain pipeline, and security boundary. The implementation must pass the route, accessibility, session-isolation, and public-control exposure checks in [`specs/tankroy-public-experience.md`](specs/tankroy-public-experience.md) before this revision can be called release-ready.
 
 ## Final Owner Actions Before Competition Submission
 

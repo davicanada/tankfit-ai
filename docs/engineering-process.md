@@ -33,6 +33,7 @@ When the application is scaffolded, the protected branch will additionally requi
 - Unit tests for compatibility, ROI, order state, approval, and provider routing
 - Integration tests for database-scoped sessions and transaction revalidation
 - End-to-end test for the AirFlame happy path and major failure paths
+- Browser tests for the public Tankroy surface, embedded advisor handoff, mobile behavior, and forbidden staff-control exposure
 - Negative tests mapped to `docs/security-threat-model.md`
 - Static security-boundary validation and dependency review
 - Code and secret scanning after application scaffolding
@@ -49,6 +50,7 @@ Every pull request must be reviewed against:
 5. Failure behavior and rollback.
 6. Tests and documentation.
 7. Threat-model impact, unsafe sinks, and authorization boundaries.
+8. Public-versus-workspace route boundaries, role labels, and synthetic-data notices.
 
 AI-generated code is treated as untrusted until Davi Almeida reviews the diff and the required checks pass.
 
@@ -62,6 +64,7 @@ AI-generated code is treated as untrusted until Davi Almeida reviews the diff an
 6. Confirm that expired or foreign sessions cannot be accessed.
 7. Record known limitations in the release notes or README.
 8. Confirm there is no unresolved critical or high-severity security finding.
+9. Verify the public Tankroy website can launch the advisor and that the `/demo` workspace still completes the AirFlame golden path.
 
 ## 6. Security Change Review
 
@@ -74,7 +77,17 @@ Any change that introduces file uploads, XML, user-provided URLs, outbound desti
 
 Firewall rules begin in log mode and are promoted only after false-positive review. They do not replace application authorization, validation, or encoding.
 
-## 7. Branch Protection Checklist
+## 7. Public Experience Revision Workflow
+
+The public Tankroy website and the session-scoped sales workspace are one product change with a deliberate review boundary. Before implementation:
+
+1. Update the PRD, [`specs/tankroy-public-experience.md`](specs/tankroy-public-experience.md), architecture, threat model, and ADR-0007 together.
+2. Implement public navigation and the advisor entry point without duplicating the agent, catalog, or deterministic domain modules.
+3. Keep staff actions behind explicit workspace controls and server authorization; browser visibility alone is never permission.
+4. Add or update browser tests for public browsing, widget handoff, custom discovery, session isolation, mobile keyboard access, and the complete AirFlame path.
+5. Re-run the full repository validation and record whether the production deployment has been updated. Documentation-only changes must not claim that the new surface is already live.
+
+## 8. Branch Protection Checklist
 
 Configure after the GitHub repository exists:
 

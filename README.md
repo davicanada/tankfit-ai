@@ -8,6 +8,8 @@ This is an independent personal project by **Davi Almeida**, created with exclus
 
 The release candidate includes a responsive Next.js interface, a browsable 13-product catalog, product detail pages, an interactive compatibility laboratory, multilingual AI explanations with sequential provider fallback, and the complete AirFlame journey. A public visitor can turn a natural-language brief into confirmed requirements, receive a deterministic recommendation and ROI estimate, create a database-backed order, complete a fictional checkout, enter session-scoped Demo Staff Mode, approve the order, and download a watermarked proposal.
 
+The next approved experience revision presents the same application as the fictional Tankroy customer website: public home, use cases, catalog, and product pages with an embedded `Ask TankFit AI` assistant. The `/demo` route remains the explicitly labeled sales-workspace demonstration for the complete customer-to-approval journey. These are two presentation surfaces in one deployment, not separate applications, backends, catalogs, or agents. This branch contains the documentation for that revision; its UI implementation and release verification are still pending.
+
 ## Run Locally
 
 Requirements: Node.js 22 or newer.
@@ -36,6 +38,7 @@ AirFlame, AgricuFlow, and Boreal Beverage are optional presets and repeatable te
 - [Product Requirements Document](docs/prd.md)
 - [Architecture](docs/architecture.md)
 - [AirFlame Pilot SPEC](docs/specs/airflame-pilot.md)
+- [Tankroy Public Experience SPEC](docs/specs/tankroy-public-experience.md)
 - [Architecture Decision Records](docs/adrs)
 - [Engineering Process](docs/engineering-process.md)
 - [Security Threat Model](docs/security-threat-model.md)

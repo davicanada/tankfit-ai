@@ -3,15 +3,15 @@
 | Field | Value |
 | --- | --- |
 | Product | TankFit AI |
-| Version | 0.6 |
-| Status | Release candidate |
-| Date | August 30, 2026 |
+| Version | 0.7 |
+| Status | Public-experience revision approved for implementation |
+| Date | August 31, 2026 |
 | Owner | Davi Almeida |
 | Product type | Public portfolio prototype |
 
 ## 1. Executive Summary
 
-TankFit AI is a public, AI-assisted sales advisor for **Tankroy Systems Inc.**, a fictional Canadian company that sells remote tank-monitoring solutions to fuel distributors, industrial operators, farms, utilities, and other businesses that store liquids, gases, or solids.
+TankFit AI is the embedded, AI-assisted solution advisor on the fictional **Tankroy Systems Inc.** public website. Tankroy sells remote tank-monitoring solutions to fuel distributors, industrial operators, farms, utilities, and other businesses that store liquids, gases, or solids. The same Next.js application also provides a deliberately separated sales workspace for reviewing a synthetic opportunity.
 
 Customers frequently understand their operational problem but do not know which sensor, connectivity option, mounting method, or service model they need. TankFit AI turns an informal description of that problem into a technically compatible product recommendation, a transparent ROI estimate, a draft order, and a simulated proposal.
 
@@ -35,7 +35,11 @@ Maya wants customers to receive useful guidance at any time without allowing an 
 
 ### 2.3 The Product
 
-**TankFit AI** is Tankroy Systems' public-facing solution advisor. Its conversational style is clear, practical, neutral, and cautious. It asks only questions that materially affect the recommendation and explains why each question matters when necessary.
+**Tankroy Systems Inc.** is the fictional customer-facing brand. Its website provides the catalog, product information, solution context, and entry points to the advisor.
+
+**TankFit AI** is the embedded public solution advisor and full-page `/advisor` experience. Its conversational style is clear, practical, neutral, and cautious. It asks only questions that materially affect the recommendation and explains why each question matters when necessary.
+
+The same application includes a separate sales workspace for the competition demonstration. The workspace represents a fictional Tankroy solution specialist reviewing requirements, order state, approval evidence, and a synthetic proposal. In the anonymous MVP it is protected by the existing session-scoped `Demo Staff Mode`, not by a general public staff account.
 
 ## 3. Problem Statement
 
@@ -152,13 +156,18 @@ The catalog will contain approximately 10-15 fictional products. Each product wi
 
 The primary catalog will be stored in the application database. A read-only JSON copy and static product images will provide a resilient catalog fallback.
 
-### 8.3 Channels
+### 8.3 Channels and Experience Surfaces
 
-The MVP channel is a responsive public web application. Telegram, WhatsApp, native mobile applications, and embedding into a third-party website are future possibilities, not MVP requirements.
+The MVP is one responsive public web application with two intentionally separated surfaces:
+
+1. **Public Tankroy website:** home, use cases, catalog, product details, and an embedded TankFit AI assistant. Anonymous visitors can browse without an account and start a custom or preset discovery flow.
+2. **Sales workspace:** requirements review, deterministic evidence, draft order, simulated checkout, approval, audit, and proposal generation. The public competition build exposes this only as an explicitly labeled, session-scoped `/demo` journey with `Demo Staff Mode`.
+
+Both surfaces share one Next.js deployment, database, catalog, compatibility engine, provider router, and security boundary. They are not separate products or backends. Telegram, WhatsApp, native mobile applications, a CMS, and a real authenticated staff portal are future possibilities, not MVP requirements.
 
 ### 8.4 Entry Modes
 
-The landing page will provide two equally valid ways to begin:
+The public Tankroy landing page will provide two equally valid ways to begin:
 
 1. **Sample scenario:** select one of the three editable presets in Section 20.
 2. **Custom scenario:** describe a new fictional organization and operational need in free text.
@@ -167,23 +176,24 @@ The presets are onboarding aids, portfolio demonstrations, and repeatable test f
 
 ## 9. End-to-End User Journey
 
-1. The visitor opens the public web application without creating an account.
+1. The visitor opens the public Tankroy website without creating an account.
 2. The application clearly states that the company, products, data, prices, and transaction are fictional.
-3. The visitor describes a custom fictional operational need in natural language or selects and optionally edits a sample scenario.
-4. TankFit AI asks targeted discovery questions until the minimum compatibility fields are complete.
-5. The rules engine filters the catalog and returns only compatible products.
-6. The AI explains the primary recommendation, constraints, evidence, and compatible alternatives.
-7. The visitor adjusts operational assumptions and views a deterministic ROI estimate.
-8. The visitor configures a demo kit or draft order.
-9. The application validates price, fictional availability, compatibility, and required fields again.
-10. The visitor completes a simulated payment or checkout step using test data only.
-11. The order enters `pending_approval`; no final proposal is issued yet.
-12. The visitor explicitly enters `Demo Staff Mode` using a short-lived signed token restricted to the current synthetic session.
-13. Acting as a fictional Tankroy Systems solution specialist, the visitor reviews the conversation summary, requirements, recommendation, assumptions, and order.
-14. The demo approver approves, rejects, or requests changes; the role change and decision are recorded in the audit timeline.
-15. After approval, the application generates a clearly marked, non-binding proposal document.
-16. The visitor returns to the customer view, checks the final status, and downloads the simulated proposal.
-17. The anonymous demo session and its generated artifacts expire automatically after 24 hours.
+3. The visitor browses the catalog or opens the floating `Ask TankFit AI` assistant from a public page.
+4. The visitor describes a custom fictional operational need in natural language or selects and optionally edits a sample scenario.
+5. TankFit AI asks targeted discovery questions until the minimum compatibility fields are complete.
+6. The rules engine filters the catalog and returns only compatible products.
+7. The AI explains the primary recommendation, constraints, evidence, and compatible alternatives.
+8. The visitor adjusts operational assumptions and views a deterministic ROI estimate.
+9. The visitor continues to the guided `/demo` workspace to configure a demo kit or draft order.
+10. The application validates price, fictional availability, compatibility, and required fields again.
+11. The visitor completes a simulated payment or checkout step using test data only.
+12. The order enters `pending_approval`; no final proposal is issued yet.
+13. The visitor explicitly enters `Demo Staff Mode` using a short-lived signed token restricted to the current synthetic session.
+14. Acting as a fictional Tankroy Systems solution specialist, the visitor reviews the conversation summary, requirements, recommendation, assumptions, and order.
+15. The demo approver approves, rejects, or requests changes; the role change and decision are recorded in the audit timeline.
+16. After approval, the application generates a clearly marked, non-binding proposal document.
+17. The visitor returns to the customer view, checks the final status, and downloads the simulated proposal.
+18. The anonymous demo session and its generated artifacts expire automatically after 24 hours.
 
 ## 10. Functional Requirements
 
@@ -267,6 +277,22 @@ The presets are onboarding aids, portfolio demonstrations, and repeatable test f
 - The role-switching interface must clearly state which fictional role is active.
 - Public demo access must be scoped to the current session and must not expose cross-session data.
 
+### FR-11: Public Tankroy Website
+
+- The root experience must be understandable as a fictional Tankroy Systems Inc. customer website before a visitor starts a conversation.
+- Public pages must explain the fictional business, supported use cases, catalog categories, and the purpose of TankFit AI using grounded synthetic content.
+- The public catalog and product-detail pages must display reviewed product images, immutable identifiers, relevant compatibility facts, and an `Ask TankFit AI` entry point.
+- Public pages must not expose order mutation, approval, audit, staff-role, provider, database, or cross-session controls.
+- A visitor must be able to browse descriptive content without creating a database-backed session; a session may begin when the advisor or guided journey is opened.
+- The public surface must work on desktop and mobile, and the assistant entry point must be keyboard accessible.
+
+### FR-12: Sales Workspace Surface
+
+- The guided workspace must present structured requirements, recommendation evidence, ROI assumptions, commercial validation, order state, approval state, audit events, and proposal eligibility in a clear sequence.
+- The competition MVP must label the workspace as a demonstration and require explicit entry into session-scoped `Demo Staff Mode` before approval actions appear.
+- Staff actions must be explicit interface mutations checked on the server; the conversational agent must not approve, authorize payment, or generate a proposal.
+- A future production staff surface may use separate authentication and authorization, but that is not required for the anonymous competition MVP.
+
 ## 11. AI and Agent Requirements
 
 ### 11.1 Agent Responsibilities
@@ -349,6 +375,7 @@ The deterministic guided mode must allow visitors to complete discovery, compati
 - Every public input must be validated against an explicit server-side schema with type, enum, format, length, depth, and collection-size limits; unknown fields must be rejected or discarded deliberately.
 - API keys must exist only in server-side environment variables.
 - The browser must never call an AI provider with a secret project key.
+- Public pages and the sales workspace must be separate presentation surfaces with server-side authorization; hiding a control in the browser is not authorization.
 - Public endpoints must implement per-IP and global rate limits.
 - Database queries must use parameterized Drizzle operations, avoid user-influenced raw SQL, follow least privilege, and remain scoped to the current session or authorized staff user.
 - Public demo approval endpoints must validate a short-lived signed token scoped to the current session and order.
@@ -437,6 +464,12 @@ The MVP is ready for public release when:
 18. The deployed application passes a documented security review with no unresolved critical or high-severity finding in the MVP threat model.
 19. The AI replies in the visitor's reliably identified language while preserving immutable catalog facts and evidence fields.
 20. The multilingual evaluation suite covers the nine primary evaluation languages defined in Section 11.3, including normal discovery, clarification, refusal, and provider-fallback cases.
+21. The root route is recognizable as the fictional Tankroy customer website and provides clear paths to the catalog and TankFit AI.
+22. A public product page can launch the same advisor session as the full-page `/advisor` route without duplicating agent or deterministic logic.
+23. Public pages contain no approval, audit, order-mutation, staff-role, provider, database, or cross-session controls.
+24. The `/demo` workspace remains explicitly labeled as a synthetic competition demonstration and exposes approval actions only after scoped `Demo Staff Mode` entry.
+25. Desktop and mobile public experiences pass keyboard-accessibility and responsive smoke tests.
+26. The public and workspace surfaces share one deployment and one authoritative catalog and deterministic domain pipeline.
 
 ## 17. Constraints and Dependencies
 
@@ -465,6 +498,7 @@ The MVP is ready for public release when:
 | Neon Postgres with Drizzle ORM | Orders, approval state, sessions, audit events, and proposal metadata are relational. Postgres provides transactions and portability, while Drizzle provides typed queries and versioned migrations that align with the TypeScript application. | Reconsider the data layer if usage patterns become primarily document-based, globally distributed, or high-volume event streaming. |
 | Versioned JSON catalog and static images | The public catalog remains available if the database is unavailable or sleeping. The fallback is inexpensive, reviewable in Git, and capable of associating each fictional product with an AI-generated image through a stable asset path. | Move catalog media to managed storage or a CMS if non-developers must edit products or the asset volume becomes large. |
 | Provider-independent AI adapter | A common interface enables fallback among Gemini, Cerebras, Groq, OpenRouter, and deterministic guided mode without exposing provider credentials to the browser. | Revisit routing when real traffic, quality measurements, latency, and provider costs reveal a better ordering or a need for a managed AI gateway. |
+| Two experience surfaces in one Next.js app | Tankroy's public website gives customers the right context, while the session-scoped sales workspace demonstrates review and approval. Sharing one app avoids duplicated catalog, session, security, and deterministic logic. | Add separately authenticated staff infrastructure or split deployments only when ownership, compliance, scaling, or lifecycle boundaries justify them. |
 
 Any future decision to split the backend into independently deployed services must be documented in an architecture decision record (ADR) with its alternatives, trade-offs, and migration triggers.
 
@@ -485,6 +519,7 @@ Any future decision to split the backend into independently deployed services mu
 | Cross-session or forged approval request | Unauthorized order or proposal action | Opaque sessions, signed scoped tokens, server-side authorization on every action, CSRF defenses, audit trail |
 | Automated abuse exhausts compute or AI quotas | Demo outage or unexpected cost | Request limits, body limits, provider caps, timeouts, circuit breakers, staged firewall rules |
 | Vulnerable dependency or leaked secret enters the repository | Supply-chain compromise or account exposure | Minimal dependencies, automated updates and scanning, secret scanning, review gates, server-only secrets |
+| Customer and staff experiences are confused | Visitors may see internal controls or misunderstand the synthetic demo | Separate route and navigation contracts, explicit role labels, server authorization, surface-specific E2E checks, and visible fiction notices |
 
 ## 19. Release Strategy
 
@@ -521,6 +556,15 @@ Any future decision to split the backend into independently deployed services mu
 - Publish the repository, demo URL, screenshots, architecture diagram, and optional demo video.
 
 **Implementation status:** Production deployment and release verification are complete. Competition publication and submission remain intentionally pending.
+
+### Phase 6: Tankroy Public Experience
+
+- Reframe the root and catalog routes as the fictional Tankroy customer website.
+- Add a responsive, keyboard-accessible TankFit AI entry point that can be embedded on public pages and hand off to `/advisor`.
+- Keep `/demo` as the explicitly labeled session-scoped sales-workspace demonstration for the complete AirFlame journey.
+- Add surface-aware navigation, disclaimers, accessibility coverage, and E2E tests proving that public pages cannot expose staff actions.
+
+**Implementation status:** Documentation and architecture approved on this branch; UI implementation and release verification are pending.
 
 ## 20. Preset Demo Scenarios and Rationale
 
@@ -563,3 +607,5 @@ Together, these scenarios cover three materially different stored resources, cus
 - Public visitors will be able to simulate the complete application using a signed, session-scoped Demo Staff Mode.
 - The three named scenarios are editable presets and test fixtures; public visitors may also start an independent custom fictional scenario governed by the same rules.
 - The project will not depend on Wix or any real organization's system.
+- Tankroy's public website and the sales workspace will share one Next.js deployment, one database, one catalog, one agent, and one deterministic domain pipeline.
+- TankFit AI will be available as an embedded public assistant and as a full-page advisor; the current `/demo` route will remain the explicit competition workspace until a future authenticated staff portal is justified.
