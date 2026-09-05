@@ -1,6 +1,6 @@
 # Release Readiness
 
-**Status, September 5, 2026:** Completion revision implemented on `codex/competition-completion`. Not yet certified for submission. The old production baseline does not demonstrate the new Stripe test integration or the full revised public experience.
+**Status, September 5, 2026:** Completion revision implemented on `codex/competition-completion` and verified on the latest protected preview. Not yet certified for submission. The old production baseline does not demonstrate the new Stripe test integration or the full revised public experience.
 
 ## Completed implementation
 
@@ -17,6 +17,7 @@
 - Unit coverage includes all three presets versus equivalent custom organizations, uncertainty, unsupported applications, provider fallback, unsafe request bodies, signed webhook validation and PDF generation.
 - Three real-Postgres integration tests passed: duplicate actions, immutable scope, foreign and expired sessions, invalid payments, competing decisions, approved snapshots and private prepared-fixture provenance. They create and delete exact test-owned session UUIDs; they do not modify shared catalog rows.
 - Eight Playwright cases passed across desktop Chromium and a mobile Chromium viewport, including AirFlame confirmation, draft creation, frozen scope and Sales handoff. No real sandbox payment was performed by these tests.
+- Connected Chrome manually verified the latest preview across the public home/widget, catalog, Customer Experience, Sales Team Experience, Demo Hub, Portuguese discovery, AirFlame draft handoff, session audit, and app-origin console behavior.
 - Two-page PDF fixtures were rendered and visually inspected, including long names and unsupported font characters. No clipping or overlap was observed. This is template verification, not proof of a real sandbox payment.
 - See [the original audit](verification-2026-09-05.md) for historical findings and [the completion record](completion-verification-2026-09-05.md) for current command results.
 
