@@ -1,4 +1,5 @@
 import catalogJson from "../../data/catalog/products.json";
+import operatingProfiles from "../../data/catalog/operating-profiles.json";
 import { z } from "zod";
 
 const productImageSchema = z.object({
@@ -48,6 +49,13 @@ export const catalog = catalogSchema.parse(catalogJson);
 
 export function getProductBySlug(slug: string) {
   return catalog.products.find((product) => product.slug === slug);
+}
+
+export function getOperatingProfile(id: string) {
+  return (
+    operatingProfiles.profiles[id as keyof typeof operatingProfiles.profiles] ??
+    null
+  );
 }
 
 export function getProductsByIds(ids: string[]) {

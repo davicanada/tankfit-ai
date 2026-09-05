@@ -1,20 +1,19 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gt, lt } from "drizzle-orm";
-import { evaluateCompatibility } from "@/domain/compatibility/evaluate";
-import type { CompatibilityRequirements } from "@/domain/compatibility/types";
+import { and, asc, desc, eq, gt, lt, sql } from "drizzle-orm";
 import { calculateRoi } from "@/domain/journey/roi";
+import { evaluateJourney } from "@/domain/journey/evaluate";
 import { assertOrderTransition } from "@/domain/journey/order-state";
 import { UserFacingError } from "@/domain/journey/errors";
 import {
   airFlameRequirementsSchema,
   defaultAirFlameRequirements,
+  emptyRequirements,
   defaultRoiAssumptions,
-  type AirFlameRequirements,
+  roiAssumptionsSchema,
   type CommerceSnapshot,
   type JourneyView,
   type OrderStatus,
-  roiAssumptionsSchema,
 } from "@/domain/journey/types";
 import {
   commerceItems,
@@ -23,7 +22,7 @@ import {
   demoProposals,
   demoSessions,
 } from "@/db/schema";
-import { getDb } from "@/db";
+import { getDb, getTransactionalDb } from "@/db";
 import { catalog } from "@/lib/catalog";
 import {
   demoSessionLifetimeMs,
@@ -31,27 +30,17 @@ import {
   writeSessionId,
 } from "@/lib/demo-session";
 
-const PRIMARY_PRODUCT_ID = "TR-FL100";
-const FICTIONAL_DEPOSIT_CENTS = 25_000;
+type Transaction = Parameters<
+  Parameters<ReturnType<typeof getTransactionalDb>["transaction"]>[0]
+>[0];
+type Session = typeof demoSessions.$inferSelect;
+type Order = typeof demoOrders.$inferSelect;
 
-function toCompatibilityRequirements(
-  requirements: AirFlameRequirements,
-): CompatibilityRequirements {
-  return {
-    material: requirements.material,
-    tankType: requirements.tankType,
-    existingInstrumentation: requirements.existingInstrumentation,
-    gaugeInterface: requirements.gaugeInterface,
-    connectivity: requirements.connectivity,
-    siteDistribution: requirements.siteDistribution,
-    measurementPreference: requirements.measurementPreference,
-    regulatedLocation: requirements.regulatedLocation,
-  };
-}
-
-function toCommerceSnapshot(
+function commerceSnapshot(
   item: typeof commerceItems.$inferSelect,
 ): CommerceSnapshot {
+  if (item.currency !== "CAD")
+    throw new UserFacingError("Unsupported demo currency.");
   return {
     productId: item.productId,
     commerceVersion: item.commerceVersion,
@@ -64,28 +53,60 @@ function toCommerceSnapshot(
   };
 }
 
-async function addEvent(input: {
-  sessionId: string;
-  orderId?: string;
-  eventType: string;
-  actor: "visitor" | "demo_staff" | "system";
-  metadata?: Record<string, unknown>;
-}) {
-  await getDb().insert(demoEvents).values({
+async function event(
+  tx: Transaction,
+  sessionId: string,
+  eventType: string,
+  actor = "system",
+  metadata: Record<string, unknown> = {},
+  orderId?: string,
+) {
+  await tx.insert(demoEvents).values({
     id: randomUUID(),
-    sessionId: input.sessionId,
-    orderId: input.orderId,
-    eventType: input.eventType,
-    actor: input.actor,
-    metadata: input.metadata ?? {},
+    sessionId,
+    orderId,
+    eventType,
+    actor,
+    metadata,
   });
+}
+
+async function withSession<T>(
+  sessionId: string,
+  work: (tx: Transaction, session: Session) => Promise<T>,
+): Promise<T> {
+  return getTransactionalDb().transaction(async (tx) => {
+    await tx.execute(sql`SET LOCAL statement_timeout = '10s'`);
+    const [session] = await tx
+      .select()
+      .from(demoSessions)
+      .where(
+        and(
+          eq(demoSessions.id, sessionId),
+          gt(demoSessions.expiresAt, new Date()),
+        ),
+      )
+      .for("update");
+    if (!session)
+      throw new UserFacingError("Your demo session is missing or expired.");
+    return work(tx, session);
+  });
+}
+
+export async function recordSessionEvent(
+  sessionId: string,
+  eventType: string,
+  metadata: Record<string, unknown>,
+) {
+  return withSession(sessionId, (tx) =>
+    event(tx, sessionId, eventType, "system", metadata),
+  );
 }
 
 export async function ensureDemoSession() {
   const db = getDb();
   const now = new Date();
   const currentId = await readSessionId();
-
   if (currentId) {
     const current = await db.query.demoSessions.findFirst({
       where: and(
@@ -93,52 +114,42 @@ export async function ensureDemoSession() {
         gt(demoSessions.expiresAt, now),
       ),
     });
-    if (current) {
-      const expiresAt = new Date(now.getTime() + demoSessionLifetimeMs);
-      await db
-        .update(demoSessions)
-        .set({ lastActiveAt: now, expiresAt })
-        .where(eq(demoSessions.id, current.id));
-      await writeSessionId(current.id);
-      return current.id;
-    }
+    if (current) return current.id; // Fixed lifetime: reads never extend retention.
   }
-
   await db.delete(demoSessions).where(lt(demoSessions.expiresAt, now));
-  const sessionId = randomUUID();
+  const id = randomUUID();
   await db.insert(demoSessions).values({
-    id: sessionId,
+    id,
     expiresAt: new Date(now.getTime() + demoSessionLifetimeMs),
-    requirements: defaultAirFlameRequirements,
+    requirements: emptyRequirements,
     roiAssumptions: defaultRoiAssumptions,
   });
-  await writeSessionId(sessionId);
-  await addEvent({ sessionId, eventType: "session_started", actor: "system" });
-  return sessionId;
+  await writeSessionId(id);
+  await recordSessionEvent(id, "session_started", {});
+  return id;
 }
 
 export async function requireDemoSession() {
-  const sessionId = await readSessionId();
-  if (!sessionId) {
+  const id = await readSessionId();
+  const session = id
+    ? await getDb().query.demoSessions.findFirst({
+        where: and(
+          eq(demoSessions.id, id),
+          gt(demoSessions.expiresAt, new Date()),
+        ),
+      })
+    : undefined;
+  if (!session)
     throw new UserFacingError("Your demo session is missing or expired.");
-  }
-  const session = await getDb().query.demoSessions.findFirst({
-    where: and(
-      eq(demoSessions.id, sessionId),
-      gt(demoSessions.expiresAt, new Date()),
-    ),
-  });
-  if (!session) {
-    throw new UserFacingError("Your demo session is missing or expired.");
-  }
   return session;
 }
 
-export async function getCommerceSnapshot(productId = PRIMARY_PRODUCT_ID) {
+export async function getCommerceSnapshot(productId?: string) {
+  if (!productId) return null;
   const item = await getDb().query.commerceItems.findFirst({
     where: eq(commerceItems.productId, productId),
   });
-  return item ? toCommerceSnapshot(item) : null;
+  return item ? commerceSnapshot(item) : null;
 }
 
 export async function buildJourneyView(
@@ -147,26 +158,38 @@ export async function buildJourneyView(
 ): Promise<JourneyView> {
   const db = getDb();
   const session = await db.query.demoSessions.findFirst({
-    where: eq(demoSessions.id, sessionId),
+    where: and(
+      eq(demoSessions.id, sessionId),
+      gt(demoSessions.expiresAt, new Date()),
+    ),
   });
   if (!session) throw new UserFacingError("Demo session not found.");
-
-  const [commerce, order] = await Promise.all([
-    getCommerceSnapshot(),
+  const [commerce, order, events] = await Promise.all([
+    getCommerceSnapshot(
+      session.recommendationStatus === "compatible"
+        ? (session.recommendationProductId ?? undefined)
+        : undefined,
+    ),
     db.query.demoOrders.findFirst({
       where: eq(demoOrders.sessionId, sessionId),
       orderBy: [desc(demoOrders.createdAt)],
     }),
+    db.query.demoEvents.findMany({
+      where: eq(demoEvents.sessionId, sessionId),
+      orderBy: [asc(demoEvents.createdAt)],
+      limit: 200,
+    }),
   ]);
-  const proposal = order
-    ? await db.query.demoProposals.findFirst({
-        where: and(
-          eq(demoProposals.orderId, order.id),
-          gt(demoProposals.expiresAt, new Date()),
-        ),
-      })
-    : null;
-
+  const proposal =
+    order?.status === "approved"
+      ? await db.query.demoProposals.findFirst({
+          where: and(
+            eq(demoProposals.orderId, order.id),
+            eq(demoProposals.sessionId, sessionId),
+            gt(demoProposals.expiresAt, new Date()),
+          ),
+        })
+      : undefined;
   return {
     sessionId,
     expiresAt: session.expiresAt.toISOString(),
@@ -180,9 +203,11 @@ export async function buildJourneyView(
           ruleVersion: session.recommendationRuleVersion ?? "unknown",
           productId: session.recommendationProductId,
           productName:
+            order?.solutionSnapshot?.productName ??
             catalog.products.find(
-              (product) => product.id === session.recommendationProductId,
-            )?.name ?? null,
+              (p) => p.id === session.recommendationProductId,
+            )?.name ??
+            null,
           reasons: session.recommendationReasons ?? [],
         }
       : null,
@@ -195,8 +220,7 @@ export async function buildJourneyView(
           status: order.status as OrderStatus,
           quantity: order.quantity,
           hardwareSubtotalCad: order.hardwareSubtotalCents / 100,
-          monthlyServiceCad:
-            (order.monthlyServiceCents * order.quantity) / 100,
+          monthlyServiceCad: (order.monthlyServiceCents * order.quantity) / 100,
           fictionalDepositCad: order.fictionalDepositCents / 100,
           decisionNote: order.decisionNote,
           updatedAt: order.updatedAt.toISOString(),
@@ -204,205 +228,341 @@ export async function buildJourneyView(
       : null,
     staffMode,
     proposalId: proposal?.id ?? null,
+    conversation: session.discoveryMessages,
+    events: events.map((e) => ({
+      id: e.id,
+      eventType: e.eventType,
+      actor: e.actor,
+      createdAt: e.createdAt.toISOString(),
+      metadata: e.metadata,
+    })),
   };
+}
+
+async function confirmInTransaction(
+  tx: Transaction,
+  session: Session,
+  rawRequirements: unknown,
+  rawRoi: unknown,
+) {
+  const existing = await tx.query.demoOrders.findFirst({
+    where: eq(demoOrders.sessionId, session.id),
+  });
+  if (existing)
+    throw new UserFacingError(
+      "This opportunity is frozen after order creation. Reset the demo to start a new revision.",
+    );
+  const requirements = airFlameRequirementsSchema.parse(rawRequirements);
+  const roiAssumptions = roiAssumptionsSchema.parse(rawRoi);
+  const compatibility = evaluateJourney(requirements);
+  const productId = compatibility.primaryRecommendation?.product.id;
+  const item =
+    productId && compatibility.status === "compatible"
+      ? await tx.query.commerceItems.findFirst({
+          where: eq(commerceItems.productId, productId),
+        })
+      : undefined;
+  const roiResult = item
+    ? calculateRoi({
+        fleetSize: requirements.fleetSize,
+        assumptions: roiAssumptions,
+        commerce: commerceSnapshot(item),
+      })
+    : null;
+  const update = {
+    requirements,
+    roiAssumptions,
+    roiResult,
+    requirementsConfirmed: true,
+    recommendationStatus: compatibility.status,
+    recommendationProductId: productId ?? null,
+    recommendationRuleVersion: compatibility.ruleVersion,
+    recommendationReasons: compatibility.reasons,
+    lastActiveAt: new Date(),
+  };
+  await tx
+    .update(demoSessions)
+    .set(update)
+    .where(eq(demoSessions.id, session.id));
+  await event(tx, session.id, "requirements_confirmed", "visitor", {
+    status: compatibility.status,
+    productId: productId ?? null,
+    ruleVersion: compatibility.ruleVersion,
+  });
+  return { ...session, ...update };
 }
 
 export async function confirmRequirements(
   sessionId: string,
-  rawRequirements: unknown,
-  rawRoiAssumptions: unknown,
+  requirements: unknown,
+  roi: unknown,
 ) {
-  const requirements = airFlameRequirementsSchema.parse(rawRequirements);
-  const roiAssumptions = roiAssumptionsSchema.parse(rawRoiAssumptions);
-  const compatibility = evaluateCompatibility(
-    catalog.products,
-    toCompatibilityRequirements(requirements),
+  return withSession(sessionId, (tx, session) =>
+    confirmInTransaction(tx, session, requirements, roi),
   );
-  const commerce = await getCommerceSnapshot(
-    compatibility.primaryRecommendation?.product.id,
-  );
-  const roi = commerce
-    ? calculateRoi({
-        fleetSize: requirements.fleetSize,
-        assumptions: roiAssumptions,
-        commerce,
-      })
-    : null;
-
-  await getDb().batch([
-    getDb()
-      .update(demoSessions)
-      .set({
-        requirements,
-        requirementsConfirmed: true,
-        recommendationStatus: compatibility.status,
-        recommendationProductId:
-          compatibility.primaryRecommendation?.product.id ?? null,
-        recommendationRuleVersion: compatibility.ruleVersion,
-        recommendationReasons: compatibility.reasons,
-        roiAssumptions,
-        roiResult: roi,
-        lastActiveAt: new Date(),
-      })
-      .where(eq(demoSessions.id, sessionId)),
-    getDb().insert(demoEvents).values({
-      id: randomUUID(),
-      sessionId,
-      eventType: "requirements_confirmed",
-      actor: "visitor",
-      metadata: {
-        compatibilityStatus: compatibility.status,
-        productId: compatibility.primaryRecommendation?.product.id ?? null,
-        ruleVersion: compatibility.ruleVersion,
-      },
-    }),
-  ]);
 }
 
-export async function createDraftOrder(sessionId: string) {
-  const db = getDb();
-  const session = await db.query.demoSessions.findFirst({
-    where: eq(demoSessions.id, sessionId),
+export async function saveDiscovery(
+  sessionId: string,
+  rawRequirements: unknown,
+  messages: Session["discoveryMessages"],
+  expectedMessages: Session["discoveryMessages"],
+) {
+  return withSession(sessionId, async (tx, session) => {
+    if (
+      JSON.stringify(session.discoveryMessages) !==
+      JSON.stringify(expectedMessages)
+    )
+      throw new UserFacingError(
+        "The conversation changed. Refresh before sending another message.",
+      );
+    const order = await tx.query.demoOrders.findFirst({
+      where: eq(demoOrders.sessionId, sessionId),
+    });
+    if (order || session.requirementsConfirmed)
+      throw new UserFacingError(
+        "Requirements are already confirmed. Reset the demo to start a new conversation.",
+      );
+    await tx
+      .update(demoSessions)
+      .set({
+        requirements: airFlameRequirementsSchema.parse(rawRequirements),
+        discoveryMessages: messages,
+      })
+      .where(eq(demoSessions.id, sessionId));
   });
+}
+
+async function draftInTransaction(tx: Transaction, session: Session) {
+  const existing = await tx.query.demoOrders.findFirst({
+    where: eq(demoOrders.sessionId, session.id),
+  });
+  if (existing) return existing.id;
+  const requirements = airFlameRequirementsSchema.parse(session.requirements);
+  const compatibility = evaluateJourney(requirements);
   if (
-    !session?.requirementsConfirmed ||
-    session.recommendationStatus !== "compatible" ||
-    !session.recommendationProductId
-  ) {
+    !session.requirementsConfirmed ||
+    compatibility.status !== "compatible" ||
+    !compatibility.primaryRecommendation
+  )
     throw new UserFacingError(
       "Confirm a compatible recommendation before ordering.",
     );
-  }
-
-  const requirements = airFlameRequirementsSchema.parse(session.requirements);
-  const commerceRow = await db.query.commerceItems.findFirst({
-    where: eq(commerceItems.productId, session.recommendationProductId),
-  });
-  if (!commerceRow) {
-    throw new UserFacingError("Current commerce data is unavailable.");
-  }
-  if (
-    commerceRow.availability === "unavailable" ||
-    commerceRow.stockQuantity < requirements.pilotQuantity
-  ) {
-    throw new UserFacingError(
-      "The requested pilot quantity is not currently available.",
-    );
-  }
-
-  const existing = await db.query.demoOrders.findFirst({
-    where: and(
-      eq(demoOrders.sessionId, sessionId),
-      eq(demoOrders.status, "draft"),
+  const item = await tx.query.commerceItems.findFirst({
+    where: eq(
+      commerceItems.productId,
+      compatibility.primaryRecommendation.product.id,
     ),
-    orderBy: [desc(demoOrders.createdAt)],
   });
-  if (existing) return existing.id;
-
-  const orderId = randomUUID();
-  await db.batch([
-    db.insert(demoOrders).values({
-      id: orderId,
-      sessionId,
-      status: "draft",
-      productId: commerceRow.productId,
+  if (
+    !item ||
+    item.currency !== "CAD" ||
+    item.availability === "unavailable" ||
+    item.stockQuantity < requirements.pilotQuantity
+  )
+    throw new UserFacingError(
+      "Current commerce data cannot support this pilot quantity.",
+    );
+  const roiAssumptions = roiAssumptionsSchema.parse(session.roiAssumptions);
+  const roi = calculateRoi({
+    fleetSize: requirements.fleetSize,
+    assumptions: roiAssumptions,
+    commerce: commerceSnapshot(item),
+  });
+  const id = randomUUID();
+  await tx.insert(demoOrders).values({
+    id,
+    sessionId: session.id,
+    status: "draft",
+    productId: item.productId,
+    quantity: requirements.pilotQuantity,
+    currency: item.currency,
+    commerceVersion: item.commerceVersion,
+    unitPriceCents: item.unitPriceCents,
+    monthlyServiceCents: item.monthlyServiceCents,
+    hardwareSubtotalCents: requirements.pilotQuantity * item.unitPriceCents,
+    fictionalDepositCents: 25_000,
+    leadTimeBusinessDays: item.leadTimeBusinessDays,
+    solutionSnapshot: {
+      requirements,
+      roiAssumptions,
+      roi,
+      catalogVersion: catalog.catalogVersion,
+      ruleVersion: compatibility.ruleVersion,
+      productName: compatibility.primaryRecommendation.product.name,
+      reasons: compatibility.primaryRecommendation.matchedFields,
+    },
+  });
+  await tx
+    .update(demoSessions)
+    .set({ roiResult: roi })
+    .where(eq(demoSessions.id, session.id));
+  await event(
+    tx,
+    session.id,
+    "draft_order_created",
+    "visitor",
+    {
+      productId: item.productId,
       quantity: requirements.pilotQuantity,
-      currency: commerceRow.currency,
-      commerceVersion: commerceRow.commerceVersion,
-      unitPriceCents: commerceRow.unitPriceCents,
-      monthlyServiceCents: commerceRow.monthlyServiceCents,
-      hardwareSubtotalCents:
-        requirements.pilotQuantity * commerceRow.unitPriceCents,
-      fictionalDepositCents: FICTIONAL_DEPOSIT_CENTS,
-      leadTimeBusinessDays: commerceRow.leadTimeBusinessDays,
-    }),
-    db.insert(demoEvents).values({
-      id: randomUUID(),
-      sessionId,
-      orderId,
-      eventType: "draft_order_created",
-      actor: "visitor",
-      metadata: {
-        productId: commerceRow.productId,
-        quantity: requirements.pilotQuantity,
-        commerceVersion: commerceRow.commerceVersion,
-      },
-    }),
-  ]);
-  return orderId;
+      commerceVersion: item.commerceVersion,
+    },
+    id,
+  );
+  return id;
 }
 
-export async function submitFictionalCheckout(
+export async function createDraftOrder(sessionId: string) {
+  return withSession(sessionId, draftInTransaction);
+}
+
+export async function prepareAirFlameOpportunity(sessionId: string) {
+  return withSession(sessionId, async (tx, session) => {
+    const existing = await tx.query.demoOrders.findFirst({
+      where: eq(demoOrders.sessionId, sessionId),
+    });
+    if (existing) return existing.id;
+    const confirmed = await confirmInTransaction(
+      tx,
+      session,
+      defaultAirFlameRequirements,
+      defaultRoiAssumptions,
+    );
+    const id = await draftInTransaction(tx, confirmed);
+    await event(
+      tx,
+      sessionId,
+      "prepared_sales_fixture",
+      "visitor",
+      { fixture: "airflame", version: "2026.09.1", paymentNotBypassed: true },
+      id,
+    );
+    return id;
+  });
+}
+
+async function validateCommerce(tx: Transaction, order: Order) {
+  const [item] = await tx
+    .select()
+    .from(commerceItems)
+    .where(eq(commerceItems.productId, order.productId))
+    .for("share");
+  if (
+    !item ||
+    item.availability === "unavailable" ||
+    item.stockQuantity < order.quantity ||
+    item.currency !== order.currency ||
+    item.commerceVersion !== order.commerceVersion ||
+    item.leadTimeBusinessDays !== order.leadTimeBusinessDays ||
+    item.unitPriceCents !== order.unitPriceCents ||
+    item.monthlyServiceCents !== order.monthlyServiceCents
+  )
+    throw new UserFacingError(
+      "Commerce data changed. Reset the demo and create a new order with current values.",
+    );
+}
+
+export async function readCheckoutOrder(sessionId: string, orderId: string) {
+  return withSession(sessionId, async (tx) => {
+    const order = await tx.query.demoOrders.findFirst({
+      where: and(
+        eq(demoOrders.id, orderId),
+        eq(demoOrders.sessionId, sessionId),
+      ),
+    });
+    if (!order || order.status !== "draft" || !order.solutionSnapshot)
+      throw new UserFacingError(
+        "Only a current draft can enter test checkout.",
+      );
+    await validateCommerce(tx, order);
+    return order;
+  });
+}
+
+export async function attachCheckout(
   sessionId: string,
   orderId: string,
+  checkoutSessionId: string,
 ) {
-  const db = getDb();
-  const order = await db.query.demoOrders.findFirst({
-    where: and(
-      eq(demoOrders.id, orderId),
-      eq(demoOrders.sessionId, sessionId),
-    ),
-  });
-  if (!order || order.status !== "draft") {
-    throw new UserFacingError(
-      "Only a draft order can enter simulated checkout.",
-    );
-  }
-  assertOrderTransition(order.status as OrderStatus, "pending_approval");
-
-  const commerce = await db.query.commerceItems.findFirst({
-    where: eq(commerceItems.productId, order.productId),
-  });
-  if (
-    !commerce ||
-    commerce.availability === "unavailable" ||
-    commerce.stockQuantity < order.quantity ||
-    commerce.unitPriceCents !== order.unitPriceCents ||
-    commerce.monthlyServiceCents !== order.monthlyServiceCents
-  ) {
-    throw new UserFacingError(
-      "Commerce data changed. Start a new order with the current catalog values.",
-    );
-  }
-
-  const now = new Date();
-  await db.batch([
-    db
+  return withSession(sessionId, async (tx) => {
+    const [order] = await tx
       .update(demoOrders)
-      .set({
-        status: "pending_approval",
-        checkoutCompletedAt: now,
-        updatedAt: now,
-      })
+      .set({ checkoutSessionId })
       .where(
         and(
           eq(demoOrders.id, orderId),
           eq(demoOrders.sessionId, sessionId),
           eq(demoOrders.status, "draft"),
         ),
+      )
+      .returning();
+    if (!order) throw new UserFacingError("The draft is no longer available.");
+    await event(tx, sessionId, "test_checkout_started", "visitor", {}, orderId);
+  });
+}
+
+export async function completeVerifiedCheckout(
+  sessionId: string,
+  orderId: string,
+  payment: {
+    checkoutSessionId: string;
+    amount: number;
+    currency: string;
+    livemode: boolean;
+    paid: boolean;
+  },
+) {
+  return withSession(sessionId, async (tx) => {
+    const order = await tx.query.demoOrders.findFirst({
+      where: and(
+        eq(demoOrders.id, orderId),
+        eq(demoOrders.sessionId, sessionId),
       ),
-    db.insert(demoEvents).values({
-      id: randomUUID(),
+    });
+    if (
+      !order ||
+      !order.solutionSnapshot ||
+      payment.livemode ||
+      !payment.paid ||
+      order.checkoutSessionId !== payment.checkoutSessionId ||
+      payment.amount !== order.fictionalDepositCents ||
+      payment.currency.toUpperCase() !== order.currency
+    )
+      throw new UserFacingError("Test payment verification failed.");
+    if (order.status !== "draft") return; // Verified duplicate callback: no duplicate events.
+    await validateCommerce(tx, order);
+    await tx
+      .update(demoOrders)
+      .set({
+        status: "pending_approval",
+        checkoutCompletedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(demoOrders.id, order.id), eq(demoOrders.sessionId, sessionId)),
+      );
+    await event(
+      tx,
       sessionId,
-      orderId,
-      eventType: "fictional_deposit_authorized",
-      actor: "visitor",
-      metadata: {
-        amountCents: order.fictionalDepositCents,
+      "test_payment_verified",
+      "system",
+      {
+        paymentProvider: "stripe_test",
+        amountCents: payment.amount,
         currency: order.currency,
-        paymentProvider: "internal_demo_adapter",
         realMoneyMoved: false,
       },
-    }),
-    db.insert(demoEvents).values({
-      id: randomUUID(),
-      sessionId,
       orderId,
-      eventType: "order_submitted_for_approval",
-      actor: "system",
-      metadata: {},
-    }),
-  ]);
+    );
+    await event(
+      tx,
+      sessionId,
+      "order_submitted_for_approval",
+      "system",
+      {},
+      orderId,
+    );
+  });
 }
 
 export async function decideOrder(input: {
@@ -411,72 +571,65 @@ export async function decideOrder(input: {
   decision: "approved" | "changes_requested" | "rejected";
   note: string;
 }) {
-  const db = getDb();
-  const order = await db.query.demoOrders.findFirst({
-    where: and(
-      eq(demoOrders.id, input.orderId),
-      eq(demoOrders.sessionId, input.sessionId),
-    ),
-  });
-  if (!order || order.status !== "pending_approval") {
-    throw new UserFacingError(
-      "Only a pending order can receive a decision.",
-    );
-  }
-  assertOrderTransition(order.status as OrderStatus, input.decision);
-
-  const now = new Date();
-  const operations = [
-    db
+  return withSession(input.sessionId, async (tx, session) => {
+    const order = await tx.query.demoOrders.findFirst({
+      where: and(
+        eq(demoOrders.id, input.orderId),
+        eq(demoOrders.sessionId, input.sessionId),
+      ),
+    });
+    if (
+      !order ||
+      !order.solutionSnapshot ||
+      order.status !== "pending_approval"
+    )
+      throw new UserFacingError(
+        "Only a verified pending order can receive a decision.",
+      );
+    assertOrderTransition(order.status as OrderStatus, input.decision);
+    await tx
       .update(demoOrders)
       .set({
         status: input.decision,
         decisionNote: input.note || null,
-        decidedAt: now,
-        updatedAt: now,
+        decidedAt: new Date(),
+        updatedAt: new Date(),
       })
       .where(
         and(
-          eq(demoOrders.id, input.orderId),
+          eq(demoOrders.id, order.id),
           eq(demoOrders.sessionId, input.sessionId),
-          eq(demoOrders.status, "pending_approval"),
         ),
-      ),
-    db.insert(demoEvents).values({
-      id: randomUUID(),
-      sessionId: input.sessionId,
-      orderId: input.orderId,
-      eventType: `order_${input.decision}`,
-      actor: "demo_staff",
-      metadata: { noteProvided: Boolean(input.note) },
-    }),
-  ] as const;
-
-  await db.batch(operations);
-
-  if (input.decision === "approved") {
-    const proposalId = randomUUID();
-    await db
-      .insert(demoProposals)
-      .values({
-        id: proposalId,
-        orderId: input.orderId,
-        sessionId: input.sessionId,
-        expiresAt: new Date(now.getTime() + demoSessionLifetimeMs),
-      })
-      .onConflictDoNothing({ target: demoProposals.orderId });
-    await addEvent({
-      sessionId: input.sessionId,
-      orderId: input.orderId,
-      eventType: "proposal_ready",
-      actor: "system",
-      metadata: {},
-    });
-  }
+      );
+    await event(
+      tx,
+      session.id,
+      `order_${input.decision}`,
+      "demo_staff",
+      { noteProvided: Boolean(input.note) },
+      order.id,
+    );
+    if (input.decision === "approved") {
+      await tx.insert(demoProposals).values({
+        id: randomUUID(),
+        orderId: order.id,
+        sessionId: session.id,
+        expiresAt: session.expiresAt,
+      });
+      await event(tx, session.id, "proposal_ready", "system", {}, order.id);
+    }
+  });
 }
 
 export async function getProposalData(proposalId: string, sessionId: string) {
   const db = getDb();
+  const session = await db.query.demoSessions.findFirst({
+    where: and(
+      eq(demoSessions.id, sessionId),
+      gt(demoSessions.expiresAt, new Date()),
+    ),
+  });
+  if (!session) return null;
   const proposal = await db.query.demoProposals.findFirst({
     where: and(
       eq(demoProposals.id, proposalId),
@@ -492,14 +645,12 @@ export async function getProposalData(proposalId: string, sessionId: string) {
       eq(demoOrders.status, "approved"),
     ),
   });
-  if (!order) return null;
-  const session = await db.query.demoSessions.findFirst({
-    where: eq(demoSessions.id, sessionId),
-  });
-  if (!session) return null;
-  return { proposal, order, session };
+  if (!order?.solutionSnapshot) return null;
+  return { proposal, order, snapshot: order.solutionSnapshot };
 }
 
 export async function resetDemoSession(sessionId: string) {
-  await getDb().delete(demoSessions).where(eq(demoSessions.id, sessionId));
+  await withSession(sessionId, async (tx) => {
+    await tx.delete(demoSessions).where(eq(demoSessions.id, sessionId));
+  });
 }

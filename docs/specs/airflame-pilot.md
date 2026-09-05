@@ -1,11 +1,11 @@
 # SPEC: AirFlame Fuels Pilot Journey
 
-**Status:** Implemented and under release validation
+**Status:** Implemented and under release validation; public-surface handoff approved
 **Scenario:** AirFlame Fuels  
 **Primary user:** Jordan Blake, Operations Manager  
 **Purpose:** Define the first complete, testable TankFit AI journey.
 
-AirFlame is an editable preset and regression fixture, not a hard-coded customer-only workflow. The same schemas, discovery logic, compatibility rules, tools, commerce validation, security controls, and approval state machine must serve independently entered custom scenarios.
+AirFlame is an editable preset and regression fixture, not a hard-coded customer-only workflow. The public Tankroy website, embedded TankFit AI assistant, full-page `/advisor`, `/demo/customer`, and `/demo/sales` must all use the same schemas, discovery logic, compatibility rules, tools, commerce validation, security controls, and approval state machine for independently entered custom scenarios.
 
 ## 1. Scenario
 
@@ -15,7 +15,7 @@ The public demonstration represents a five-tank pilot. It does not represent a p
 
 ## 2. Starting Request
 
-The visitor may select the AirFlame preset or enter an equivalent request:
+The visitor may open TankFit AI from the public Tankroy website, select the AirFlame preset in the guided demo, or enter an equivalent request:
 
 > We manage 500 rural heating-oil tanks. Most are above ground and already have float gauges. We want fewer run-outs and unnecessary deliveries, but we want to test the solution on five tanks first.
 
@@ -116,16 +116,26 @@ Application code calculates avoided costs, estimated annual benefit, estimated f
 
 1. The visitor creates a draft order for five FL-100 monitors.
 2. The database revalidates commercial data.
-3. The mock-payment adapter simulates a refundable demo-kit deposit without requesting real card information.
-4. The order moves to `pending_approval`.
+3. Stripe-hosted test Checkout collects test-only details for a fictional deposit. Live credentials and objects are rejected.
+4. Only a verified paid test session with the expected stored ID, amount and currency moves the order to `pending_approval`. Cancellation, provider failure or missing configuration leaves it in draft.
 5. The visitor explicitly enters session-scoped Demo Staff Mode.
 6. The demo approver reviews discovery answers, compatibility evidence, ROI assumptions, order values, and audit events.
 7. Approval, rejection, or change request records the role, reason, and timestamp.
 8. Only approval permits proposal generation.
 
+Customer order controls belong to Customer Experience. Approval and audit controls belong to the explicitly labeled `/demo/sales` Sales Team Experience. The public Tankroy catalog and advisor surfaces may explain the journey and hand off to the demo modes, but must not display approval controls or another session's order.
+
+If an evaluator opens Sales Team Experience without an eligible current-session opportunity, `Load prepared AirFlame opportunity` may create a new private fixture through a validated server mutation. The fixture must reproduce the documented AirFlame requirements, run the normal deterministic and current commercial validation, record its provenance, and remain isolated to the evaluator's anonymous session.
+
 ## 9. Proposal
 
-Every page must display `DEMO - NOT A VALID QUOTE` and state that the document is a synthetic demo, not a valid quote or contract. The proposal includes the fictional parties, pilot scope, products, database-validated commercial values and lead time, assumptions, approval note, catalog/rule/commerce versions, proposal identifier, generation date, and synthetic-demo terms. It is generated on demand only from an approved, unexpired, session-scoped order.
+Every page must display `DEMO - NOT A VALID QUOTE OR CONTRACT`. The proposal includes fictional parties, pilot scope, database-validated values, assumptions, approval note, evidence versions and synthetic-demo terms. It is generated only from an approved, unexpired, session-owned order's immutable snapshot. Legacy orders without snapshots fail closed. The English PDF normalizes unsupported font characters; original visitor text remains in the session.
+
+The prepared opportunity remains a draft until normal test checkout is verified.
+
+### Synthetic operating profiles
+
+`data/catalog/operating-profiles.json` defines fictional temperature, reporting and alert capabilities. Relevant catalog constraints require explicit evidence: clear radar path, absence of foam/obstructions, cylinder footprint, sheltered installation, gateway coverage or wetted-material review. Unknown evidence blocks compatibility. These are synthetic assumptions, never certifications or engineering advice. `src/domain/journey/presets.ts` contains editable examples; names never influence evaluation. Only the fully validated primary product is a transactional match.
 
 ## 10. Acceptance Tests
 
@@ -142,3 +152,8 @@ Every page must display `DEMO - NOT A VALID QUOTE` and state that the document i
 - Proposal generation fails without approval.
 - One session cannot view or approve another session's order.
 - The complete happy path produces a downloadable, clearly marked demo proposal.
+- A visitor can start the same AirFlame journey from the public Tankroy website or the full-page advisor without changing the deterministic recommendation.
+- Public pages do not expose Demo Staff Mode, approval, audit, or order-mutation controls before the deliberate workspace handoff.
+- The Demo Hub lets an evaluator choose Customer Experience or Sales Team Experience without granting a role.
+- Sales Team Experience can continue the current session's AirFlame opportunity or explicitly create a distinct session-private prepared fixture.
+- A prepared fixture cannot bypass deterministic compatibility, commercial revalidation, approval authorization, or cross-session isolation.

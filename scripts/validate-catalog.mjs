@@ -1,8 +1,18 @@
 import { readFile } from "node:fs/promises";
 
 const productFile = new URL("../data/catalog/products.json", import.meta.url);
-const commerceFile = new URL("../data/catalog/demo-commerce.json", import.meta.url);
-const companyFile = new URL("../data/companies/companies.json", import.meta.url);
+const commerceFile = new URL(
+  "../data/catalog/demo-commerce.json",
+  import.meta.url,
+);
+const companyFile = new URL(
+  "../data/companies/companies.json",
+  import.meta.url,
+);
+const operatingFile = new URL(
+  "../data/catalog/operating-profiles.json",
+  import.meta.url,
+);
 
 const [catalog, commerce, companyRegistry] = await Promise.all([
   readJson(productFile),
@@ -11,6 +21,7 @@ const [catalog, commerce, companyRegistry] = await Promise.all([
 ]);
 
 const errors = [];
+const operating = await readJson(operatingFile);
 const products = catalog.products;
 const items = commerce.items;
 const companies = companyRegistry.companies;
@@ -24,13 +35,47 @@ if (!Array.isArray(items)) {
 }
 
 if (!Array.isArray(companies) || companies.length < 4) {
-  errors.push("The company registry must contain at least four fictional companies.");
+  errors.push(
+    "The company registry must contain at least four fictional companies.",
+  );
 }
 
 if (errors.length === 0) {
   validateProducts(products, errors);
   validateCommerce(products, items, errors);
   validateCompanies(companies, errors);
+  if (
+    operating.fictional !== true ||
+    !operating.version ||
+    !operating.disclaimer
+  )
+    errors.push(
+      "Operating profiles must have version and fictional provenance.",
+    );
+  for (const [id, profile] of Object.entries(operating.profiles ?? {})) {
+    const product = products.find((p) => p.id === id);
+    if (
+      !product ||
+      !["tank_monitor", "inventory_monitor"].includes(product.productType)
+    )
+      errors.push(`Unknown operating-profile monitor: ${id}`);
+    if (
+      !Number.isFinite(profile.minimumTemperatureC) ||
+      !Number.isFinite(profile.maximumTemperatureC) ||
+      profile.minimumTemperatureC >= profile.maximumTemperatureC
+    )
+      errors.push(`Invalid operating-temperature range: ${id}`);
+    if (
+      !Array.isArray(profile.readingFrequencies) ||
+      !profile.readingFrequencies.length ||
+      profile.readingFrequencies.some(
+        (f) => !["daily", "twice_daily", "weekly"].includes(f),
+      )
+    )
+      errors.push(`Invalid reading frequencies: ${id}`);
+    if (typeof profile.lowLevelAlerts !== "boolean")
+      errors.push(`Missing alert capability: ${id}`);
+  }
 }
 
 if (errors.length > 0) {
@@ -64,8 +109,18 @@ function validateProducts(entries, validationErrors) {
     requireString(product, "name", location, validationErrors);
     requireString(product, "description", location, validationErrors);
     requireString(product, "measurementMethod", location, validationErrors);
-    requireNonEmptyArray(product, "supportedMaterials", location, validationErrors);
-    requireNonEmptyArray(product, "supportedTankTypes", location, validationErrors);
+    requireNonEmptyArray(
+      product,
+      "supportedMaterials",
+      location,
+      validationErrors,
+    );
+    requireNonEmptyArray(
+      product,
+      "supportedTankTypes",
+      location,
+      validationErrors,
+    );
     requireNonEmptyArray(product, "connectivity", location, validationErrors);
     requireNonEmptyArray(product, "capabilities", location, validationErrors);
     requireNonEmptyArray(product, "constraints", location, validationErrors);
@@ -74,21 +129,32 @@ function validateProducts(entries, validationErrors) {
       validationErrors.push(`${location}.fictional must be true.`);
     }
 
-    if (ids.has(product.id)) validationErrors.push(`Duplicate product id: ${product.id}.`);
-    if (slugs.has(product.slug)) validationErrors.push(`Duplicate product slug: ${product.slug}.`);
+    if (ids.has(product.id))
+      validationErrors.push(`Duplicate product id: ${product.id}.`);
+    if (slugs.has(product.slug))
+      validationErrors.push(`Duplicate product slug: ${product.slug}.`);
     ids.add(product.id);
     slugs.add(product.slug);
 
     const imagePath = product.image?.path;
-    if (typeof imagePath !== "string" || !imagePath.startsWith("/images/products/") || !imagePath.endsWith(".webp")) {
-      validationErrors.push(`${location}.image.path must use /images/products/*.webp.`);
+    if (
+      typeof imagePath !== "string" ||
+      !imagePath.startsWith("/images/products/") ||
+      !imagePath.endsWith(".webp")
+    ) {
+      validationErrors.push(
+        `${location}.image.path must use /images/products/*.webp.`,
+      );
     } else if (imagePaths.has(imagePath)) {
       validationErrors.push(`Duplicate image path: ${imagePath}.`);
     } else {
       imagePaths.add(imagePath);
     }
 
-    if (typeof product.image?.alt !== "string" || product.image.alt.trim() === "") {
+    if (
+      typeof product.image?.alt !== "string" ||
+      product.image.alt.trim() === ""
+    ) {
       validationErrors.push(`${location}.image.alt is required.`);
     }
   }
@@ -96,7 +162,9 @@ function validateProducts(entries, validationErrors) {
   for (const product of entries) {
     for (const accessoryId of product.compatibleAccessories ?? []) {
       if (!ids.has(accessoryId)) {
-        validationErrors.push(`${product.id} references unknown accessory ${accessoryId}.`);
+        validationErrors.push(
+          `${product.id} references unknown accessory ${accessoryId}.`,
+        );
       }
     }
   }
@@ -105,14 +173,21 @@ function validateProducts(entries, validationErrors) {
 function validateCommerce(productsList, commerceItems, validationErrors) {
   const productIds = new Set(productsList.map((product) => product.id));
   const commerceIds = new Set();
-  const allowedAvailability = new Set(["in_stock", "limited", "backorder", "unavailable"]);
+  const allowedAvailability = new Set([
+    "in_stock",
+    "limited",
+    "backorder",
+    "unavailable",
+  ]);
 
   for (const [index, item] of commerceItems.entries()) {
     const location = `items[${index}]`;
     requireString(item, "productId", location, validationErrors);
 
     if (!productIds.has(item.productId)) {
-      validationErrors.push(`${location} references unknown product ${item.productId}.`);
+      validationErrors.push(
+        `${location} references unknown product ${item.productId}.`,
+      );
     }
     if (commerceIds.has(item.productId)) {
       validationErrors.push(`Duplicate commerce record for ${item.productId}.`);
@@ -120,15 +195,32 @@ function validateCommerce(productsList, commerceItems, validationErrors) {
     commerceIds.add(item.productId);
 
     requireNonNegativeNumber(item, "unitPriceCad", location, validationErrors);
-    requireNonNegativeNumber(item, "monthlyServiceCad", location, validationErrors);
-    requireNonNegativeInteger(item, "stockQuantity", location, validationErrors);
-    requireNonNegativeInteger(item, "leadTimeBusinessDays", location, validationErrors);
+    requireNonNegativeNumber(
+      item,
+      "monthlyServiceCad",
+      location,
+      validationErrors,
+    );
+    requireNonNegativeInteger(
+      item,
+      "stockQuantity",
+      location,
+      validationErrors,
+    );
+    requireNonNegativeInteger(
+      item,
+      "leadTimeBusinessDays",
+      location,
+      validationErrors,
+    );
 
     if (!allowedAvailability.has(item.availability)) {
       validationErrors.push(`${location}.availability is invalid.`);
     }
     if (item.availability === "unavailable" && item.stockQuantity !== 0) {
-      validationErrors.push(`${location} cannot be unavailable with positive stock.`);
+      validationErrors.push(
+        `${location} cannot be unavailable with positive stock.`,
+      );
     }
   }
 
@@ -155,13 +247,22 @@ function validateCompanies(entries, validationErrors) {
     if (company.fictional !== true) {
       validationErrors.push(`${location}.fictional must be true.`);
     }
-    if (ids.has(company.id)) validationErrors.push(`Duplicate company id: ${company.id}.`);
+    if (ids.has(company.id))
+      validationErrors.push(`Duplicate company id: ${company.id}.`);
     ids.add(company.id);
 
-    if (typeof company.logoPath !== "string" || !company.logoPath.startsWith("/images/logos/") || !company.logoPath.endsWith(".svg")) {
-      validationErrors.push(`${location}.logoPath must use /images/logos/*.svg.`);
+    if (
+      typeof company.logoPath !== "string" ||
+      !company.logoPath.startsWith("/images/logos/") ||
+      !company.logoPath.endsWith(".svg")
+    ) {
+      validationErrors.push(
+        `${location}.logoPath must use /images/logos/*.svg.`,
+      );
     } else if (paths.has(company.logoPath)) {
-      validationErrors.push(`Duplicate company logo path: ${company.logoPath}.`);
+      validationErrors.push(
+        `Duplicate company logo path: ${company.logoPath}.`,
+      );
     } else {
       paths.add(company.logoPath);
     }
@@ -181,7 +282,11 @@ function requireNonEmptyArray(object, key, location, validationErrors) {
 }
 
 function requireNonNegativeNumber(object, key, location, validationErrors) {
-  if (typeof object?.[key] !== "number" || !Number.isFinite(object[key]) || object[key] < 0) {
+  if (
+    typeof object?.[key] !== "number" ||
+    !Number.isFinite(object[key]) ||
+    object[key] < 0
+  ) {
     validationErrors.push(`${location}.${key} must be a non-negative number.`);
   }
 }

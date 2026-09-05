@@ -4,6 +4,7 @@ import { evaluateCompatibility } from "@/domain/compatibility/evaluate";
 import { scenarioPresets } from "@/domain/compatibility/presets";
 import { catalog } from "@/lib/catalog";
 import {
+  createProviderCandidate,
   resetProviderCircuitsForTests,
   routeAdvisorResponse,
   type ProviderCandidate,
@@ -29,6 +30,15 @@ const messages = [{ role: "user" as const, content: "Explain this result." }];
 
 describe("AI provider routing", () => {
   beforeEach(() => resetProviderCircuitsForTests());
+
+  it("uses JSON Object Mode for the selected Groq model without disabling server validation", () => {
+    const provider = createProviderCandidate({
+      id: "groq",
+      apiKey: "fixture",
+      model: "qwen/qwen3.6-27b",
+    });
+    expect(provider.providerOptions?.groq.structuredOutputs).toBe(false);
+  });
 
   it("uses the first successful provider after a failure", async () => {
     const reply = await routeAdvisorResponse({

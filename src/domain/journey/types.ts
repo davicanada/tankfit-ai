@@ -1,4 +1,33 @@
 import { z } from "zod";
+import { supportedMaterials } from "@/domain/compatibility/types";
+import { getCompany } from "@/lib/companies";
+
+export const tankTypes = [
+  "above_ground_horizontal",
+  "above_ground_vertical",
+  "open_top_process_tank",
+  "underground_vented",
+  "above_ground_pressurized_horizontal",
+  "above_ground_pressurized_vertical",
+  "upright_cylinder",
+  "upright_cylinder_bank",
+  "unknown",
+] as const;
+export const instrumentationTypes = [
+  "mechanical_float_gauge",
+  "supported_remote_ready_propane_gauge",
+  "none_required",
+  "unknown",
+] as const;
+export const measurementMethods = [
+  "existing_float_gauge_interface",
+  "existing_propane_gauge_interface",
+  "non_contact_radar",
+  "hydrostatic_pressure",
+  "load_cell_weight",
+  "no_preference",
+  "unknown",
+] as const;
 
 export const orderStatuses = [
   "draft",
@@ -13,28 +42,76 @@ export type OrderStatus = (typeof orderStatuses)[number];
 export const airFlameRequirementsSchema = z
   .object({
     companyName: z.string().trim().min(1).max(80),
-    material: z.literal("heating_oil"),
+    material: z.enum([...supportedMaterials, "unsupported", "unknown"]),
     fleetSize: z.number().int().min(1).max(10_000),
     pilotQuantity: z.number().int().min(1).max(100),
-    tankType: z.literal("above_ground_horizontal"),
-    existingInstrumentation: z.literal("mechanical_float_gauge"),
-    gaugeInterface: z.literal("confirmed_compatible"),
-    connectivity: z.literal("lte_m"),
-    siteDistribution: z.literal("distributed"),
-    measurementPreference: z.literal("existing_float_gauge_interface"),
-    readingFrequency: z.enum(["daily", "twice_daily", "weekly"]),
-    lowLevelAlerts: z.boolean(),
-    minimumTemperatureC: z.number().int().min(-60).max(50),
-    maximumTemperatureC: z.number().int().min(-50).max(80),
-    regulatedLocation: z.boolean(),
+    tankType: z.enum(tankTypes),
+    existingInstrumentation: z.enum(instrumentationTypes),
+    gaugeInterface: z.enum([
+      "confirmed_compatible",
+      "not_applicable",
+      "unknown",
+    ]),
+    connectivity: z.enum([
+      "lte_m",
+      "bluetooth_le",
+      "ethernet",
+      "unavailable",
+      "unknown",
+    ]),
+    siteDistribution: z.enum([
+      "distributed",
+      "clustered",
+      "single_site",
+      "unknown",
+    ]),
+    measurementPreference: z.enum(measurementMethods),
+    readingFrequency: z.enum(["daily", "twice_daily", "weekly", "unknown"]),
+    lowLevelAlerts: z.union([z.boolean(), z.literal("unknown")]),
+    minimumTemperatureC: z.number().min(-100).max(100).nullable(),
+    maximumTemperatureC: z.number().min(-100).max(150).nullable(),
+    regulatedLocation: z.union([z.boolean(), z.literal("unknown")]),
+    clearSensorPath: z
+      .union([z.boolean(), z.literal("unknown")])
+      .default("unknown"),
+    foamOrObstructions: z
+      .union([z.boolean(), z.literal("unknown")])
+      .default("unknown"),
+    cylinderFootprintConfirmed: z
+      .union([z.boolean(), z.literal("unknown")])
+      .default("unknown"),
+    shelteredInstallation: z
+      .union([z.boolean(), z.literal("unknown")])
+      .default("unknown"),
+    gatewayCoverageConfirmed: z
+      .union([z.boolean(), z.literal("unknown")])
+      .default("unknown"),
+    wettedMaterialCompatible: z
+      .union([z.boolean(), z.literal("unknown")])
+      .default("unknown"),
   })
   .strict()
-  .refine((value) => value.minimumTemperatureC < value.maximumTemperatureC, {
-    message: "The minimum temperature must be lower than the maximum.",
-    path: ["minimumTemperatureC"],
-  });
+  .refine(
+    (value) =>
+      value.minimumTemperatureC === null ||
+      value.maximumTemperatureC === null ||
+      value.minimumTemperatureC < value.maximumTemperatureC,
+    {
+      message: "The minimum temperature must be lower than the maximum.",
+      path: ["minimumTemperatureC"],
+    },
+  );
 
 export type AirFlameRequirements = z.infer<typeof airFlameRequirementsSchema>;
+export type SolutionSnapshot = {
+  requirements: AirFlameRequirements;
+  roiAssumptions: RoiAssumptions;
+  roi: RoiResult;
+  catalogVersion: string;
+  ruleVersion: string;
+  productName: string;
+  reasons: string[];
+};
 
 export const roiAssumptionsSchema = z
   .object({
@@ -100,10 +177,18 @@ export type JourneyView = {
   } | null;
   staffMode: boolean;
   proposalId: string | null;
+  conversation: { role: "user" | "assistant"; content: string }[];
+  events: {
+    id: string;
+    eventType: string;
+    actor: string;
+    createdAt: string;
+    metadata: Record<string, unknown>;
+  }[];
 };
 
 export const defaultAirFlameRequirements: AirFlameRequirements = {
-  companyName: "AirFlame Fuels",
+  companyName: getCompany("airflame-fuels").name,
   material: "heating_oil",
   fleetSize: 500,
   pilotQuantity: 5,
@@ -118,6 +203,12 @@ export const defaultAirFlameRequirements: AirFlameRequirements = {
   minimumTemperatureC: -25,
   maximumTemperatureC: 35,
   regulatedLocation: false,
+  clearSensorPath: "unknown",
+  foamOrObstructions: "unknown",
+  cylinderFootprintConfirmed: "unknown",
+  shelteredInstallation: "unknown",
+  gatewayCoverageConfirmed: "unknown",
+  wettedMaterialCompatible: "unknown",
 };
 
 export const defaultRoiAssumptions: RoiAssumptions = {
@@ -130,4 +221,28 @@ export const defaultRoiAssumptions: RoiAssumptions = {
   annualManualChecks: 1_200,
   costPerManualCheckCad: 18,
   manualCheckReductionPercent: 70,
+};
+
+export const emptyRequirements: AirFlameRequirements = {
+  companyName: "My fictional organization",
+  fleetSize: 1,
+  pilotQuantity: 1,
+  material: "unknown",
+  tankType: "unknown",
+  existingInstrumentation: "unknown",
+  gaugeInterface: "unknown",
+  connectivity: "unknown",
+  siteDistribution: "unknown",
+  measurementPreference: "unknown",
+  readingFrequency: "unknown",
+  lowLevelAlerts: "unknown",
+  minimumTemperatureC: null,
+  maximumTemperatureC: null,
+  regulatedLocation: "unknown",
+  clearSensorPath: "unknown",
+  foamOrObstructions: "unknown",
+  cylinderFootprintConfirmed: "unknown",
+  shelteredInstallation: "unknown",
+  gatewayCoverageConfirmed: "unknown",
+  wettedMaterialCompatible: "unknown",
 };

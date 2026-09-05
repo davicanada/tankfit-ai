@@ -1,4 +1,5 @@
 import type { CompatibilityRequirements } from "./types";
+import { getCompany } from "@/lib/companies";
 
 export type ScenarioPreset = {
   id: string;
@@ -12,11 +13,11 @@ export type ScenarioPreset = {
 export const scenarioPresets: ScenarioPreset[] = [
   {
     id: "airflame",
-    company: "AirFlame Fuels",
+    company: getCompany("airflame-fuels").name,
     title: "Distributed heating-oil pilot",
     description:
       "Five above-ground tanks with compatible float gauges across rural sites.",
-    logoPath: "/images/logos/airflame-fuels.svg",
+    logoPath: getCompany("airflame-fuels").logoPath,
     requirements: {
       material: "heating_oil",
       tankType: "above_ground_horizontal",
@@ -30,11 +31,11 @@ export const scenarioPresets: ScenarioPreset[] = [
   },
   {
     id: "agricuflow",
-    company: "AgricuFlow Cooperative",
+    company: getCompany("agricuflow-cooperative").name,
     title: "Remote water storage",
     description:
       "Above-ground water tanks that need non-contact monitoring and cellular alerts.",
-    logoPath: "/images/logos/agricuflow-cooperative.svg",
+    logoPath: getCompany("agricuflow-cooperative").logoPath,
     requirements: {
       material: "water",
       tankType: "above_ground_vertical",
@@ -48,11 +49,11 @@ export const scenarioPresets: ScenarioPreset[] = [
   },
   {
     id: "boreal",
-    company: "Boreal Beverage Group",
+    company: getCompany("boreal-beverage-group").name,
     title: "Industrial-gas cylinder bank",
     description:
       "A clustered cylinder bank monitored by weight through a shared gateway.",
-    logoPath: "/images/logos/boreal-beverage-group.svg",
+    logoPath: getCompany("boreal-beverage-group").logoPath,
     requirements: {
       material: "industrial_gases",
       tankType: "upright_cylinder_bank",

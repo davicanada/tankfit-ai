@@ -13,9 +13,10 @@ import {
   createDraftOrder,
   decideOrder,
   ensureDemoSession,
-  requireDemoSession,
+  requireDemoSession as readActionSession,
   resetDemoSession,
-  submitFictionalCheckout,
+  prepareAirFlameOpportunity,
+  recordSessionEvent,
 } from "@/lib/journey-service";
 import {
   clearStaffToken,
@@ -24,9 +25,19 @@ import {
 } from "@/lib/demo-session";
 import { extractAirFlameBrief } from "@/lib/ai/discovery";
 import { reserveDailyAiRequest } from "@/lib/ai/usage-budget";
+import {
+  beginTestCheckout,
+  reconcileTestCheckout,
+} from "@/lib/payments/stripe";
+import { assertActionOrigin } from "@/lib/action-security";
+
+async function requireDemoSession() {
+  await assertActionOrigin();
+  return readActionSession();
+}
 
 type ActionResult =
-  | { ok: true; view: JourneyView }
+  | { ok: true; view: JourneyView; checkoutUrl?: string }
   | { ok: false; error: string };
 
 function safeMessage(error: unknown) {
@@ -45,13 +56,12 @@ async function currentView(sessionId: string) {
       claims.sessionId === sessionId &&
       claims.orderId === baseView.order?.id,
   );
-  return staffMode
-    ? buildJourneyView(sessionId, true)
-    : baseView;
+  return staffMode ? buildJourneyView(sessionId, true) : baseView;
 }
 
 export async function initializeJourneyAction(): Promise<ActionResult> {
   try {
+    await assertActionOrigin();
     const sessionId = await ensureDemoSession();
     return { ok: true, view: await currentView(sessionId) };
   } catch (error) {
@@ -79,7 +89,7 @@ export async function analyzeBriefAction(input: {
   | { ok: false; error: string }
 > {
   try {
-    await requireDemoSession();
+    const session = await requireDemoSession();
     const parsed = discoveryInputSchema.parse(input);
     const aiAllowed = await reserveDailyAiRequest("discovery").catch(
       () => false,
@@ -88,6 +98,14 @@ export async function analyzeBriefAction(input: {
       brief: parsed.brief,
       current: parsed.currentRequirements,
       aiAllowed,
+    });
+    await recordSessionEvent(session.id, "discovery_completed", {
+      mode: result.mode,
+      provider: result.provider,
+      ...result.usage,
+      estimatedCostUsd: null,
+      costStatus: "Provider billing unavailable; request caps enforced",
+      requirements: result.requirements,
     });
     return { ok: true, ...result };
   } catch (error) {
@@ -128,7 +146,27 @@ export async function checkoutAction(input: {
   try {
     const { orderId } = orderInputSchema.parse(input);
     const session = await requireDemoSession();
-    await submitFictionalCheckout(session.id, orderId);
+    const checkoutUrl = await beginTestCheckout(session.id, orderId);
+    return { ok: true, view: await currentView(session.id), checkoutUrl };
+  } catch (error) {
+    return { ok: false, error: safeMessage(error) };
+  }
+}
+
+export async function reconcileCheckoutAction(): Promise<ActionResult> {
+  try {
+    const session = await requireDemoSession();
+    await reconcileTestCheckout(session.id);
+    return { ok: true, view: await currentView(session.id) };
+  } catch (error) {
+    return { ok: false, error: safeMessage(error) };
+  }
+}
+
+export async function prepareOpportunityAction(): Promise<ActionResult> {
+  try {
+    const session = await requireDemoSession();
+    await prepareAirFlameOpportunity(session.id);
     return { ok: true, view: await currentView(session.id) };
   } catch (error) {
     return { ok: false, error: safeMessage(error) };
@@ -142,11 +180,17 @@ export async function enterStaffModeAction(input: {
     const { orderId } = orderInputSchema.parse(input);
     const session = await requireDemoSession();
     const view = await buildJourneyView(session.id, false);
-    if (view.order?.id !== orderId || view.order.status !== "pending_approval") {
+    if (
+      view.order?.id !== orderId ||
+      view.order.status !== "pending_approval"
+    ) {
       throw new UserFacingError(
         "This order is not waiting for a demo decision.",
       );
     }
+    await recordSessionEvent(session.id, "demo_staff_mode_entered", {
+      orderId,
+    });
     await writeStaffToken(session.id, orderId);
     return { ok: true, view: await buildJourneyView(session.id, true) };
   } catch (error) {
@@ -189,6 +233,7 @@ export async function decideOrderAction(input: {
 export async function exitStaffModeAction(): Promise<ActionResult> {
   try {
     const session = await requireDemoSession();
+    await recordSessionEvent(session.id, "demo_staff_mode_exited", {});
     await clearStaffToken();
     return { ok: true, view: await buildJourneyView(session.id, false) };
   } catch (error) {

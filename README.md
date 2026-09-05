@@ -6,7 +6,9 @@ This is an independent personal project by **Davi Almeida**, created with exclus
 
 ## Current Status
 
-The release candidate includes a responsive Next.js interface, a browsable 13-product catalog, product detail pages, an interactive compatibility laboratory, multilingual AI explanations with sequential provider fallback, and the complete AirFlame journey. A public visitor can turn a natural-language brief into confirmed requirements, receive a deterministic recommendation and ROI estimate, create a database-backed order, complete a fictional checkout, enter session-scoped Demo Staff Mode, approve the order, and download a watermarked proposal.
+The deployed baseline supports the original AirFlame demonstration. The completion branch adds the fictional Tankroy public site, embedded and full-page conversation, a Demo Hub, Customer Experience and Sales Team Experience. Orders use frozen solution snapshots and serialized database transitions. The new payment path requires Stripe sandbox configuration; it never falls back silently to a mock.
+
+These surfaces share one deployment and session contract. Sales Team Experience can continue the evaluator's own opportunity or explicitly create a private prepared AirFlame draft. Preparing a fixture never bypasses test payment, compatibility or approval. Implementation is not a release claim: sandbox verification, final regression evidence and owner review must be complete before the new revision replaces production.
 
 ## Run Locally
 
@@ -25,6 +27,10 @@ Open `http://localhost:3000`. The catalog and compatibility laboratory do not re
 npm run check
 ```
 
+Browser tests: `npm run test:e2e` (install Chromium with `npx playwright install chromium`). Database tests: `npm run test:integration`; use `TEST_DATABASE_URL` for a dedicated Neon test database, or the locally configured development database. They create and remove only their own UUID-scoped synthetic sessions. They simulate provider responses at the service boundary and are not proof of a live Stripe sandbox checkout.
+
+For payment configuration, follow [Stripe Test Setup](docs/stripe-test-setup.md). Never use live keys or real card details. `APP_ORIGIN` must match the exact local, preview or production URL used by Checkout.
+
 ## First End-to-End Scenario
 
 The initial implementation focuses on AirFlame Fuels, a fictional heating-oil distributor evaluating a five-tank monitoring pilot across a larger rural fleet. See [`docs/specs/airflame-pilot.md`](docs/specs/airflame-pilot.md).
@@ -36,6 +42,7 @@ AirFlame, AgricuFlow, and Boreal Beverage are optional presets and repeatable te
 - [Product Requirements Document](docs/prd.md)
 - [Architecture](docs/architecture.md)
 - [AirFlame Pilot SPEC](docs/specs/airflame-pilot.md)
+- [Tankroy Public Experience SPEC](docs/specs/tankroy-public-experience.md)
 - [Architecture Decision Records](docs/adrs)
 - [Engineering Process](docs/engineering-process.md)
 - [Security Threat Model](docs/security-threat-model.md)
@@ -44,11 +51,15 @@ AirFlame, AgricuFlow, and Boreal Beverage are optional presets and repeatable te
 - [Product Image Prompts](docs/product-image-prompts.md)
 - [Company Logo Prompts](docs/company-logo-prompts.md)
 - [Asset Provenance](docs/asset-provenance.md)
-- [Agent Harness](AGENTS.md)
+- [Coding-Agent Harness and Rationale](docs/agent-harness.md)
+- [Agent Context and Rules](AGENTS.md)
+- [Completion Safety and Test Payments](docs/adrs/0008-completion-safety-and-test-payments.md)
+- [Draft Submission Card](docs/submission/project-card.md)
 
 ## Catalog
 
 - `data/catalog/products.json` contains descriptive product and compatibility data and may be used as a read-only fallback.
+- `data/catalog/operating-profiles.json` adds explicitly synthetic temperature and reporting profiles. Missing evidence or unresolved catalog conditions requires technical review.
 - `data/catalog/demo-commerce.json` contains fictional database seed values for price, stock, availability, and delivery lead time. It must never be used to confirm a runtime transaction.
 - `data/companies/companies.json` maps fictional company records to their public logo asset paths.
 
@@ -81,7 +92,7 @@ The conversational advisor tries Gemini, Cerebras, Groq, and OpenRouter in that 
 
 ## Safety Boundary
 
-The AI controls the conversation, not technical truth or irreversible actions. Deterministic code controls compatibility, catalog claims, price, stock, lead time, calculations, order state, mock payment, approval, and proposal eligibility. No real payment or legally valid document is created.
+The AI controls the conversation, not technical truth or irreversible actions. Deterministic code controls compatibility, catalog claims, price, stock, lead time, calculations, order state, verified test-payment handling, approval, and proposal eligibility. No real payment or legally valid document is created.
 
 ## License and Asset Note
 

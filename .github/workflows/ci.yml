@@ -25,3 +25,7 @@ jobs:
 
       - name: Validate application, rules, and catalog
         run: npm run check
+      - name: Install browser for public-boundary tests
+        run: npx playwright install --with-deps chromium
+      - name: Test public desktop and mobile boundaries without credentials
+        run: npm run test:e2e

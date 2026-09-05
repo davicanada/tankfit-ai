@@ -13,6 +13,7 @@ import type {
   AirFlameRequirements,
   RoiAssumptions,
   RoiResult,
+  SolutionSnapshot,
 } from "@/domain/journey/types";
 
 export const commerceItems = pgTable("commerce_items", {
@@ -44,6 +45,10 @@ export const demoSessions = pgTable(
     requirementsConfirmed: boolean("requirements_confirmed")
       .default(false)
       .notNull(),
+    discoveryMessages: jsonb("discovery_messages")
+      .$type<{ role: "user" | "assistant"; content: string }[]>()
+      .default([])
+      .notNull(),
     recommendationStatus: text("recommendation_status"),
     recommendationProductId: text("recommendation_product_id"),
     recommendationRuleVersion: text("recommendation_rule_version"),
@@ -72,6 +77,8 @@ export const demoOrders = pgTable(
     fictionalDepositCents: integer("fictional_deposit_cents").notNull(),
     leadTimeBusinessDays: integer("lead_time_business_days").notNull(),
     decisionNote: text("decision_note"),
+    solutionSnapshot: jsonb("solution_snapshot").$type<SolutionSnapshot>(),
+    checkoutSessionId: text("checkout_session_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

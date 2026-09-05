@@ -1,35 +1,57 @@
-import type { Metadata } from "next";
-import { AirFlameJourney } from "@/components/airflame-journey";
+import Link from "next/link";
 import { FictionNotice } from "@/components/fiction-notice";
+import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = {
-  title: "AirFlame end-to-end demo",
-  description:
-    "Run a complete fictional tank-monitoring journey from discovery and recommendation to simulated checkout, approval, and proposal.",
-};
-
+export const metadata = { title: "Demo Hub" };
 export default function DemoPage() {
   return (
     <>
       <FictionNotice />
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-        <div className="max-w-3xl">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">
-            Golden-path simulation
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em] sm:text-5xl">
-            Take AirFlame from field problem to approved proposal.
-          </h1>
-          <p className="mt-5 text-base leading-7 text-muted-foreground">
-            This public demonstration uses synthetic data, a fictional deposit,
-            and a temporary anonymous session. No real purchase, payment, or
-            customer information is involved.
-          </p>
+      <section className="mx-auto max-w-6xl px-6 py-16">
+        <p className="text-sm text-primary">
+          One fictional opportunity, two perspectives
+        </p>
+        <h1 className="mt-3 text-4xl font-semibold">
+          Choose your demo experience
+        </h1>
+        <p className="mt-5 max-w-2xl text-muted-foreground">
+          Explore Tankroy as a customer, then switch to the sales perspective to
+          review your own private opportunity. Choosing a perspective does not
+          grant approval permissions.
+        </p>
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
+          {[
+            {
+              title: "Customer Experience",
+              href: "/demo/customer",
+              text: "Browse, ask TankFit AI, confirm requirements and try test checkout.",
+              action: "Experience the Customer Journey",
+            },
+            {
+              title: "Sales Team Experience",
+              href: "/demo/sales",
+              text: "Review your session's opportunity, inspect its history and explicitly enter scoped Demo Staff Mode.",
+              action: "Experience the Sales Team Workspace",
+            },
+          ].map((mode) => (
+            <article
+              key={mode.href}
+              className="space-y-5 rounded-xl border bg-card p-8"
+            >
+              <h2 className="text-2xl font-semibold">{mode.title}</h2>
+              <p className="text-muted-foreground">{mode.text}</p>
+              <Button asChild>
+                <Link href={mode.href}>{mode.action}</Link>
+              </Button>
+            </article>
+          ))}
         </div>
-        <div className="mt-10">
-          <AirFlameJourney />
-        </div>
-      </div>
+        <p className="mt-8 text-sm text-muted-foreground">
+          All companies, products, transactions and documents are fictional.
+          Independent project by Davi Almeida for the Jornada de Dados
+          competition.
+        </p>
+      </section>
     </>
   );
 }
