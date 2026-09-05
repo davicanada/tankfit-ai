@@ -116,8 +116,8 @@ Application code calculates avoided costs, estimated annual benefit, estimated f
 
 1. The visitor creates a draft order for five FL-100 monitors.
 2. The database revalidates commercial data.
-3. The mock-payment adapter simulates a refundable demo-kit deposit without requesting real card information.
-4. The order moves to `pending_approval`.
+3. Stripe-hosted test Checkout collects test-only details for a fictional deposit. Live credentials and objects are rejected.
+4. Only a verified paid test session with the expected stored ID, amount and currency moves the order to `pending_approval`. Cancellation, provider failure or missing configuration leaves it in draft.
 5. The visitor explicitly enters session-scoped Demo Staff Mode.
 6. The demo approver reviews discovery answers, compatibility evidence, ROI assumptions, order values, and audit events.
 7. Approval, rejection, or change request records the role, reason, and timestamp.
@@ -129,7 +129,13 @@ If an evaluator opens Sales Team Experience without an eligible current-session 
 
 ## 9. Proposal
 
-Every page must display `DEMO - NOT A VALID QUOTE` and state that the document is a synthetic demo, not a valid quote or contract. The proposal includes the fictional parties, pilot scope, products, database-validated commercial values and lead time, assumptions, approval note, catalog/rule/commerce versions, proposal identifier, generation date, and synthetic-demo terms. It is generated on demand only from an approved, unexpired, session-scoped order.
+Every page must display `DEMO - NOT A VALID QUOTE OR CONTRACT`. The proposal includes fictional parties, pilot scope, database-validated values, assumptions, approval note, evidence versions and synthetic-demo terms. It is generated only from an approved, unexpired, session-owned order's immutable snapshot. Legacy orders without snapshots fail closed. The English PDF normalizes unsupported font characters; original visitor text remains in the session.
+
+The prepared opportunity remains a draft until normal test checkout is verified.
+
+### Synthetic operating profiles
+
+`data/catalog/operating-profiles.json` defines fictional temperature, reporting and alert capabilities. Relevant catalog constraints require explicit evidence: clear radar path, absence of foam/obstructions, cylinder footprint, sheltered installation, gateway coverage or wetted-material review. Unknown evidence blocks compatibility. These are synthetic assumptions, never certifications or engineering advice. `src/domain/journey/presets.ts` contains editable examples; names never influence evaluation. Only the fully validated primary product is a transactional match.
 
 ## 10. Acceptance Tests
 

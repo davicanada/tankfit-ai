@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "db:migrate": "tsx scripts/migrate-database.ts",
     "db:seed": "tsx scripts/seed-database.ts",
     "validate": "npm run validate:catalog && npm run validate:assets && npm run validate:security-boundaries",
@@ -39,11 +41,13 @@
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
     "shadcn": "^4.19.0",
+    "stripe": "^22.6.1",
     "tailwind-merge": "^2.6.0",
     "tw-animate-css": "^1.4.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

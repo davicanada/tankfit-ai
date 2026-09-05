@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { AdvisorWidget } from "@/components/advisor-widget";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,7 +26,11 @@ export const metadata: Metadata = {
     "Explore a fictional tank-monitoring catalog and test deterministic product compatibility in a public portfolio project.",
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   await headers();
   return (
     <html
@@ -37,6 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />
+          <AdvisorWidget />
         </div>
       </body>
     </html>

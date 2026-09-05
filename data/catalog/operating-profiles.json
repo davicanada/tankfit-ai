@@ -1,0 +1,55 @@
+{
+  "version": "2026.09.1",
+  "fictional": true,
+  "disclaimer": "Synthetic competition-only operating profiles, not engineering specifications or installation advice.",
+  "profiles": {
+    "TR-FL100": {
+      "minimumTemperatureC": -30,
+      "maximumTemperatureC": 50,
+      "readingFrequencies": ["daily", "twice_daily", "weekly"],
+      "lowLevelAlerts": true
+    },
+    "TR-FL110": {
+      "minimumTemperatureC": -30,
+      "maximumTemperatureC": 50,
+      "readingFrequencies": ["daily", "twice_daily", "weekly"],
+      "lowLevelAlerts": true
+    },
+    "TR-RS200": {
+      "minimumTemperatureC": -20,
+      "maximumTemperatureC": 50,
+      "readingFrequencies": ["daily", "twice_daily", "weekly"],
+      "lowLevelAlerts": true
+    },
+    "TR-RS210": {
+      "minimumTemperatureC": -20,
+      "maximumTemperatureC": 50,
+      "readingFrequencies": ["daily", "twice_daily", "weekly"],
+      "lowLevelAlerts": true
+    },
+    "TR-HS300": {
+      "minimumTemperatureC": -10,
+      "maximumTemperatureC": 40,
+      "readingFrequencies": ["daily", "twice_daily", "weekly"],
+      "lowLevelAlerts": true
+    },
+    "TR-HS310": {
+      "minimumTemperatureC": -10,
+      "maximumTemperatureC": 40,
+      "readingFrequencies": ["daily", "twice_daily", "weekly"],
+      "lowLevelAlerts": true
+    },
+    "TR-GW400": {
+      "minimumTemperatureC": 0,
+      "maximumTemperatureC": 40,
+      "readingFrequencies": ["daily", "twice_daily", "weekly"],
+      "lowLevelAlerts": true
+    },
+    "TR-GW420": {
+      "minimumTemperatureC": 0,
+      "maximumTemperatureC": 40,
+      "readingFrequencies": ["daily", "twice_daily", "weekly"],
+      "lowLevelAlerts": true
+    }
+  }
+}

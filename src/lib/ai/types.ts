@@ -10,7 +10,7 @@ export const advisorMessageSchema = z
 
 export const compatibilityRequirementsSchema = z
   .object({
-    material: z.enum([...supportedMaterials, "unsupported"]),
+    material: z.enum([...supportedMaterials, "unsupported", "unknown"]),
     tankType: z.string().trim().min(1).max(80),
     existingInstrumentation: z.string().trim().min(1).max(80),
     gaugeInterface: z.enum([
@@ -97,6 +97,8 @@ export type ProviderAttempt = {
   outcome: ProviderAttemptOutcome;
   latencyMs: number;
   errorCategory?: ProviderErrorCategory;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
 };
 
 export type AdvisorReply = {

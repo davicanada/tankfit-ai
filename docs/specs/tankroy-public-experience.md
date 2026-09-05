@@ -1,12 +1,15 @@
 # SPEC: Tankroy Public Experience and Sales Workspace
 
-**Status:** Approved for implementation  
-**Version:** 0.1  
+**Status:** Implemented on completion branch; sandbox and deployed verification pending
+
+**Version:** 0.2
 **Date:** August 31, 2026  
 **Owner:** Davi Almeida  
 **Related ADR:** [`0007-public-customer-and-sales-surfaces.md`](../adrs/0007-public-customer-and-sales-surfaces.md)
 
 ## 1. Purpose
+
+September 5 revision: prepared opportunities remain drafts until test checkout succeeds. Sandbox unavailability is visible and never an implicit payment success. The old stateless `/api/advisor` is retired with HTTP 410.
 
 This SPEC defines how TankFit AI is presented as part of the fictional Tankroy Systems Inc. website while preserving the existing end-to-end competition demonstration. The change is a product-surface reorganization, not a second application or a second agent.
 
@@ -33,7 +36,7 @@ The sales workspace represents a Tankroy solution specialist reviewing a synthet
 
 - Structured requirements and the original customer brief.
 - Deterministic recommendation, matched fields, unresolved constraints, catalog/rule versions, and ROI assumptions.
-- Database-validated draft order and simulated checkout result.
+- Database-validated immutable draft order and verified Stripe test-checkout result.
 - Approval, rejection, or change-request controls with a reason and audit record.
 - Approved proposal download with the existing watermark and expiry controls.
 
@@ -55,17 +58,18 @@ The hub and mode routes are presentation controls. They are not roles, authentic
 
 ## 3. Route and Navigation Contract
 
-| Route | Surface | Purpose | Authorization |
-| --- | --- | --- | --- |
-| `/` | Public Tankroy | Company overview, featured use cases, product discovery, and advisor entry point | Anonymous session or no session |
-| `/catalog` | Public Tankroy | Browse the fictional catalog | Anonymous session or no session |
-| `/catalog/[slug]` | Public Tankroy | Inspect one product's grounded facts, image, constraints, and advisor entry point | Anonymous session or no session |
-| `/advisor` | Public TankFit AI | Full-page conversational discovery and compatibility explanation | Anonymous signed session |
-| `/demo` | Demo Hub | Explain and select Customer Experience or Sales Team Experience | Anonymous; no role granted |
-| `/demo/customer` | Customer Experience | Test the public Tankroy site, chatbox, discovery, recommendation, ROI, and customer actions | Anonymous signed session for stateful actions |
-| `/demo/sales` | Sales Team Experience | Continue the current opportunity or explicitly create a private prepared AirFlame opportunity, then review approval and proposal state | Anonymous signed session; staff mutations require scoped Demo Staff Mode |
-| `/api/advisor` | Server boundary | AI-assisted discovery and grounded explanation | Same-origin, session-scoped request |
-| `/api/proposals/[id]` | Server boundary | Generate an approved synthetic proposal on demand | Same-origin, current-session authorization, unexpired record |
+| Route                   | Surface               | Purpose                                                                                                                                | Authorization                                                            |
+| ----------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `/`                     | Public Tankroy        | Company overview, featured use cases, product discovery, and advisor entry point                                                       | Anonymous session or no session                                          |
+| `/catalog`              | Public Tankroy        | Browse the fictional catalog                                                                                                           | Anonymous session or no session                                          |
+| `/catalog/[slug]`       | Public Tankroy        | Inspect one product's grounded facts, image, constraints, and advisor entry point                                                      | Anonymous session or no session                                          |
+| `/advisor`              | Public TankFit AI     | Full-page conversational discovery and compatibility explanation                                                                       | Anonymous signed session                                                 |
+| `/demo`                 | Demo Hub              | Explain and select Customer Experience or Sales Team Experience                                                                        | Anonymous; no role granted                                               |
+| `/demo/customer`        | Customer Experience   | Test the public Tankroy site, chatbox, discovery, recommendation, ROI, and customer actions                                            | Anonymous signed session for stateful actions                            |
+| `/demo/sales`           | Sales Team Experience | Continue the current opportunity or explicitly create a private prepared AirFlame opportunity, then review approval and proposal state | Anonymous signed session; staff mutations require scoped Demo Staff Mode |
+| `/api/discovery`        | Server boundary       | Persisted discovery and grounded explanation                                                                                           | Same-origin mutation, server-derived session                             |
+| `/api/payments/webhook` | Provider callback     | Verify test payment                                                                                                                    | Raw-body Stripe signature; live events rejected                          |
+| `/api/proposals/[id]`   | Server boundary       | Generate an approved synthetic proposal on demand                                                                                      | Same-origin, current-session authorization, unexpired record             |
 
 The public navigation should describe the customer experience in Tankroy language. Internal labels such as `Demo Staff Mode`, `approval`, and `audit` belong inside Sales Team Experience, not in the primary public navigation. Both experience routes must provide a clear return to the Demo Hub. A mode switch may preserve the current session but must not encode a session identifier, order identifier, or authorization claim in a client-controlled URL.
 

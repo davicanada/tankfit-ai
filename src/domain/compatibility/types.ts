@@ -12,11 +12,16 @@ export const supportedMaterials = [
 export type SupportedMaterial = (typeof supportedMaterials)[number];
 
 export type CompatibilityRequirements = {
-  material: SupportedMaterial | "unsupported";
+  material: SupportedMaterial | "unsupported" | "unknown";
   tankType: string | "unknown";
   existingInstrumentation: string | "unknown";
   gaugeInterface: "confirmed_compatible" | "not_applicable" | "unknown";
-  connectivity: "lte_m" | "bluetooth_le" | "ethernet" | "unavailable" | "unknown";
+  connectivity:
+    | "lte_m"
+    | "bluetooth_le"
+    | "ethernet"
+    | "unavailable"
+    | "unknown";
   siteDistribution: "distributed" | "clustered" | "single_site" | "unknown";
   measurementPreference: string | "no_preference" | "unknown";
   regulatedLocation: boolean | "unknown";

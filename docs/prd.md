@@ -1,13 +1,13 @@
 # Product Requirements Document: TankFit AI
 
-| Field | Value |
-| --- | --- |
-| Product | TankFit AI |
-| Version | 0.8 |
-| Status | Public-experience revision approved for implementation |
-| Date | August 31, 2026 |
-| Owner | Davi Almeida |
-| Product type | Public portfolio prototype |
+| Field        | Value                                                                           |
+| ------------ | ------------------------------------------------------------------------------- |
+| Product      | TankFit AI                                                                      |
+| Version      | 0.9                                                                             |
+| Status       | Completion revision under implementation and verification; owner review pending |
+| Date         | August 31, 2026                                                                 |
+| Owner        | Davi Almeida                                                                    |
+| Product type | Public portfolio prototype                                                      |
 
 ## 1. Executive Summary
 
@@ -249,7 +249,7 @@ An evaluator may also open the Demo Hub first. Customer Experience starts the pu
 ### FR-7: Simulated Checkout
 
 - The system must never accept or request real card information.
-- Checkout must use a provider sandbox or an internal mock-payment adapter.
+- The submitted competition payment path must use a provider sandbox. Internal payment fixtures are limited to automated tests and must not silently replace an unavailable sandbox.
 - All checkout screens must state that no money will move.
 - A successful simulation must create an auditable payment event linked to the draft order.
 
@@ -328,7 +328,7 @@ The agent must not:
 - Invent or modify product specifications, availability, price, or compatibility.
 - Directly write arbitrary database values.
 - Approve a proposal, bypass an approval, or change approval state.
-- Confirm a payment without a result from the mock or sandbox payment adapter.
+- Confirm payment without a verified test-only Stripe result. Internal fixtures exist only in automated tests.
 - Provide authoritative safety, regulatory, installation, or engineering advice.
 - Reveal system prompts, secrets, credentials, hidden rules, or another session's data.
 
@@ -510,34 +510,34 @@ The MVP is ready for public release when:
 
 ### 17.1 Technology Choice Rationale
 
-| Choice | Why it fits the MVP | When to reconsider it |
-| --- | --- | --- |
-| One full-stack Next.js application | The product is web-first and maintained by one developer. A single TypeScript codebase can share catalog, order, session, validation, and API types while avoiding a second deployment, duplicated contracts, cross-origin configuration, separate secrets, and independent cold starts. | Split services if team ownership, scaling, security boundaries, or deployment lifecycles become materially different. |
-| Neon Postgres with Drizzle ORM | Orders, approval state, sessions, audit events, and proposal metadata are relational. Postgres provides transactions and portability, while Drizzle provides typed queries and versioned migrations that align with the TypeScript application. | Reconsider the data layer if usage patterns become primarily document-based, globally distributed, or high-volume event streaming. |
-| Versioned JSON catalog and static images | The public catalog remains available if the database is unavailable or sleeping. The fallback is inexpensive, reviewable in Git, and capable of associating each fictional product with an AI-generated image through a stable asset path. | Move catalog media to managed storage or a CMS if non-developers must edit products or the asset volume becomes large. |
-| Provider-independent AI adapter | A common interface enables fallback among Gemini, Cerebras, Groq, OpenRouter, and deterministic guided mode without exposing provider credentials to the browser. | Revisit routing when real traffic, quality measurements, latency, and provider costs reveal a better ordering or a need for a managed AI gateway. |
-| Demo Hub with two experience modes in one Next.js app | Customer Experience gives evaluators the public Tankroy context, while Sales Team Experience demonstrates review and approval. Sharing one app and session contract avoids duplicated catalog, agent, security, and deterministic logic. | Add separately authenticated staff infrastructure or split deployments only when ownership, compliance, scaling, or lifecycle boundaries justify them. |
+| Choice                                                | Why it fits the MVP                                                                                                                                                                                                                                                                      | When to reconsider it                                                                                                                                  |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| One full-stack Next.js application                    | The product is web-first and maintained by one developer. A single TypeScript codebase can share catalog, order, session, validation, and API types while avoiding a second deployment, duplicated contracts, cross-origin configuration, separate secrets, and independent cold starts. | Split services if team ownership, scaling, security boundaries, or deployment lifecycles become materially different.                                  |
+| Neon Postgres with Drizzle ORM                        | Orders, approval state, sessions, audit events, and proposal metadata are relational. Postgres provides transactions and portability, while Drizzle provides typed queries and versioned migrations that align with the TypeScript application.                                          | Reconsider the data layer if usage patterns become primarily document-based, globally distributed, or high-volume event streaming.                     |
+| Versioned JSON catalog and static images              | The public catalog remains available if the database is unavailable or sleeping. The fallback is inexpensive, reviewable in Git, and capable of associating each fictional product with an AI-generated image through a stable asset path.                                               | Move catalog media to managed storage or a CMS if non-developers must edit products or the asset volume becomes large.                                 |
+| Provider-independent AI adapter                       | A common interface enables fallback among Gemini, Cerebras, Groq, OpenRouter, and deterministic guided mode without exposing provider credentials to the browser.                                                                                                                        | Revisit routing when real traffic, quality measurements, latency, and provider costs reveal a better ordering or a need for a managed AI gateway.      |
+| Demo Hub with two experience modes in one Next.js app | Customer Experience gives evaluators the public Tankroy context, while Sales Team Experience demonstrates review and approval. Sharing one app and session contract avoids duplicated catalog, agent, security, and deterministic logic.                                                 | Add separately authenticated staff infrastructure or split deployments only when ownership, compliance, scaling, or lifecycle boundaries justify them. |
 
 Any future decision to split the backend into independently deployed services must be documented in an architecture decision record (ADR) with its alternatives, trade-offs, and migration triggers.
 
 ## 18. Risks and Mitigations
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| AI fabricates a technical claim | Unsafe or misleading recommendation | Structured catalog, deterministic compatibility, claim validation, evidence display |
-| Free AI quota is exhausted | Public chat stops working | Multi-provider routing, rate limits, caching, deterministic guided mode |
-| Database cold start adds latency | Slow first interaction | Serverless driver, regional alignment, static catalog fallback, loading feedback |
-| Public abuse consumes quotas | Demo becomes unavailable | Per-IP limits, global caps, input limits, bot protection |
-| Visitors enter real information | Privacy exposure | Clear warning, sample personas, input minimization, redaction, short retention |
-| Project is mistaken for a real company's product | Brand or ownership confusion | Fictional company and products, explicit synthetic-data and independent-project disclaimers |
-| Recommendation is treated as engineering advice | Safety risk | Scope restrictions, disclaimers, human approval, technical-review escalation |
-| Free-tier terms change | Unexpected downtime or cost | No automatic paid upgrades, usage caps, portable provider adapters |
-| Prompt injection attempts to expand agent authority | Unauthorized tools, data exposure, or unsafe output | Least-privilege tools, deterministic authorization, structured output validation, adversarial tests |
-| Injection or browser attack targets public input | Data exposure, session compromise, or code execution | Schema validation, parameterized queries, safe rendering, CSP, same-origin enforcement, prohibited dangerous sinks |
-| Cross-session or forged approval request | Unauthorized order or proposal action | Opaque sessions, signed scoped tokens, server-side authorization on every action, CSRF defenses, audit trail |
-| Automated abuse exhausts compute or AI quotas | Demo outage or unexpected cost | Request limits, body limits, provider caps, timeouts, circuit breakers, staged firewall rules |
-| Vulnerable dependency or leaked secret enters the repository | Supply-chain compromise or account exposure | Minimal dependencies, automated updates and scanning, secret scanning, review gates, server-only secrets |
-| Customer and staff experiences are confused | Visitors may see internal controls or misunderstand the synthetic demo | Separate route and navigation contracts, explicit role labels, server authorization, surface-specific E2E checks, and visible fiction notices |
+| Risk                                                                  | Impact                                                                        | Mitigation                                                                                                                                                                             |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AI fabricates a technical claim                                       | Unsafe or misleading recommendation                                           | Structured catalog, deterministic compatibility, claim validation, evidence display                                                                                                    |
+| Free AI quota is exhausted                                            | Public chat stops working                                                     | Multi-provider routing, rate limits, caching, deterministic guided mode                                                                                                                |
+| Database cold start adds latency                                      | Slow first interaction                                                        | Serverless driver, regional alignment, static catalog fallback, loading feedback                                                                                                       |
+| Public abuse consumes quotas                                          | Demo becomes unavailable                                                      | Per-IP limits, global caps, input limits, bot protection                                                                                                                               |
+| Visitors enter real information                                       | Privacy exposure                                                              | Clear warning, sample personas, input minimization, redaction, short retention                                                                                                         |
+| Project is mistaken for a real company's product                      | Brand or ownership confusion                                                  | Fictional company and products, explicit synthetic-data and independent-project disclaimers                                                                                            |
+| Recommendation is treated as engineering advice                       | Safety risk                                                                   | Scope restrictions, disclaimers, human approval, technical-review escalation                                                                                                           |
+| Free-tier terms change                                                | Unexpected downtime or cost                                                   | No automatic paid upgrades, usage caps, portable provider adapters                                                                                                                     |
+| Prompt injection attempts to expand agent authority                   | Unauthorized tools, data exposure, or unsafe output                           | Least-privilege tools, deterministic authorization, structured output validation, adversarial tests                                                                                    |
+| Injection or browser attack targets public input                      | Data exposure, session compromise, or code execution                          | Schema validation, parameterized queries, safe rendering, CSP, same-origin enforcement, prohibited dangerous sinks                                                                     |
+| Cross-session or forged approval request                              | Unauthorized order or proposal action                                         | Opaque sessions, signed scoped tokens, server-side authorization on every action, CSRF defenses, audit trail                                                                           |
+| Automated abuse exhausts compute or AI quotas                         | Demo outage or unexpected cost                                                | Request limits, body limits, provider caps, timeouts, circuit breakers, staged firewall rules                                                                                          |
+| Vulnerable dependency or leaked secret enters the repository          | Supply-chain compromise or account exposure                                   | Minimal dependencies, automated updates and scanning, secret scanning, review gates, server-only secrets                                                                               |
+| Customer and staff experiences are confused                           | Visitors may see internal controls or misunderstand the synthetic demo        | Separate route and navigation contracts, explicit role labels, server authorization, surface-specific E2E checks, and visible fiction notices                                          |
 | Prepared sales fixture becomes a privileged shortcut or shared record | Evaluation could bypass deterministic controls or leak state between visitors | Create the fixture only through an explicit server mutation, clone it into the current session, run normal validation, record provenance, and forbid shared mutable demo opportunities |
 
 ## 19. Release Strategy
@@ -574,7 +574,7 @@ Any future decision to split the backend into independently deployed services mu
 - Complete end-to-end, accessibility, mobile, and failure-mode testing.
 - Publish the repository, demo URL, screenshots, architecture diagram, and optional demo video.
 
-**Implementation status:** Production deployment and release verification are complete. Competition publication and submission remain intentionally pending.
+**Implementation status:** The earlier AirFlame baseline is deployed. The September 5 completion revision requires fresh preview/production verification, sandbox configuration, and owner-reviewed merge. Competition publication and submission remain intentionally pending.
 
 ### Phase 6: Tankroy Public Experience
 
@@ -584,7 +584,7 @@ Any future decision to split the backend into independently deployed services mu
 - Add surface-aware navigation, disclaimers, accessibility coverage, and E2E tests proving that public pages cannot expose staff actions.
 - Support both continuation of the evaluator's own customer-created opportunity and explicit creation of a private prepared AirFlame sales fixture.
 
-**Implementation status:** Documentation and architecture approved on this branch; UI implementation and release verification are pending.
+**Implementation status:** Public widget, Demo Hub, Customer Experience and Sales Team Experience are implemented on `codex/competition-completion`; full release verification and owner-reviewed deployment remain pending. See ADR-0008 and the dated verification evidence.
 
 ## 20. Preset Demo Scenarios and Rationale
 

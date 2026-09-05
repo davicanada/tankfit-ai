@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { catalog } from "@/lib/catalog";
 import { readSessionId } from "@/lib/demo-session";
 import { getProposalData } from "@/lib/journey-service";
 import { createProposalPdf } from "@/lib/proposal-pdf";
@@ -21,26 +20,21 @@ export async function GET(
 
   const data = await getProposalData(parsedId.data, sessionId);
   if (!data) return new Response("Not found", { status: 404 });
-  const product = catalog.products.find(
-    (candidate) => candidate.id === data.order.productId,
-  );
-  if (!product) return new Response("Not found", { status: 404 });
 
   const bytes = await createProposalPdf({
     proposalId: data.proposal.id,
     orderId: data.order.id,
     generatedAt: data.proposal.generatedAt,
-    requirements: data.session.requirements,
-    roiAssumptions: data.session.roiAssumptions,
-    roiResult: data.session.roiResult,
+    requirements: data.snapshot.requirements,
+    roiAssumptions: data.snapshot.roiAssumptions,
+    roiResult: data.snapshot.roi,
     quantity: data.order.quantity,
     productId: data.order.productId,
-    productName: product.name,
+    productName: data.snapshot.productName,
     currency: data.order.currency,
-    catalogVersion: catalog.catalogVersion,
+    catalogVersion: data.snapshot.catalogVersion,
     commerceVersion: data.order.commerceVersion,
-    compatibilityRuleVersion:
-      data.session.recommendationRuleVersion ?? "unknown",
+    compatibilityRuleVersion: data.snapshot.ruleVersion,
     unitPriceCents: data.order.unitPriceCents,
     monthlyServiceCents: data.order.monthlyServiceCents,
     hardwareSubtotalCents: data.order.hardwareSubtotalCents,

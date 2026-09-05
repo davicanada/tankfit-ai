@@ -41,7 +41,10 @@ export type GenerateCandidate = (input: {
   timeoutMs: number;
   maxOutputTokens: number;
   abortSignal?: AbortSignal;
-}) => Promise<string>;
+}) => Promise<
+  | string
+  | { text: string; inputTokens: number | null; outputTokens: number | null }
+>;
 
 function classifyProviderError(error: unknown): ProviderErrorCategory {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
@@ -167,7 +170,11 @@ const generateCandidate: GenerateCandidate = async ({
 
   const text = result.text.trim();
   if (!text) throw new Error("Provider returned an empty response.");
-  return text;
+  return {
+    text,
+    inputTokens: result.totalUsage.inputTokens ?? null,
+    outputTokens: result.totalUsage.outputTokens ?? null,
+  };
 };
 
 export async function routeAdvisorResponse(input: {
@@ -222,7 +229,7 @@ export async function routeAdvisorResponse(input: {
     }
 
     try {
-      const answer = await runCandidate({
+      const generated = await runCandidate({
         candidate,
         system,
         messages,
@@ -230,12 +237,17 @@ export async function routeAdvisorResponse(input: {
         maxOutputTokens: input.maxOutputTokens,
         abortSignal: input.abortSignal,
       });
+      const answer = typeof generated === "string" ? generated : generated.text;
       recordSuccess(candidate.id);
       attempts.push({
         provider: candidate.id,
         model: candidate.model,
         outcome: "success",
         latencyMs: Math.max(0, now() - startedAt),
+        inputTokens:
+          typeof generated === "string" ? null : generated.inputTokens,
+        outputTokens:
+          typeof generated === "string" ? null : generated.outputTokens,
       });
 
       return {
@@ -281,8 +293,7 @@ export function createDeterministicAdvisorReply(
     compatibility: {
       status: compatibility.status,
       ruleVersion: compatibility.ruleVersion,
-      primaryProductId:
-        compatibility.primaryRecommendation?.product.id ?? null,
+      primaryProductId: compatibility.primaryRecommendation?.product.id ?? null,
     },
   };
 }

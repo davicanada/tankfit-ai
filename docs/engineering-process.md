@@ -24,6 +24,8 @@ Do not combine unrelated changes simply because they were made during the same s
 
 ## 3. Required Checks
 
+Current completion workflow: `npm run check` runs validators, lint, TypeScript, unit tests and a production build. CI also runs secret-free public Playwright checks. `npm run test:integration` and `E2E_DATABASE=1 npm run test:e2e` are explicit database-backed gates; do not silently substitute skipped tests. Review real sandbox payment and live language evidence separately. Codex-created branches use the `codex/` prefix.
+
 The initial CI check runs `npm run validate`, which validates catalog structure, unique identifiers, cross-references, image paths, and one-to-one commerce seed coverage.
 
 When the application is scaffolded, the protected branch will additionally require:

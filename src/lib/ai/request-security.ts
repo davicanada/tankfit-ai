@@ -35,10 +35,27 @@ export function validateAdvisorRequestHeaders(
 }
 
 export async function readBoundedJsonBody(request: Request) {
-  const body = await request.text();
-  if (new TextEncoder().encode(body).byteLength > MAX_BODY_BYTES) {
-    return { ok: false as const, status: 413 as const };
+  const reader = request.body?.getReader();
+  if (!reader) return { ok: false as const, status: 400 as const };
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BODY_BYTES) {
+      await reader.cancel();
+      return { ok: false as const, status: 413 as const };
+    }
+    chunks.push(value);
   }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const body = new TextDecoder().decode(bytes);
 
   try {
     return { ok: true as const, value: JSON.parse(body) as unknown };

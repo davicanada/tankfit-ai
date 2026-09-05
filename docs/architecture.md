@@ -4,6 +4,8 @@
 **Owner:** Davi Almeida  
 **Last updated:** August 31, 2026
 
+**September 5 completion revision:** ADR-0008 adds bounded general discovery, explicit synthetic operating profiles, fixed session expiry, frozen order snapshots, short session-row-locked Neon transactions, Stripe-hosted test Checkout and a signed webhook. The public/customer/sales components share `/api/discovery` and the same anonymous session. Only the verified test-payment adapter advances payment state. Current deployment status is tracked separately from implementation.
+
 ## 1. Architectural Objective
 
 TankFit AI must provide a conversational sales experience through the fictional Tankroy Systems Inc. public website without allowing a language model to control technical truth, transactional values, payment state, or approval. A clearly separated sales workspace must demonstrate review and approval without becoming a general public administration area. The public experience must remain useful when AI providers or the database are temporarily unavailable, while failing safely when current transactional data cannot be confirmed.
@@ -67,14 +69,9 @@ The single agent may interpret needs, request missing information, call narrowly
 
 The first conversational implementation uses sequential, completed-response fallback rather than immediate token streaming. This allows a failed provider response to be discarded before another provider is selected. Provider order, model IDs, timeouts, and output limits are configuration; they do not alter domain behavior. See [`adrs/0005-ai-provider-fallback.md`](adrs/0005-ai-provider-fallback.md).
 
-The agent can call:
+The implemented orchestrator extracts bounded requirements, invokes deterministic compatibility, and supplies validated descriptive evidence to the reply model. It does not register mutation tools with the model. The interface invokes ROI, current commerce, drafts and status through session-scoped services. Earlier tool names describe domain responsibilities, not an implemented autonomous tool-calling API.
 
-- `searchCatalog`: read descriptive product fields.
-- `evaluateCompatibility`: return compatible products or technical-review reasons.
-- `calculateRoi`: calculate values from explicit assumptions.
-- `readCommercialSnapshot`: read current fictional price, stock, availability, and lead time.
-- `requestDraftOrder`: request an order through server-side validation.
-- `readOrderStatus`: read the current session's state.
+`/api/discovery` is the live conversation endpoint. The previous stateless `/api/advisor` returns HTTP 410 so a base-only result cannot bypass full operating-profile checks.
 
 The agent cannot call approval-state or payment-state mutation functions. Those actions originate from explicit interface controls and are checked by deterministic authorization rules.
 
@@ -82,16 +79,16 @@ Custom-scenario text cannot create new product categories, tools, URLs, file pat
 
 ## 5. Data Ownership
 
-| Data | Authoritative source | Fallback behavior |
-| --- | --- | --- |
-| Product descriptions, images, compatibility attributes | Versioned catalog seeded into Postgres | Versioned JSON supports browsing and recommendation |
-| Fictional company names and logo paths | Versioned company registry | Local reviewed logo assets and registry remain available without a database |
-| Price, stock, availability, delivery lead time | Postgres | No transactional confirmation; order and checkout pause |
-| Requirements, conversation summary, order and audit events | Postgres, scoped to anonymous session | No cross-session fallback |
-| Prepared Sales Team Experience opportunity | Newly created Postgres records scoped to the evaluator's anonymous session, with fixture provenance | Create only after an explicit validated action; never use a shared mutable opportunity |
-| Compatibility and ROI outputs | Deterministic code plus versioned inputs | Recalculate from available validated inputs |
-| Proposal document | Generated on demand from approved Postgres state; Postgres stores only scoped metadata | Regenerate only from an approved, unexpired order |
-| AI response | Selected provider | Try configured providers, then deterministic guided mode |
+| Data                                                       | Authoritative source                                                                                | Fallback behavior                                                                      |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Product descriptions, images, compatibility attributes     | Versioned catalog seeded into Postgres                                                              | Versioned JSON supports browsing and recommendation                                    |
+| Fictional company names and logo paths                     | Versioned company registry                                                                          | Local reviewed logo assets and registry remain available without a database            |
+| Price, stock, availability, delivery lead time             | Postgres                                                                                            | No transactional confirmation; order and checkout pause                                |
+| Requirements, conversation summary, order and audit events | Postgres, scoped to anonymous session                                                               | No cross-session fallback                                                              |
+| Prepared Sales Team Experience opportunity                 | Newly created Postgres records scoped to the evaluator's anonymous session, with fixture provenance | Create only after an explicit validated action; never use a shared mutable opportunity |
+| Compatibility and ROI outputs                              | Deterministic code plus versioned inputs                                                            | Recalculate from available validated inputs                                            |
+| Proposal document                                          | Generated on demand from approved Postgres state; Postgres stores only scoped metadata              | Regenerate only from an approved, unexpired order                                      |
+| AI response                                                | Selected provider                                                                                   | Try configured providers, then deterministic guided mode                               |
 
 ## 6. Human Approval Boundary
 
@@ -103,21 +100,21 @@ The agent cannot issue the token, assume the role, approve an order, or generate
 
 ## 7. Failure Behavior
 
-| Failure | Safe behavior |
-| --- | --- |
-| One AI provider times out | Record the attempt and try the next configured provider |
-| All AI providers fail | Continue through deterministic guided discovery |
-| Postgres is unavailable | Allow descriptive browsing and compatibility from JSON; block commercial confirmation, order submission, and checkout |
-| Stock changes before checkout | Reject or revise the draft; never silently oversell |
-| Compatibility is unknown | Return `technical_review_required` |
-| Mock payment fails | Keep the order out of `pending_approval` and record the failure |
-| Sales Team Experience has no eligible opportunity | Show an empty state and an explicit prepared-fixture action; do not enumerate or reuse another session's data |
-| Prepared fixture creation fails | Roll back partial records, grant no role, and leave the workspace in its safe empty state |
-| Approval token is invalid or expired | Deny the action without revealing session data |
-| Proposal generation fails | Preserve approved state and allow a safe retry from the same approved record |
-| Malicious or malformed input fails validation | Reject before database, provider, file, or state-transition work and record a bounded security event |
-| Cross-origin state-changing request | Reject before mutation |
-| Outbound destination is not configured | Reject without making a network request |
+| Failure                                           | Safe behavior                                                                                                         |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| One AI provider times out                         | Record the attempt and try the next configured provider                                                               |
+| All AI providers fail                             | Continue through deterministic guided discovery                                                                       |
+| Postgres is unavailable                           | Allow descriptive browsing and compatibility from JSON; block commercial confirmation, order submission, and checkout |
+| Stock changes before checkout                     | Reject or revise the draft; never silently oversell                                                                   |
+| Compatibility is unknown                          | Return `technical_review_required`                                                                                    |
+| Mock payment fails                                | Keep the order out of `pending_approval` and record the failure                                                       |
+| Sales Team Experience has no eligible opportunity | Show an empty state and an explicit prepared-fixture action; do not enumerate or reuse another session's data         |
+| Prepared fixture creation fails                   | Roll back partial records, grant no role, and leave the workspace in its safe empty state                             |
+| Approval token is invalid or expired              | Deny the action without revealing session data                                                                        |
+| Proposal generation fails                         | Preserve approved state and allow a safe retry from the same approved record                                          |
+| Malicious or malformed input fails validation     | Reject before database, provider, file, or state-transition work and record a bounded security event                  |
+| Cross-origin state-changing request               | Reject before mutation                                                                                                |
+| Outbound destination is not configured            | Reject without making a network request                                                                               |
 
 ## 8. Security and Privacy Boundaries
 
@@ -127,7 +124,7 @@ The agent cannot issue the token, assume the role, approve an order, or generate
 - Secrets remain in server-side environment variables.
 - Logs exclude secrets and redact likely personal information.
 - Public input, output, token, and request rates are limited.
-- Session data and proposal artifacts expire after 24 hours.
+- Session data and proposals become inaccessible at a fixed 24-hour expiry. Expired rows are removed opportunistically when a new session is created, not by a guaranteed wall-clock deletion job. Runtime proposal files are not persistently stored.
 - Public requests pass through strict schemas, body limits, same-origin checks, rate limits, and per-object authorization.
 - The MVP has no upload, XML parsing, arbitrary URL retrieval, operating-system command, dynamic-code, or user-controlled template capability.
 - Browser rendering uses escaped text or sanitized allowlisted Markdown plus a restrictive Content Security Policy.
