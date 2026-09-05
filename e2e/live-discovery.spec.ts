@@ -78,6 +78,9 @@ for (const [language, message] of cases) {
       // of the captured answer; HTTP success alone is not that review.
       await page.goto("/demo/sales");
       await expect(
+        page.getByRole("heading", { name: "Session audit and AI usage" }),
+      ).toBeVisible({ timeout: 20000 });
+      await expect(
         page.getByRole("button", { name: "Approve pilot" }),
       ).toHaveCount(0);
       await testInfo.attach("session-audit", {

@@ -78,6 +78,10 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
               throw new Error(result.error ?? "Conversation unavailable.");
             setMessages(result.messages);
             setMessage("");
+            if (result.guidedReviewRequired)
+              setError(
+                "AI fact extraction is temporarily unavailable. Review unknown values in the guided fields before continuing.",
+              );
             window.dispatchEvent(new Event("tankfit-discovery-updated"));
           } catch (err) {
             setError(err instanceof Error ? err.message : "Please retry.");

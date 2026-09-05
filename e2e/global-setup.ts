@@ -1,5 +1,6 @@
 import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
+import { previewAuthPath } from "./auth-path";
 
 export default async function setup() {
   if (!process.env.E2E_ACCESS_URL) return;
@@ -16,7 +17,7 @@ export default async function setup() {
         url.origin === access.origin && !url.searchParams.has("_vercel_share"),
     );
     await mkdir("tmp/e2e", { recursive: true });
-    await context.storageState({ path: "tmp/e2e/preview-auth.json" });
+    await context.storageState({ path: previewAuthPath });
   } finally {
     await browser.close();
   }

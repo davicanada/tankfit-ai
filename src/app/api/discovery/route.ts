@@ -120,6 +120,7 @@ export async function POST(request: Request) {
     return json({
       messages: [...messages, { role: "assistant", content: answer }],
       requirements: result.requirements,
+      guidedReviewRequired: result.mode === "deterministic",
     });
   } catch {
     return json(

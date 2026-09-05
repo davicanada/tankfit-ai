@@ -19,6 +19,8 @@ Use Stripe-hosted Checkout in test mode for the competition payment path. Reject
 
 ## Alternatives and consequences
 
+Groq's selected `qwen/qwen3.6-27b` uses JSON Object Mode for extraction, because it is not in the provider's JSON Schema Structured Outputs model list. The trusted prompt includes the schema, and the returned object must still pass the same strict server-side Zod validation. Unsupported JSON Schema transport is not a reason to switch models or weaken domain validation. See [Groq's supported structured-output models](https://console.groq.com/docs/structured-outputs). Provider failures are logged only as bounded categories and completion status, never raw responses or credentials.
+
 - Keeping AirFlame defaults during extraction is convenient but silently creates unsupported requirements; explicit unknowns add questions but preserve correctness.
 - Independent reads and conditional updates are inexpensive but insufficient for related state and event consistency. Short row-locked transactions serialize one anonymous session without a global lock.
 - Rendering from current catalog/session state can change approved documents; frozen snapshots cost a small amount of short-lived JSON storage.

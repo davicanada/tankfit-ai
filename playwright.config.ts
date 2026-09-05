@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { previewAuthPath } from "./e2e/auth-path";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -10,9 +11,7 @@ export default defineConfig({
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",
     trace: process.env.E2E_ACCESS_URL ? "off" : "retain-on-failure",
-    storageState: process.env.E2E_ACCESS_URL
-      ? "tmp/e2e/preview-auth.json"
-      : undefined,
+    storageState: process.env.E2E_ACCESS_URL ? previewAuthPath : undefined,
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },

@@ -134,6 +134,7 @@ export function createProviderCandidate(
       providerOptions: {
         groq: {
           reasoningEffort: "none",
+          ...(model === "qwen/qwen3.6-27b" ? { structuredOutputs: false } : {}),
         } satisfies GroqLanguageModelOptions,
       },
     };
