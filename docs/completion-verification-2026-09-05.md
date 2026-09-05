@@ -14,6 +14,7 @@ Branch: `codex/competition-completion`. This record is not a submission certific
 ## Limitations and remaining gates
 
 - No local Stripe or AI keys were present during verification. Only the live Stripe account context was exposed by the connector; no live account mutation or payment was attempted.
+- A controlled protected-preview AI run captured successful Spanish, Italian, German, Polish, Portuguese and English responses from the configured fallback chain. French, Chinese and Hindi attempts were not certified in that run because provider quota/authentication limits interrupted the opt-in suite; they remain owner-run quality checks, not automated claims.
 - Signed webhook tests use SDK-generated fixture signatures. Postgres payment tests supply verified-adapter fixtures. Neither replaces an actual Stripe sandbox run.
 - Test suite proves selected properties, not resistance to every possible attack. The full signed browser staff-token path after real test payment remains a deployment gate.
 - PDF text uses the English StandardFonts template; unsupported script glyphs are normalized, while original session text is retained. The multilingual conversation contract does not imply a localized PDF.
