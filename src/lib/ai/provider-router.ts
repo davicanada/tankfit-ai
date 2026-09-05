@@ -46,7 +46,7 @@ export type GenerateCandidate = (input: {
   | { text: string; inputTokens: number | null; outputTokens: number | null }
 >;
 
-function classifyProviderError(error: unknown): ProviderErrorCategory {
+export function classifyProviderError(error: unknown): ProviderErrorCategory {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
 
   if (

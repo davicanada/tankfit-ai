@@ -7,7 +7,10 @@ import {
   type AirFlameRequirements,
 } from "@/domain/journey/types";
 import { getAiConfiguration } from "./config";
-import { createProviderCandidate } from "./provider-router";
+import {
+  createProviderCandidate,
+  classifyProviderError,
+} from "./provider-router";
 
 const extractionSchema = z
   .object(airFlameRequirementsSchema.shape)
@@ -145,10 +148,14 @@ export async function extractAirFlameBrief(input: {
           outputTokens: result.totalUsage.outputTokens ?? null,
         },
       };
-    } catch {
+    } catch (error) {
       console.warn("ai.discovery.provider_failed", {
         provider: provider.id,
         model: provider.model,
+        category: classifyProviderError(error),
+        outputFailure:
+          error instanceof Error &&
+          /NoObjectGenerated|NoOutputGenerated|TypeValidation/.test(error.name),
       });
     }
   }
