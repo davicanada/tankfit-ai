@@ -23,6 +23,25 @@ describe("AirFlame discovery fallback", () => {
     expect(result.minimumTemperatureC).toBe(-20);
     expect(result.maximumTemperatureC).toBe(30);
   });
+  it("keeps multilingual explicit material fallback conservative", () => {
+    for (const phrase of [
+      "eau",
+      "agua",
+      "acqua",
+      "wasser",
+      "woda",
+      "水",
+      "पानी",
+    ]) {
+      expect(deterministicExtraction(`Tanks contain ${phrase}.`).material).toBe(
+        "water",
+      );
+    }
+    expect(deterministicExtraction("Réservoirs sans eau.").material).toBe(
+      "unknown",
+    );
+    expect(deterministicExtraction("储罐没有水。").material).toBe("unknown");
+  });
   it("rejects provider authority and mass assignment", () => {
     expect(() => normalizeExtraction({ approved: true, price: 1 })).toThrow();
     expect(() =>

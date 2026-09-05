@@ -34,7 +34,10 @@ export function deterministicExtraction(brief: string): AirFlameRequirements {
   const matches = (
     [
       ["heating_oil", /heating[ -]?oil/i],
-      ["water", /\bwater\b/i],
+      [
+        "water",
+        /\bwater\b|\beau\b|\bagua\b|\bacqua\b|\bwasser\b|\bwod(?:a|ę)\b|水|पानी/iu,
+      ],
       ["propane", /\bpropane\b/i],
       ["refined_fuels", /diesel|gasoline|refined fuels/i],
       ["lubricants", /\blubricants?\b/i],
@@ -43,7 +46,7 @@ export function deterministicExtraction(brief: string): AirFlameRequirements {
   ).filter(([, pattern]) => pattern.test(brief));
   if (matches.length === 1) extracted.material = matches[0][0];
   if (
-    /not (?:heating[ -]?oil|water|propane|diesel|gasoline)|no (?:heating[ -]?oil|water|propane)/i.test(
+    /not (?:heating[ -]?oil|water|propane|diesel|gasoline)|no (?:heating[ -]?oil|water|propane)|pas\s+(?:d['’]?|de\s+l['’]?)?eau|sans\s+(?:d['’]?|de\s+l['’]?)?eau|no\s+agua|senza\s+acqua|kein(?:e|en)?\s+wasser|bez\s+wod(?:y|ę)|(?:无水|没有水)|पानी\s*नहीं/iu.test(
       brief,
     )
   )
