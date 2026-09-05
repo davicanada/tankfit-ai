@@ -17,6 +17,49 @@ const extractionSchema = z
   .strict()
   .partial();
 
+const materialPatterns = [
+  ["heating_oil", /heating[ -]?oil/i],
+  [
+    "water",
+    /\bwater\b|\beau\b|\bagua\b|\bacqua\b|\bwasser\b|\bwod(?:a|ę)\b|水|पानी/iu,
+  ],
+  ["propane", /\bpropane\b/i],
+  ["refined_fuels", /diesel|gasoline|refined fuels/i],
+  ["lubricants", /\blubricants?\b/i],
+  ["industrial_gases", /CO2|industrial gas|carbon dioxide/i],
+] as const;
+
+const materialNegationPattern =
+  /not (?:heating[ -]?oil|water|propane|diesel|gasoline)|no (?:heating[ -]?oil|water|propane)|pas\s+(?:d['’]?|de\s+l['’]?)?eau|sans\s+(?:d['’]?|de\s+l['’]?)?eau|no\s+agua|senza\s+acqua|kein(?:e|en)?\s+wasser|bez\s+wod(?:y|ę)|(?:无水|没有水)|पानी\s*नहीं/iu;
+
+function explicitMaterial(brief: string): AirFlameRequirements["material"] | null {
+  const matches = materialPatterns.filter(([, pattern]) => pattern.test(brief));
+  if (materialNegationPattern.test(brief)) return "unknown";
+  if (/acid|ammonia|chlorine|molten/i.test(brief)) return "unsupported";
+  return matches.length === 1 ? matches[0][0] : null;
+}
+
+/**
+ * A model may misclassify an explicitly named supported material as
+ * `unsupported`. Preserve the visitor's explicit fact before deterministic
+ * compatibility evaluation; this does not infer any missing requirement.
+ */
+export function reconcileExplicitMaterial(
+  requirements: AirFlameRequirements,
+  brief: string,
+): AirFlameRequirements {
+  const material = explicitMaterial(brief);
+  if (
+    material &&
+    material !== "unknown" &&
+    material !== "unsupported" &&
+    requirements.material === "unsupported"
+  ) {
+    return { ...requirements, material };
+  }
+  return requirements;
+}
+
 /** A new brief never implicitly confirms unmentioned preset facts. */
 export function normalizeExtraction(value: unknown): AirFlameRequirements {
   return airFlameRequirementsSchema.parse({
@@ -31,28 +74,8 @@ export function deterministicExtraction(brief: string): AirFlameRequirements {
   const pilot = brief.match(/(?:pilot|start|begin)\D{0,20}(\d{1,3})/i);
   if (fleet) extracted.fleetSize = Number(fleet[1]);
   if (pilot) extracted.pilotQuantity = Number(pilot[1]);
-  const matches = (
-    [
-      ["heating_oil", /heating[ -]?oil/i],
-      [
-        "water",
-        /\bwater\b|\beau\b|\bagua\b|\bacqua\b|\bwasser\b|\bwod(?:a|ę)\b|水|पानी/iu,
-      ],
-      ["propane", /\bpropane\b/i],
-      ["refined_fuels", /diesel|gasoline|refined fuels/i],
-      ["lubricants", /\blubricants?\b/i],
-      ["industrial_gases", /CO2|industrial gas|carbon dioxide/i],
-    ] as const
-  ).filter(([, pattern]) => pattern.test(brief));
-  if (matches.length === 1) extracted.material = matches[0][0];
-  if (
-    /not (?:heating[ -]?oil|water|propane|diesel|gasoline)|no (?:heating[ -]?oil|water|propane)|pas\s+(?:d['’]?|de\s+l['’]?)?eau|sans\s+(?:d['’]?|de\s+l['’]?)?eau|no\s+agua|senza\s+acqua|kein(?:e|en)?\s+wasser|bez\s+wod(?:y|ę)|(?:无水|没有水)|पानी\s*नहीं/iu.test(
-      brief,
-    )
-  )
-    extracted.material = "unknown";
-  if (/acid|ammonia|chlorine|molten/i.test(brief))
-    extracted.material = "unsupported";
+  const material = explicitMaterial(brief);
+  if (material) extracted.material = material;
   if (/above[ -]?ground.*horizontal|horizontal.*above[ -]?ground/i.test(brief))
     extracted.tankType = "above_ground_horizontal";
   if (/above[ -]?ground.*vertical|vertical.*above[ -]?ground/i.test(brief))
@@ -150,7 +173,10 @@ export async function extractAirFlameBrief(input: {
         providerOptions: candidate.providerOptions,
       });
       return {
-        requirements: normalizeExtraction(result.output),
+        requirements: reconcileExplicitMaterial(
+          normalizeExtraction(result.output),
+          input.brief,
+        ),
         mode: "ai" as const,
         provider: provider.id,
         usage: {

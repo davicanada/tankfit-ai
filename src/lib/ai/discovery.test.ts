@@ -4,6 +4,7 @@ import {
   extractAirFlameBrief,
   deterministicExtraction,
   normalizeExtraction,
+  reconcileExplicitMaterial,
 } from "./discovery";
 
 describe("AirFlame discovery fallback", () => {
@@ -41,6 +42,23 @@ describe("AirFlame discovery fallback", () => {
       "unknown",
     );
     expect(deterministicExtraction("储罐没有水。").material).toBe("unknown");
+  });
+  it("does not let a provider reject an explicitly supported material", () => {
+    const providerRequirements = normalizeExtraction({
+      material: "unsupported",
+    });
+    expect(
+      reconcileExplicitMaterial(
+        providerRequirements,
+        "Fictional tanks contain water and need cellular monitoring.",
+      ).material,
+    ).toBe("water");
+    expect(
+      reconcileExplicitMaterial(
+        providerRequirements,
+        "Fictional tanks contain ammonia.",
+      ).material,
+    ).toBe("unsupported");
   });
   it("rejects provider authority and mass assignment", () => {
     expect(() => normalizeExtraction({ approved: true, price: 1 })).toThrow();
