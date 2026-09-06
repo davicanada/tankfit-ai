@@ -16,6 +16,17 @@ The project explores a consultative sales journey: describe a need, validate a m
 
 The language model decides what to say; deterministic code decides what can happen. One Next.js application shares a catalog, session contract and domain pipeline across a public Tankroy site, an embedded advisor, Customer Experience and Sales Team Experience.
 
+```mermaid
+flowchart LR
+    Visitor[Visitor] --> Advisor[TankFit AI]
+    Advisor --> Rules[Deterministic compatibility and ROI]
+    Rules --> DB[(Neon Postgres)]
+    DB --> Checkout[Stripe test Checkout]
+    Checkout --> Approval[Session-scoped human approval]
+    Approval --> Proposal[Watermarked demo proposal]
+    Advisor --> Providers[Gemini → Cerebras → Groq → OpenRouter → guided fallback]
+```
+
 ## Explore
 
 - [Public demo](https://tankfit-ai.vercel.app/)
@@ -31,4 +42,4 @@ The language model decides what to say; deterministic code decides what can happ
 
 Codex is the coding-agent harness; `AGENTS.md` defines context and boundaries, and Davi Almeida reviews changes before merge.
 
-**Draft only:** Replace both social-post placeholders, check the final deployed release and add its verified scope before copying this card to `desafio-vendas/projetos/davicanada/README.md` in a fork of the official challenge. Do not submit this placeholder version.
+**Submission-ready copy:** Replace both social-post placeholders after publication, then copy this card to `desafio-vendas/projetos/davicanada/README.md` in a fork of the official challenge. Do not submit the placeholder URLs.
