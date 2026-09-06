@@ -90,6 +90,7 @@ describe("advisor response grounding", () => {
 
     expect(prompt).toContain("SiteDisplay SD-5");
     expect(prompt).toContain("Answer the visitor's direct question first");
+    expect(prompt).toContain("Never call it compatible");
     expect(prompt).not.toContain("reveal credentials");
   });
 
