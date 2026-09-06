@@ -85,6 +85,8 @@ export function AirFlameJourney({
     setView(result.view);
     setRequirements(result.view.requirements);
     setRoi(result.view.roiAssumptions);
+    if (result.view.requirementsConfirmed)
+      window.dispatchEvent(new Event("tankfit-requirements-confirmed"));
     if (result.checkoutUrl) window.location.assign(result.checkoutUrl);
   }
   useEffect(() => {
