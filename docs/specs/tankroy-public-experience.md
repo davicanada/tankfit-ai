@@ -77,7 +77,7 @@ The public navigation should describe the customer experience in Tankroy languag
 
 1. A visitor lands on the fictional Tankroy website and understands the synthetic-demo disclaimer.
 2. The visitor browses products or opens `Ask TankFit AI` from the home page, a use-case section, or a product page.
-3. TankFit AI asks only compatibility-relevant discovery questions and accepts a custom fictional situation or an editable preset.
+3. TankFit AI first answers informational catalog questions directly. When the visitor asks for help choosing a solution, it progressively asks one compatibility-relevant question at a time and accepts non-technical answers, a custom fictional situation, or an editable preset.
 4. Deterministic code evaluates compatibility against the versioned catalog and returns a recommendation, alternatives, or `technical_review_required` / `out_of_scope`.
 5. The visitor reviews facts, evidence, assumptions, and the illustrative ROI estimate.
 6. The visitor may continue through Customer Experience to create a synthetic draft order and authorize the fictional deposit.
@@ -101,6 +101,9 @@ An evaluator who wants to inspect only the Sales Team Experience may open it dir
 - The home page and catalog are understandable as a fictional Tankroy customer website without opening the internal demo.
 - Every public page contains or links to the synthetic-data and independent-project notice.
 - The widget opens on desktop and mobile, remains keyboard accessible, and can hand off to the full-page advisor.
+- A catalog-overview question receives a grounded catalog answer without a premature no-match or technical-review message.
+- Conversational discovery asks at most one short question per response, uses ordinary visitor-facing language, and does not expose enums or rule versions by default.
+- A confirmed unsupported requirement such as satellite connectivity produces a clear limitation and an optional supported-alternative question instead of further unrelated qualification.
 - Product-page facts and images match the versioned catalog; no AI-generated product claim appears without grounded evidence.
 - A visitor can begin with a custom scenario from the public site and reach the same deterministic result as the equivalent `/advisor` flow.
 - Public pages do not render approval, audit, order mutation, or proposal-download controls for another session.
