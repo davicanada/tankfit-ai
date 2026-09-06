@@ -9,6 +9,11 @@ import type { AdvisorMessage } from "@/lib/ai/types";
 
 const confirmedMessage =
   "This fictional opportunity is already confirmed. Continue the customer journey to review it, or reset the demo to start a new conversation.";
+const starterPrompts = [
+  "What products do you offer?",
+  "Help me choose a monitoring solution",
+  "Which connectivity options are available?",
+] as const;
 
 export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
   const [messages, setMessages] = useState<AdvisorMessage[]>([]);
@@ -19,6 +24,7 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
   const [sessionStateKnown, setSessionStateKnown] = useState(false);
   const [isResetting, startReset] = useTransition();
   const sessionEventRef = useRef(false);
+  const conversationRef = useRef<HTMLDivElement>(null);
   const locked = sessionStateKnown && requirementsConfirmed;
   useEffect(() => {
     let active = true;
@@ -59,6 +65,14 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
       window.removeEventListener("tankfit-requirements-confirmed", confirm);
     };
   }, []);
+  useEffect(() => {
+    const conversation = conversationRef.current;
+    if (!conversation || messages.length === 0) return;
+    conversation.scrollTo({
+      top: conversation.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages.length]);
   function resetDemo() {
     setError("");
     startReset(async () => {
@@ -86,25 +100,63 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
         confidential information. You can write in your preferred language.
       </p>
       <div
+        ref={conversationRef}
         role="log"
         aria-live="polite"
-        className={`${compact ? "max-h-56" : "max-h-96"} space-y-4 overflow-y-auto break-words`}
+        className={`${compact ? "max-h-72" : "max-h-[32rem]"} space-y-4 overflow-y-auto break-words pr-1`}
       >
         {messages.length === 0 && (
-          <p className="text-sm">
-            What material do your fictional tanks contain, and what problem
-            would you like to solve?
-          </p>
+          <div className="max-w-[88%] rounded-2xl rounded-tl-sm border bg-muted/35 px-4 py-3 text-sm">
+            <p className="mb-1 text-xs font-semibold text-primary">
+              TankFit AI
+            </p>
+            <p className="leading-relaxed">
+              I can explain the fictional catalog or help you narrow down a
+              monitoring solution. What would you like to know?
+            </p>
+          </div>
         )}
         {messages.map((entry, index) => (
-          <div key={index} className="rounded-md bg-muted/40 p-3 text-sm">
-            <p className="mb-1 font-semibold">
-              {entry.role === "user" ? "You" : "TankFit AI"}
-            </p>
-            <p className="whitespace-pre-wrap">{entry.content}</p>
+          <div
+            key={index}
+            className={`flex ${entry.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm ${
+                entry.role === "user"
+                  ? "rounded-tr-sm bg-primary text-primary-foreground"
+                  : "rounded-tl-sm border bg-muted/35"
+              }`}
+            >
+              <p
+                className={`mb-1 text-xs font-semibold ${
+                  entry.role === "user" ? "opacity-80" : "text-primary"
+                }`}
+              >
+                {entry.role === "user" ? "You" : "TankFit AI"}
+              </p>
+              <p className="whitespace-pre-wrap leading-relaxed">
+                {entry.content}
+              </p>
+            </div>
           </div>
         ))}
       </div>
+      {messages.length === 0 && !locked && (
+        <div aria-label="Suggested conversation starters" className="flex flex-wrap gap-2">
+          {starterPrompts.map((prompt) => (
+            <Button
+              key={prompt}
+              onClick={() => setMessage(prompt)}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {prompt}
+            </Button>
+          ))}
+        </div>
+      )}
       <form
         className="space-y-3"
         onSubmit={async (e) => {
@@ -147,6 +199,7 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
             value={message}
             maxLength={1200}
             disabled={pending || isResetting || locked}
+            placeholder="Ask about the catalog, or describe what you need to monitor."
             onChange={(e) => setMessage(e.target.value)}
           />
         </label>

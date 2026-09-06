@@ -11,9 +11,20 @@ test("public catalog and widget do not expose staff controls", async ({
   await page
     .getByRole("button", { name: "Ask TankFit AI", exact: true })
     .click();
+  const widget = page.getByRole("region", {
+    name: "Ask TankFit AI",
+    exact: true,
+  });
+  await expect(widget).toBeVisible();
+  await expect(widget).toContainText(
+    "I can explain the fictional catalog or help you narrow down",
+  );
+  await widget
+    .getByRole("button", { name: "What products do you offer?" })
+    .click();
   await expect(
-    page.getByRole("region", { name: "Ask TankFit AI", exact: true }),
-  ).toBeVisible();
+    widget.getByRole("textbox", { name: "Message to TankFit AI" }),
+  ).toHaveValue("What products do you offer?");
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "Ask TankFit AI", exact: true }),
