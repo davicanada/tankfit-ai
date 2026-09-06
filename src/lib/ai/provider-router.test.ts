@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { LanguageModel } from "ai";
 import { evaluateCompatibility } from "@/domain/compatibility/evaluate";
 import { scenarioPresets } from "@/domain/compatibility/presets";
+import { defaultAirFlameRequirements } from "@/domain/journey/types";
 import { catalog } from "@/lib/catalog";
+import { buildAdvisorConversationContext } from "./conversation-context";
 import {
   createProviderCandidate,
   resetProviderCircuitsForTests,
@@ -27,6 +29,10 @@ const compatibility = evaluateCompatibility(
   scenarioPresets[0].requirements,
 );
 const messages = [{ role: "user" as const, content: "Explain this result." }];
+const conversationContext = buildAdvisorConversationContext({
+  messages,
+  requirements: defaultAirFlameRequirements,
+});
 
 describe("AI provider routing", () => {
   beforeEach(() => resetProviderCircuitsForTests());
@@ -45,6 +51,7 @@ describe("AI provider routing", () => {
       candidates: [candidate("gemini"), candidate("cerebras")],
       messages,
       compatibility,
+      conversationContext,
       timeoutMs: 5_000,
       maxOutputTokens: 300,
       generate: async ({ candidate: current }) => {
@@ -73,6 +80,7 @@ describe("AI provider routing", () => {
         { role: "user", content: "Explain the valid recommendation." },
       ],
       compatibility,
+      conversationContext,
       timeoutMs: 5_000,
       maxOutputTokens: 300,
       generate: async ({ messages: modelMessages }) => {
@@ -94,6 +102,7 @@ describe("AI provider routing", () => {
       candidates: [candidate("gemini", null), candidate("groq", null)],
       messages,
       compatibility,
+      conversationContext,
       timeoutMs: 5_000,
       maxOutputTokens: 300,
       generate: async () => {
@@ -103,7 +112,8 @@ describe("AI provider routing", () => {
 
     expect(reply.mode).toBe("deterministic");
     expect(reply.provider).toBeNull();
-    expect(reply.answer).toContain("compatibility rule version");
+    expect(reply.answer).toContain("strongest catalog match");
+    expect(reply.answer).not.toContain("rule version");
     expect(
       reply.attempts.every(({ outcome }) => outcome === "not_configured"),
     ).toBe(true);
@@ -114,6 +124,7 @@ describe("AI provider routing", () => {
       candidates: [candidate("gemini"), candidate("groq")],
       messages,
       compatibility,
+      conversationContext,
       timeoutMs: 5_000,
       maxOutputTokens: 300,
       generate: async ({ candidate: current }) => {
@@ -143,6 +154,7 @@ describe("AI provider routing", () => {
         candidates: [failingCandidate],
         messages,
         compatibility,
+        conversationContext,
         timeoutMs: 5_000,
         maxOutputTokens: 300,
         generate,
@@ -154,6 +166,7 @@ describe("AI provider routing", () => {
       candidates: [failingCandidate],
       messages,
       compatibility,
+      conversationContext,
       timeoutMs: 5_000,
       maxOutputTokens: 300,
       generate: async () => {

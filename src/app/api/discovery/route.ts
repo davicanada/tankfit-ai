@@ -7,6 +7,10 @@ import {
   recordSessionEvent,
 } from "@/lib/journey-service";
 import { extractAirFlameBrief } from "@/lib/ai/discovery";
+import {
+  boundAdvisorAnswer,
+  buildAdvisorConversationContext,
+} from "@/lib/ai/conversation-context";
 import { evaluateJourney } from "@/domain/journey/evaluate";
 import {
   generateAdvisorResponse,
@@ -56,8 +60,10 @@ export async function POST(request: Request) {
     .safeParse(body.value);
   if (!input.success)
     return json({ error: "Use a short fictional message." }, 400);
+  let stage = "ensure_session";
   try {
     await ensureDemoSession();
+    stage = "read_session";
     const session = await requireDemoSession();
     if (session.requirementsConfirmed)
       return json(
@@ -86,6 +92,7 @@ export async function POST(request: Request) {
         },
         400,
       );
+    stage = "extract_requirements";
     const extractionAllowed = await reserveDailyAiRequest("discovery").catch(
       () => false,
     );
@@ -95,23 +102,35 @@ export async function POST(request: Request) {
       aiAllowed: extractionAllowed,
     });
     const compatibility = evaluateJourney(result.requirements);
+    const conversationContext = buildAdvisorConversationContext({
+      messages,
+      requirements: result.requirements,
+    });
     const answerAllowed = await reserveDailyAiRequest("advisor").catch(
       () => false,
     );
+    stage = "generate_answer";
     const reply = answerAllowed
       ? await generateAdvisorResponse({
           messages,
           compatibility,
+          conversationContext,
           abortSignal: request.signal,
         })
-      : createDeterministicAdvisorReply(compatibility);
-    const answer = reply.answer.slice(0, 1200);
+      : createDeterministicAdvisorReply(compatibility, conversationContext);
+    const answer = boundAdvisorAnswer(
+      reply.answer,
+      1_200,
+      conversationContext.technicalTraceRequested,
+    );
+    stage = "save_conversation";
     await saveDiscovery(
       session.id,
       result.requirements,
       [...messages, { role: "assistant", content: answer }],
       session.discoveryMessages,
     );
+    stage = "record_audit";
     await recordSessionEvent(session.id, "conversation_turn", {
       provider: reply.provider,
       model: reply.model,
@@ -120,6 +139,8 @@ export async function POST(request: Request) {
       estimatedCostUsd: null,
       costStatus: "Billing unavailable; global request caps apply",
       compatibility: compatibility.status,
+      conversationIntent: conversationContext.intent,
+      unsupportedConstraints: conversationContext.unsupportedConstraints,
     });
     return json({
       messages: [...messages, { role: "assistant", content: answer }],
@@ -127,6 +148,7 @@ export async function POST(request: Request) {
       guidedReviewRequired: result.mode === "deterministic",
     });
   } catch {
+    console.warn("ai.discovery.request_failed", { stage });
     return json(
       {
         error:

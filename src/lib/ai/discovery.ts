@@ -60,6 +60,38 @@ export function reconcileExplicitMaterial(
   return requirements;
 }
 
+const explicitTankTypePatterns: Record<
+  Exclude<AirFlameRequirements["tankType"], "unknown">,
+  RegExp
+> = {
+  above_ground_horizontal:
+    /above[ -]?ground.{0,30}horizontal|horizontal.{0,30}above[ -]?ground|acima do solo.{0,30}horizontal|horizontal.{0,30}acima do solo/iu,
+  above_ground_vertical:
+    /above[ -]?ground.{0,30}vertical|vertical.{0,30}above[ -]?ground|acima do solo.{0,30}vertical|vertical.{0,30}acima do solo/iu,
+  open_top_process_tank:
+    /open[ -]?top (?:process )?tank|tanque (?:de processo )?aberto/iu,
+  underground_vented:
+    /underground.{0,30}vented|vented.{0,30}underground|subterrane[oa].{0,30}ventilad[oa]|ventilad[oa].{0,30}subterrane[oa]/iu,
+  above_ground_pressurized_horizontal:
+    /above[ -]?ground.{0,40}pressuri[sz]ed.{0,30}horizontal|horizontal.{0,30}pressuri[sz]ed.{0,40}above[ -]?ground|acima do solo.{0,40}pressurizad[oa].{0,30}horizontal/iu,
+  above_ground_pressurized_vertical:
+    /above[ -]?ground.{0,40}pressuri[sz]ed.{0,30}vertical|vertical.{0,30}pressuri[sz]ed.{0,40}above[ -]?ground|acima do solo.{0,40}pressurizad[oa].{0,30}vertical/iu,
+  upright_cylinder: /upright cylinder|cilindro vertical/iu,
+  upright_cylinder_bank:
+    /upright cylinder bank|bank of upright cylinders|banco de cilindros verticais/iu,
+};
+
+/** Do not turn dimensions or a material into an unstated tank orientation. */
+export function reconcileExplicitTankType(
+  requirements: AirFlameRequirements,
+  brief: string,
+): AirFlameRequirements {
+  if (requirements.tankType === "unknown") return requirements;
+  return explicitTankTypePatterns[requirements.tankType].test(brief)
+    ? requirements
+    : { ...requirements, tankType: "unknown" };
+}
+
 /** A new brief never implicitly confirms unmentioned preset facts. */
 export function normalizeExtraction(value: unknown): AirFlameRequirements {
   return airFlameRequirementsSchema.parse({
@@ -173,8 +205,11 @@ export async function extractAirFlameBrief(input: {
         providerOptions: candidate.providerOptions,
       });
       return {
-        requirements: reconcileExplicitMaterial(
-          normalizeExtraction(result.output),
+        requirements: reconcileExplicitTankType(
+          reconcileExplicitMaterial(
+            normalizeExtraction(result.output),
+            input.brief,
+          ),
           input.brief,
         ),
         mode: "ai" as const,

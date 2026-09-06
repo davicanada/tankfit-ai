@@ -96,3 +96,57 @@ for (const [language, message] of cases) {
     }
   });
 }
+
+test("keep a Portuguese novice catalog conversation concise and grounded", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    process.env.E2E_LIVE_AI !== "1" ||
+      process.env.E2E_DATABASE !== "1" ||
+      testInfo.project.name !== "chromium",
+    "Requires explicit live-provider and isolated-database opt-in.",
+  );
+  await page.goto("/demo/customer");
+
+  const turns: { message: string; answer: string }[] = [];
+  const send = async (message: string) => {
+    const result = await page.evaluate(async (visitorMessage) => {
+      const response = await fetch("/api/discovery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: visitorMessage }),
+      });
+      return { status: response.status, body: await response.json() };
+    }, message);
+    expect(result.status).toBe(200);
+    const answer = String(result.body.messages.at(-1)?.content ?? "");
+    expect(answer.length).toBeGreaterThan(10);
+    expect(answer.length).toBeLessThanOrEqual(1_200);
+    expect((answer.match(/\?/g) ?? []).length).toBeLessThanOrEqual(1);
+    expect(answer).not.toMatch(
+      /technical_review_required|lte_m|above_ground_|2026\.08\.1\/operating-/i,
+    );
+    turns.push({ message, answer });
+    return answer;
+  };
+
+  const catalogAnswer = await send("Quais produtos vocês vendem?");
+  expect(catalogAnswer).not.toMatch(/nenhum produto.*atende/i);
+
+  await send("É um tanque de propano com 15 metros de altura.");
+  const satelliteAnswer = await send(
+    "Preciso de conectividade via satélite e a temperatura fica entre 20 e 40 graus Celsius.",
+  );
+  expect(satelliteAnswer).toMatch(/sat[eé]lite/i);
+
+  const frequencyAnswer = await send(
+    "Há bocais flangeados. Quais frequências de leitura vocês oferecem?",
+  );
+  expect(frequencyAnswer).toMatch(/di[aá]ri|seman|daily|weekly/i);
+  expect(frequencyAnswer).toMatch(/sat[eé]lite/i);
+
+  await testInfo.attach("portuguese-novice-conversation", {
+    body: JSON.stringify(turns, null, 2),
+    contentType: "application/json",
+  });
+});

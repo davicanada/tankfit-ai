@@ -204,9 +204,13 @@ An evaluator may also open the Demo Hub first. Customer Experience starts the pu
 ### FR-1: Conversational Discovery
 
 - The system must accept a free-text description of the customer's application.
+- The system must distinguish an informational catalog question from a request to qualify a solution and answer the visitor's direct question before collecting requirements.
 - The system must extract structured requirements from the conversation.
-- The system must ask for missing fields that affect compatibility.
+- During solution discovery, the system must ask no more than one short, compatibility-relevant question per response and allow the visitor to answer in non-technical language.
 - The system should avoid asking questions that do not affect the MVP decision.
+- When a confirmed hard requirement is unsupported by every catalog product, the system must say so plainly and stop collecting unrelated details; it may ask whether a supported alternative is acceptable.
+- Visitor-facing responses must not expose internal enum values, status identifiers, or rule versions unless the visitor explicitly requests technical traceability.
+- The advisor should avoid repeating disclaimers already visible in the interface and should direct the visitor to the guided form only when review or confirmation is the relevant next step.
 - The visitor must be able to review and edit the extracted requirements.
 - The system must support custom fictional scenarios that are not pre-associated with AirFlame Fuels, AgricuFlow Cooperative, or Boreal Beverage Group.
 - The system must classify unsupported materials or applications as `out_of_scope` and incomplete or uncertain supported applications as `technical_review_required`.

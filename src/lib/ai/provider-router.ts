@@ -13,6 +13,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, type LanguageModel, type ModelMessage } from "ai";
 import type { CompatibilityResult } from "@/domain/compatibility/types";
 import { getAiConfiguration, type ProviderConfiguration } from "./config";
+import type { AdvisorConversationContext } from "./conversation-context";
 import { createDeterministicAdvisorResponse } from "./deterministic-response";
 import { buildAdvisorSystemPrompt } from "./prompt";
 import type {
@@ -182,6 +183,7 @@ export async function routeAdvisorResponse(input: {
   candidates: ProviderCandidate[];
   messages: AdvisorMessage[];
   compatibility: CompatibilityResult;
+  conversationContext: AdvisorConversationContext;
   timeoutMs: number;
   maxOutputTokens: number;
   generate?: GenerateCandidate;
@@ -191,7 +193,10 @@ export async function routeAdvisorResponse(input: {
   const attempts: ProviderAttempt[] = [];
   const now = input.now ?? Date.now;
   const runCandidate = input.generate ?? generateCandidate;
-  const system = buildAdvisorSystemPrompt(input.compatibility);
+  const system = buildAdvisorSystemPrompt(
+    input.compatibility,
+    input.conversationContext,
+  );
   const transcript = JSON.stringify(
     input.messages.map((message, index) => ({
       index: index + 1,
@@ -278,15 +283,23 @@ export async function routeAdvisorResponse(input: {
     }
   }
 
-  return createDeterministicAdvisorReply(input.compatibility, attempts);
+  return createDeterministicAdvisorReply(
+    input.compatibility,
+    input.conversationContext,
+    attempts,
+  );
 }
 
 export function createDeterministicAdvisorReply(
   compatibility: CompatibilityResult,
+  conversationContext: AdvisorConversationContext,
   attempts: ProviderAttempt[] = [],
 ): AdvisorReply {
   return {
-    answer: createDeterministicAdvisorResponse(compatibility),
+    answer: createDeterministicAdvisorResponse(
+      compatibility,
+      conversationContext,
+    ),
     mode: "deterministic",
     provider: null,
     model: null,
@@ -302,6 +315,7 @@ export function createDeterministicAdvisorReply(
 export async function generateAdvisorResponse(input: {
   messages: AdvisorMessage[];
   compatibility: CompatibilityResult;
+  conversationContext: AdvisorConversationContext;
   abortSignal?: AbortSignal;
 }) {
   const configuration = getAiConfiguration();
@@ -309,6 +323,7 @@ export async function generateAdvisorResponse(input: {
     candidates: configuration.providers.map(createProviderCandidate),
     messages: input.messages,
     compatibility: input.compatibility,
+    conversationContext: input.conversationContext,
     timeoutMs: configuration.timeoutMs,
     maxOutputTokens: configuration.maxOutputTokens,
     abortSignal: input.abortSignal,
