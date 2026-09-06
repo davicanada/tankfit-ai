@@ -1,35 +1,80 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { resetJourneyAction } from "@/app/demo/actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { AdvisorMessage } from "@/lib/ai/types";
+
+const confirmedMessage =
+  "This fictional opportunity is already confirmed. Continue the customer journey to review it, or reset the demo to start a new conversation.";
 
 export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
   const [messages, setMessages] = useState<AdvisorMessage[]>([]);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [requirementsConfirmed, setRequirementsConfirmed] = useState(false);
+  const [sessionStateKnown, setSessionStateKnown] = useState(false);
+  const [isResetting, startReset] = useTransition();
+  const sessionEventRef = useRef(false);
+  const locked = sessionStateKnown && requirementsConfirmed;
   useEffect(() => {
     let active = true;
     const reset = () => {
+      sessionEventRef.current = true;
       setMessages([]);
       setMessage("");
       setError("");
+      setRequirementsConfirmed(false);
+      setSessionStateKnown(true);
+    };
+    const confirm = () => {
+      sessionEventRef.current = true;
+      setMessage("");
+      setError("");
+      setRequirementsConfirmed(true);
+      setSessionStateKnown(true);
     };
     window.addEventListener("tankfit-session-reset", reset);
+    window.addEventListener("tankfit-requirements-confirmed", confirm);
     fetch("/api/discovery")
       .then((r) => r.json())
       .then((data) => {
-        if (active && Array.isArray(data.messages)) setMessages(data.messages);
+        if (!active) return;
+        if (sessionEventRef.current) return;
+        if (Array.isArray(data.messages)) setMessages(data.messages);
+        const confirmed = data.requirementsConfirmed === true;
+        setRequirementsConfirmed(confirmed);
+        if (confirmed) setMessage("");
+        setSessionStateKnown(true);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) setSessionStateKnown(true);
+      });
     return () => {
       active = false;
       window.removeEventListener("tankfit-session-reset", reset);
+      window.removeEventListener("tankfit-requirements-confirmed", confirm);
     };
   }, []);
+  function resetDemo() {
+    setError("");
+    startReset(async () => {
+      const result = await resetJourneyAction();
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setRequirementsConfirmed(false);
+      setSessionStateKnown(true);
+      setMessages([]);
+      setMessage("");
+      window.dispatchEvent(new Event("tankfit-session-reset"));
+      window.dispatchEvent(new Event("tankfit-discovery-updated"));
+    });
+  }
   return (
     <section
       aria-label="TankFit AI conversation"
@@ -64,7 +109,7 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
         className="space-y-3"
         onSubmit={async (e) => {
           e.preventDefault();
-          if (pending || !message.trim()) return;
+          if (pending || isResetting || locked || !message.trim()) return;
           setPending(true);
           setError("");
           try {
@@ -74,6 +119,12 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
               body: JSON.stringify({ message }),
             });
             const result = await response.json();
+            if (response.status === 409) {
+              setRequirementsConfirmed(true);
+              setSessionStateKnown(true);
+              setMessage("");
+              throw new Error(confirmedMessage);
+            }
             if (!response.ok)
               throw new Error(result.error ?? "Conversation unavailable.");
             setMessages(result.messages);
@@ -95,23 +146,46 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
           <Textarea
             value={message}
             maxLength={1200}
-            disabled={pending}
+            disabled={pending || isResetting || locked}
             onChange={(e) => setMessage(e.target.value)}
           />
         </label>
-        <Button disabled={pending || !message.trim()} type="submit">
+        <Button
+          disabled={pending || isResetting || locked || !message.trim()}
+          type="submit"
+        >
           {pending ? "Thinking…" : "Send message"}
         </Button>
-        <p role="status" className="text-sm text-amber-200">
-          {error}
-        </p>
+        {(error || locked) && (
+          <p role="status" className="text-sm text-amber-200">
+            {error || confirmedMessage}
+          </p>
+        )}
+        {locked && (
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm">
+              <Link href="/demo/customer">Continue customer journey</Link>
+            </Button>
+            <Button
+              disabled={isResetting}
+              onClick={resetDemo}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {isResetting ? "Resetting…" : "Reset demo"}
+            </Button>
+          </div>
+        )}
       </form>
-      <Link
-        className="block text-sm text-primary underline"
-        href="/demo/customer"
-      >
-        Review facts and continue the customer journey
-      </Link>
+      {!locked && (
+        <Link
+          className="block text-sm text-primary underline"
+          href="/demo/customer"
+        >
+          Review facts and continue the customer journey
+        </Link>
+      )}
     </section>
   );
 }

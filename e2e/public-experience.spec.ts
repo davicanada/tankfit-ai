@@ -49,6 +49,83 @@ test("demo hub separates customer and sales perspectives", async ({ page }) => {
   );
 });
 
+test("confirmed sessions lock the public chat with clear next actions", async ({
+  page,
+}) => {
+  test.skip(
+    process.env.E2E_DATABASE !== "1",
+    "Requires a configured isolated demo database and session signing secret.",
+  );
+  await page.goto("/demo/customer");
+  const journeyReset = page.getByRole("button", {
+    name: "Reset demo",
+    exact: true,
+  });
+  await expect(journeyReset).toBeVisible({ timeout: 20000 });
+  try {
+    await journeyReset.click();
+    await expect(
+      page.getByRole("button", { name: "AirFlame Fuels", exact: true }),
+    ).toBeEnabled({ timeout: 20000 });
+    await page
+      .getByRole("button", { name: "AirFlame Fuels", exact: true })
+      .click();
+    await expect(page.getByText("Guided assessment: Compatible")).toBeVisible();
+    await page
+      .getByRole("button", { name: "Confirm requirements", exact: true })
+      .click();
+
+    const chat = page.getByRole("region", {
+      name: "TankFit AI conversation",
+      exact: true,
+    });
+    await expect(
+      chat.getByRole("textbox", { name: "Message to TankFit AI" }),
+    ).toBeDisabled({ timeout: 20000 });
+    await expect(chat).toContainText("already confirmed");
+    await expect(
+      chat.getByRole("link", { name: "Continue customer journey" }),
+    ).toBeVisible();
+    await expect(
+      chat.getByRole("button", { name: "Reset demo", exact: true }),
+    ).toBeVisible();
+
+    await chat.getByRole("button", { name: "Reset demo", exact: true }).click();
+    await expect(
+      chat.getByRole("textbox", { name: "Message to TankFit AI" }),
+    ).toBeEnabled({ timeout: 20000 });
+    await expect(
+      page.getByRole("textbox", { name: "Operational brief" }),
+    ).toBeEnabled({ timeout: 20000 });
+    await expect(
+      page.getByRole("button", { name: "Create draft order", exact: true }),
+    ).toHaveCount(0);
+
+    await page
+      .getByRole("button", { name: "AirFlame Fuels", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Confirm requirements", exact: true })
+      .click();
+    await page.reload();
+    const reloadedChat = page.getByRole("region", {
+      name: "TankFit AI conversation",
+      exact: true,
+    });
+    await expect(
+      reloadedChat.getByRole("textbox", { name: "Message to TankFit AI" }),
+    ).toBeDisabled({ timeout: 20000 });
+    await expect(reloadedChat).toContainText("already confirmed");
+  } finally {
+    await page.goto("/demo/customer");
+    const finalReset = page.getByRole("button", {
+      name: "Reset demo",
+      exact: true,
+    });
+    if (await finalReset.isVisible()) await finalReset.click();
+  }
+});
+
 test("public API rejects cross-origin mutation and unsigned payment callbacks", async ({
   request,
 }) => {

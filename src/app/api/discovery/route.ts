@@ -29,12 +29,16 @@ const json = (body: unknown, status = 200) =>
   });
 
 export async function GET() {
-  if (!(await readSessionId())) return json({ messages: [] });
+  if (!(await readSessionId()))
+    return json({ messages: [], requirementsConfirmed: false });
   try {
     const session = await requireDemoSession();
-    return json({ messages: session.discoveryMessages });
+    return json({
+      messages: session.discoveryMessages,
+      requirementsConfirmed: session.requirementsConfirmed,
+    });
   } catch {
-    return json({ messages: [] });
+    return json({ messages: [], requirementsConfirmed: false });
   }
 }
 
