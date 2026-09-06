@@ -40,6 +40,9 @@ not create a compatible product or alter the normalized requirements.
 
 The deterministic provider fallback follows the same intent-aware presentation
 rules so a provider outage does not return internal implementation language.
+Because inferred geometry can create a misleading fit, a model-extracted tank
+orientation is retained only when the visitor explicitly names the relevant
+orientation and installation form; dimensions or material alone are not enough.
 
 ## Alternatives Considered
 
@@ -69,5 +72,7 @@ visitors who have not asked for qualification.
   remain excluded from conversational evidence.
 - Intent classification affects wording only and cannot override deterministic
   business rules.
+- A model cannot infer a vertical, horizontal, underground, pressurized, or
+  cylinder arrangement solely from dimensions or stored material.
 - Multilingual phrasing still depends on the provider on a best-effort basis;
   the deterministic fallback remains safe and concise.

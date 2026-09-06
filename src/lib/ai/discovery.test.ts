@@ -5,6 +5,7 @@ import {
   deterministicExtraction,
   normalizeExtraction,
   reconcileExplicitMaterial,
+  reconcileExplicitTankType,
 } from "./discovery";
 
 describe("AirFlame discovery fallback", () => {
@@ -59,6 +60,24 @@ describe("AirFlame discovery fallback", () => {
         "Fictional tanks contain ammonia.",
       ).material,
     ).toBe("unsupported");
+  });
+  it("does not infer tank orientation from height or stored material", () => {
+    const inferred = normalizeExtraction({
+      material: "propane",
+      tankType: "above_ground_vertical",
+    });
+    expect(
+      reconcileExplicitTankType(
+        inferred,
+        "É um tanque de propano com 15 metros de altura.",
+      ).tankType,
+    ).toBe("unknown");
+    expect(
+      reconcileExplicitTankType(
+        inferred,
+        "É um tanque vertical acima do solo para propano.",
+      ).tankType,
+    ).toBe("above_ground_vertical");
   });
   it("rejects provider authority and mass assignment", () => {
     expect(() => normalizeExtraction({ approved: true, price: 1 })).toThrow();
