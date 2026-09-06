@@ -72,6 +72,7 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
       setMessages([]);
       setMessage("");
       window.dispatchEvent(new Event("tankfit-session-reset"));
+      window.dispatchEvent(new Event("tankfit-discovery-updated"));
     });
   }
   return (

@@ -90,6 +90,23 @@ test("confirmed sessions lock the public chat with clear next actions", async ({
       chat.getByRole("button", { name: "Reset demo", exact: true }),
     ).toBeVisible();
 
+    await chat.getByRole("button", { name: "Reset demo", exact: true }).click();
+    await expect(
+      chat.getByRole("textbox", { name: "Message to TankFit AI" }),
+    ).toBeEnabled({ timeout: 20000 });
+    await expect(
+      page.getByRole("textbox", { name: "Operational brief" }),
+    ).toBeEnabled({ timeout: 20000 });
+    await expect(
+      page.getByRole("button", { name: "Create draft order", exact: true }),
+    ).toHaveCount(0);
+
+    await page
+      .getByRole("button", { name: "AirFlame Fuels", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Confirm requirements", exact: true })
+      .click();
     await page.reload();
     const reloadedChat = page.getByRole("region", {
       name: "TankFit AI conversation",
