@@ -18,4 +18,4 @@ Explore the code and engineering decisions: https://github.com/davicanada/tankfi
 
 #AIEngineering #TypeScript #NextJS #PostgreSQL #Stripe #Vercel #PortfolioProject #JornadaDeDados
 
-Before publishing, add one or two screenshots and tag the official Jornada de Dados page if desired. After publishing, copy the clean post URL without tracking query parameters into `docs/submission/project-card.md`.
+Before publishing, attach `docs/submission/assets/tankfit-ai-home.png` and optionally add a screenshot of the Customer/Sales flow. Tag the official Jornada de Dados page if desired. After publishing, copy the clean post URL without tracking query parameters into `docs/submission/project-card.md`.

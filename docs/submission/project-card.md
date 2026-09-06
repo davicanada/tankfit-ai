@@ -16,6 +16,8 @@ The project explores a consultative sales journey: describe a need, validate a m
 
 The language model decides what to say; deterministic code decides what can happen. One Next.js application shares a catalog, session contract and domain pipeline across a public Tankroy site, an embedded advisor, Customer Experience and Sales Team Experience.
 
+![TankFit AI public fictional Tankroy website](assets/tankfit-ai-home.png)
+
 ```mermaid
 flowchart LR
     Visitor[Visitor] --> Advisor[TankFit AI]
