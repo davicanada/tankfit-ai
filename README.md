@@ -6,9 +6,9 @@ This is an independent personal project by **Davi Almeida**, created with exclus
 
 ## Current Status
 
-The deployed baseline supports the original AirFlame demonstration. The completion branch adds the fictional Tankroy public site, embedded and full-page conversation, a Demo Hub, Customer Experience and Sales Team Experience. Orders use frozen solution snapshots and serialized database transitions. The new payment path requires Stripe sandbox configuration; it never falls back silently to a mock.
+The submission-ready release is deployed at [tankfit-ai.vercel.app](https://tankfit-ai.vercel.app/). It includes the fictional Tankroy public site, embedded and full-page conversation, a Demo Hub, Customer Experience, Sales Team Experience, Stripe-hosted test Checkout, session-scoped approval, audit history, and on-demand demo proposal generation.
 
-These surfaces share one deployment and session contract. Sales Team Experience can continue the evaluator's own opportunity or explicitly create a private prepared AirFlame draft. Preparing a fixture never bypasses test payment, compatibility or approval. Implementation is not a release claim: sandbox verification, final regression evidence and owner review must be complete before the new revision replaces production.
+Orders use frozen solution snapshots and serialized database transitions. Sales Team Experience can continue only the evaluator's own opportunity or explicitly create a private prepared AirFlame draft. Preparing a fixture never bypasses test payment, compatibility, current commerce validation, or approval. The production AirFlame journey has been completed with a Stripe sandbox payment, explicit demo-staff approval, and a visually verified two-page proposal. See [Final Release Verification](docs/final-release-verification-2026-09-06.md).
 
 ## Run Locally
 
