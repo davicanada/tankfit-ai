@@ -2,6 +2,9 @@
 
 Use fictional information and test payment details only. This is Davi Almeida's independent Jornada de Dados project, not a real supplier or employee system.
 
+For a narrated end-to-end example with dialogue and expected system states, see
+[Full Fictional Workflow Simulation](submission/full-workflow-simulation.md).
+
 ## Customer Experience
 
 1. Open the Tankroy home page, browse a product and open **Ask TankFit AI**.
