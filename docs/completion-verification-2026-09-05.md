@@ -1,5 +1,7 @@
 # Completion Verification — September 5, 2026
 
+> Historical baseline record. The September 6 consultative-sales revision supersedes its payment-first ordering; do not use this document as evidence for the current branch until the revised flow is reverified.
+
 Branch: `codex/competition-completion` at `2cfda05`. This record is not a submission certificate.
 
 ## Executed

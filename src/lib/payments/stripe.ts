@@ -116,7 +116,8 @@ export async function reconcileTestCheckout(sessionId: string) {
   const order = await getDb().query.demoOrders.findFirst({
     where: and(
       eq(demoOrders.sessionId, sessionId),
-      eq(demoOrders.status, "draft"),
+      eq(demoOrders.status, "accepted"),
+      eq(demoOrders.workflowVersion, 2),
     ),
   });
   if (!order?.checkoutSessionId)

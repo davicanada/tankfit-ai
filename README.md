@@ -1,14 +1,14 @@
 # TankFit AI
 
-TankFit AI is a public, AI-assisted sales advisor for Tankroy Systems Inc., a fictional Canadian remote tank-monitoring company. A visitor may choose an editable sample scenario or describe an independent custom fictional situation. The application identifies compatible fictional products, explains a deterministic ROI estimate, creates a draft order, completes a simulated checkout, passes through a human approval gate, and produces a clearly marked demo proposal.
+TankFit AI is a public, AI-assisted sales advisor for Tankroy Systems Inc., a fictional Canadian remote tank-monitoring company. A visitor may choose an editable sample scenario or describe a custom fictional situation. An incomplete opportunity can reach Sales for clarification. A validated pilot request passes through human approval and an issued demo proposal, then explicit customer acceptance and Stripe test Checkout. Revisions preserve history. See the [complete workflow simulation](docs/submission/full-workflow-simulation.md).
 
 This is an independent personal project by **Davi Almeida**, created with exclusively synthetic information for the **Jornada de Dados** competition. Every company, person, product, specification, price, inventory value, transaction, and document represented here is fictional.
 
 ## Current Status
 
-The submission-ready release is deployed at [tankfit-ai.vercel.app](https://tankfit-ai.vercel.app/). It includes the fictional Tankroy public site, embedded and full-page conversation, a Demo Hub, Customer Experience, Sales Team Experience, Stripe-hosted test Checkout, session-scoped approval, audit history, and on-demand demo proposal generation.
+The deployed preview contains the fictional Tankroy public site, embedded and full-page conversation, a Demo Hub, Customer Experience, Sales Team Experience, Stripe-hosted test Checkout, session-scoped approval, audit history, and on-demand demo proposal generation. The consultative-sales revision is being validated on the feature branch before it is presented as the final submission.
 
-Orders use frozen solution snapshots and serialized database transitions. Sales Team Experience can continue only the evaluator's own opportunity or explicitly create a private prepared AirFlame draft. Preparing a fixture never bypasses test payment, compatibility, current commerce validation, or approval. The production AirFlame journey has been completed with a Stripe sandbox payment, explicit demo-staff approval, and a visually verified two-page proposal. See [Final Release Verification](docs/final-release-verification-2026-09-06.md).
+Orders use frozen solution snapshots and serialized database transitions. Sales Team Experience can continue only the evaluator's own opportunity or explicitly create a private prepared AirFlame request. Preparing a fixture never bypasses compatibility, current commerce validation, approval, proposal acceptance, or test payment. The dated release-verification files document the earlier payment-first baseline; fresh verification of this consultative revision is required before submission.
 
 ## Run Locally
 
@@ -42,18 +42,21 @@ AirFlame, AgricuFlow, and Boreal Beverage are optional presets and repeatable te
 - [Product Requirements Document](docs/prd.md)
 - [Architecture](docs/architecture.md)
 - [AirFlame Pilot SPEC](docs/specs/airflame-pilot.md)
+- [Consultative Sales SPEC](docs/specs/consultative-sales.md)
 - [Tankroy Public Experience SPEC](docs/specs/tankroy-public-experience.md)
 - [Architecture Decision Records](docs/adrs)
 - [Engineering Process](docs/engineering-process.md)
 - [Security Threat Model](docs/security-threat-model.md)
 - [Security Policy](SECURITY.md)
 - [Release Readiness](docs/release-readiness.md)
+- [Consultative Revision Verification](docs/consultative-release-verification-2026-09-06.md)
 - [Product Image Prompts](docs/product-image-prompts.md)
 - [Company Logo Prompts](docs/company-logo-prompts.md)
 - [Asset Provenance](docs/asset-provenance.md)
 - [Coding-Agent Harness and Rationale](docs/agent-harness.md)
 - [Agent Context and Rules](AGENTS.md)
 - [Completion Safety and Test Payments](docs/adrs/0008-completion-safety-and-test-payments.md)
+- [Consultative Sales Lifecycle ADR](docs/adrs/0011-consultative-sales-lifecycle.md)
 - [Draft Submission Card](docs/submission/project-card.md)
 
 ## Catalog

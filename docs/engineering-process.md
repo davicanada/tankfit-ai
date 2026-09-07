@@ -32,9 +32,9 @@ When the application is scaffolded, the protected branch will additionally requi
 
 - Type checking
 - Linting
-- Unit tests for compatibility, ROI, order state, approval, and provider routing
+- Unit tests for compatibility, recurring-cost ROI, order state, approval, proposal acceptance, revisions, and provider routing
 - Integration tests for database-scoped sessions and transaction revalidation
-- End-to-end test for the AirFlame happy path and major failure paths
+- End-to-end test for the AirFlame consultative happy path and major failure paths
 - Browser tests for the public Tankroy surface, Demo Hub, Customer Experience, Sales Team Experience, embedded advisor handoff, mobile behavior, and forbidden staff-control exposure
 - Integration tests for prepared sales-fixture creation, provenance, idempotency, deterministic validation, and two-session isolation
 - Negative tests mapped to `docs/security-threat-model.md`
@@ -61,13 +61,14 @@ AI-generated code is treated as untrusted until Davi Almeida reviews the diff an
 
 1. Merge a reviewed pull request into `main`.
 2. Let Vercel create and verify the production deployment.
-3. Run the AirFlame end-to-end smoke test.
+3. Run the AirFlame end-to-end smoke test in the order: request, approval, proposal, customer acceptance, then test payment.
 4. Confirm deterministic mode with AI keys disabled.
 5. Confirm the synthetic-data disclaimer and proposal watermark.
 6. Confirm that expired or foreign sessions cannot be accessed.
-7. Record known limitations in the release notes or README.
-8. Confirm there is no unresolved critical or high-severity security finding.
-9. Verify the public Tankroy website can launch the advisor and that both Demo Hub modes complete their documented AirFlame paths.
+7. Confirm that a revision preserves the previous snapshot and requires fresh approval.
+8. Record known limitations in the release notes or README.
+9. Confirm there is no unresolved critical or high-severity security finding.
+10. Verify the public Tankroy website can launch the advisor and that both Demo Hub modes complete their documented AirFlame paths.
 
 ## 6. Security Change Review
 
@@ -84,7 +85,7 @@ Firewall rules begin in log mode and are promoted only after false-positive revi
 
 The public Tankroy website and the session-scoped sales workspace are one product change with a deliberate review boundary. Before implementation:
 
-1. Update the PRD, [`specs/tankroy-public-experience.md`](specs/tankroy-public-experience.md), architecture, threat model, and ADR-0007 together.
+1. Update the PRD, [`specs/tankroy-public-experience.md`](specs/tankroy-public-experience.md), architecture, threat model, and relevant ADRs (including ADR-0011) together.
 2. Implement public navigation, the advisor entry point, and the Demo Hub without duplicating the agent, catalog, customer components, or deterministic domain modules.
 3. Keep staff actions behind explicit workspace controls and server authorization; mode selection and browser visibility are never permission.
 4. Create a prepared AirFlame sales fixture only through an explicit validated Server Action that creates session-private records and records provenance.

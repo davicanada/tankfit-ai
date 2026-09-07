@@ -2,7 +2,9 @@
 
 **Status:** Implemented release-candidate architecture with approved public-experience revision
 **Owner:** Davi Almeida  
-**Last updated:** August 31, 2026
+**Last updated:** September 6, 2026
+
+**September 6 consultative revision:** [ADR-0011](adrs/0011-consultative-sales-lifecycle.md) and [the lifecycle SPEC](specs/consultative-sales.md) supersede the payment-first workflow. Private incomplete handoffs precede validated requests; staff approval enables a proposal, customer acceptance enables Checkout, and verified payment records `paid`. Unaccepted revisions preserve prior immutable snapshots. New records explicitly use workflow version 2; migrations leave the database default at 1 so concurrent older deployments remain identifiable.
 
 **September 5 completion revision:** ADR-0008 adds bounded general discovery, explicit synthetic operating profiles, fixed session expiry, frozen order snapshots, short session-row-locked Neon transactions, Stripe-hosted test Checkout and a signed webhook. The public/customer/sales components share `/api/discovery` and the same anonymous session. Only the verified test-payment adapter advances payment state. Current deployment status is tracked separately from implementation.
 
@@ -52,9 +54,9 @@ The MVP is one Next.js application deployed to Vercel using the Node.js runtime.
 - **Embedded advisor surface:** a compact TankFit AI widget may appear on public pages, while `/advisor` provides the full-page accessible conversation. Both use the same session and server-side advisor route.
 - **Demo Hub:** `/demo` explains the fictional perspectives and links to `/demo/customer` and `/demo/sales`. Choosing a route changes presentation only and grants no permission.
 - **Customer Experience:** `/demo/customer` demonstrates the same Tankroy site, chatbox, catalog, advisor, session contract, and deterministic modules used by the public customer surface.
-- **Sales Team Experience:** `/demo/sales` presents requirements review, commercial validation, simulated checkout state, Demo Staff Mode, approval, audit, and proposal generation. It can continue the current session's opportunity or explicitly create a session-private prepared AirFlame opportunity through normal server validation. It is not a general staff dashboard.
+- **Sales Team Experience:** `/demo/sales` presents requirements review, commercial validation, pilot-request state, Demo Staff Mode, approval, audit, and proposal generation. It can continue the current session's opportunity or explicitly create a session-private prepared AirFlame opportunity through normal server validation. It is not a general staff dashboard.
 - **Server Components** read internal catalog and session data directly on the server and pass serializable results to interactive components.
-- **Server Actions** handle interface-originated mutations such as editing requirements, creating a draft order, changing demo roles, and recording approval decisions.
+- **Server Actions** handle interface-originated mutations such as editing requirements, submitting or revising a pilot request, changing demo roles, accepting a proposal, and recording approval decisions.
 - **Route Handlers** are reserved for streaming conversational responses, AI-provider calls, simulated external callbacks, and proposal downloads.
 - **Domain modules** contain deterministic compatibility, ROI, commerce, payment, approval, retention, and audit behavior. They must not depend on React.
 - **Client Components** provide the interactive chat, forms, comparison controls, and role-switching interface. They receive no provider or database secret.
@@ -69,7 +71,7 @@ The single agent may interpret needs, request missing information, call narrowly
 
 The first conversational implementation uses sequential, completed-response fallback rather than immediate token streaming. This allows a failed provider response to be discarded before another provider is selected. Provider order, model IDs, timeouts, and output limits are configuration; they do not alter domain behavior. See [`adrs/0005-ai-provider-fallback.md`](adrs/0005-ai-provider-fallback.md).
 
-The implemented orchestrator extracts bounded requirements, invokes deterministic compatibility, and supplies validated descriptive evidence to the reply model. It does not register mutation tools with the model. The interface invokes ROI, current commerce, drafts and status through session-scoped services. Earlier tool names describe domain responsibilities, not an implemented autonomous tool-calling API.
+The implemented orchestrator extracts bounded requirements, invokes deterministic compatibility, and supplies validated descriptive evidence to the reply model. It does not register mutation tools with the model. The interface invokes ROI, current commerce, pilot requests and status through session-scoped services. Earlier tool names describe domain responsibilities, not an implemented autonomous tool-calling API.
 
 `/api/discovery` is the live conversation endpoint. The previous stateless `/api/advisor` returns HTTP 410 so a base-only result cannot bypass full operating-profile checks.
 
@@ -105,9 +107,9 @@ The agent cannot issue the token, assume the role, approve an order, or generate
 | One AI provider times out                         | Record the attempt and try the next configured provider                                                               |
 | All AI providers fail                             | Continue through deterministic guided discovery                                                                       |
 | Postgres is unavailable                           | Allow descriptive browsing and compatibility from JSON; block commercial confirmation, order submission, and checkout |
-| Stock changes before checkout                     | Reject or revise the draft; never silently oversell                                                                   |
+| Stock changes before proposal acceptance or checkout | Reject the stale revision and require a new validated request; never silently oversell                              |
 | Compatibility is unknown                          | Return `technical_review_required`                                                                                    |
-| Mock payment fails                                | Keep the order out of `pending_approval` and record the failure                                                       |
+| Test payment fails                                | Keep the accepted request unpaid; never imply payment or repeat staff approval                                       |
 | Sales Team Experience has no eligible opportunity | Show an empty state and an explicit prepared-fixture action; do not enumerate or reuse another session's data         |
 | Prepared fixture creation fails                   | Roll back partial records, grant no role, and leave the workspace in its safe empty state                             |
 | Approval token is invalid or expired              | Deny the action without revealing session data                                                                        |

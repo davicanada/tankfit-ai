@@ -1,15 +1,15 @@
 # SPEC: Tankroy Public Experience and Sales Workspace
 
-**Status:** Implemented on completion branch; sandbox and deployed verification pending
+**Status:** Consultative revision implemented on feature branch; deployment validation pending
 
-**Version:** 0.2
-**Date:** August 31, 2026  
+**Version:** 0.3
+**Date:** September 6, 2026
 **Owner:** Davi Almeida  
 **Related ADR:** [`0007-public-customer-and-sales-surfaces.md`](../adrs/0007-public-customer-and-sales-surfaces.md)
 
 ## 1. Purpose
 
-September 5 revision: prepared opportunities remain drafts until test checkout succeeds. Sandbox unavailability is visible and never an implicit payment success. The old stateless `/api/advisor` is retired with HTTP 410.
+September 6 revision: [Consultative Sales](consultative-sales.md) supersedes the earlier payment-first sequence. Prepared requests need staff approval and customer acceptance before Checkout. Incomplete private handoffs remain eligible for clarification, not commerce. Sandbox unavailability is visible and never an implicit payment success. The old stateless `/api/advisor` is retired with HTTP 410.
 
 This SPEC defines how TankFit AI is presented as part of the fictional Tankroy Systems Inc. website while preserving the existing end-to-end competition demonstration. The change is a product-surface reorganization, not a second application or a second agent.
 
@@ -36,7 +36,7 @@ The sales workspace represents a Tankroy solution specialist reviewing a synthet
 
 - Structured requirements and the original customer brief.
 - Deterministic recommendation, matched fields, unresolved constraints, catalog/rule versions, and ROI assumptions.
-- Database-validated immutable draft order and verified Stripe test-checkout result.
+- Database-validated immutable pilot request, approved proposal, customer acceptance, and verified Stripe test-checkout result.
 - Approval, rejection, or change-request controls with a reason and audit record.
 - Approved proposal download with the existing watermark and expiry controls.
 
@@ -80,9 +80,9 @@ The public navigation should describe the customer experience in Tankroy languag
 3. TankFit AI first answers informational catalog questions directly. When the visitor asks for help choosing a solution, it progressively asks one compatibility-relevant question at a time and accepts non-technical answers, a custom fictional situation, or an editable preset.
 4. Deterministic code evaluates compatibility against the versioned catalog and returns a recommendation, alternatives, or `technical_review_required` / `out_of_scope`.
 5. The visitor reviews facts, evidence, assumptions, and the illustrative ROI estimate.
-6. The visitor may continue through Customer Experience to create a synthetic draft order and authorize the fictional deposit.
+6. The visitor may request Sales help with incomplete facts, or submit a compatible pilot request for approval. Optional business context includes objectives, timeline and pilot success criteria.
 7. The visitor returns to the Demo Hub and opens Sales Team Experience with the same session-scoped opportunity.
-8. The visitor explicitly enters Demo Staff Mode, records a decision, and returns to the customer perspective to download the approved, watermarked demo proposal.
+8. The visitor explicitly enters Demo Staff Mode, records a decision, and returns to the customer perspective to review the approved, watermarked demo proposal. Customer acceptance then enables test Checkout. Changes before acceptance preserve history and require a new approval.
 
 The widget may hand off to `/advisor` or Customer Experience through server-managed session state. It must not put secrets, raw database identifiers, or authorization claims in a client-controlled query string.
 
@@ -107,7 +107,7 @@ An evaluator who wants to inspect only the Sales Team Experience may open it dir
 - Product-page facts and images match the versioned catalog; no AI-generated product claim appears without grounded evidence.
 - A visitor can begin with a custom scenario from the public site and reach the same deterministic result as the equivalent `/advisor` flow.
 - Public pages do not render approval, audit, order mutation, or proposal-download controls for another session.
-- The complete AirFlame golden path still reaches recommendation, ROI, simulated checkout, Demo Staff Mode, approval, and proposal download.
+- The complete AirFlame golden path reaches recommendation, ROI, scoped staff approval, proposal download, customer acceptance and verified test payment, in that order.
 - The Demo Hub presents both modes clearly and neither mode choice grants staff authorization.
 - Customer Experience uses the same public components and behavior as the Tankroy website rather than a second customer implementation.
 - Sales Team Experience continues only an eligible opportunity belonging to the current session.

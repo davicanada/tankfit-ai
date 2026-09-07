@@ -1,5 +1,7 @@
 # ADR-0008: Complete discovery, transactional snapshots, and test payments
 
+> Historical baseline decision. ADR-0011 supersedes the payment-first order/approval sequence for new workflow-version-2 records; the safeguards and test-payment boundary remain applicable.
+
 **Status:** Accepted for implementation; owner review required before merge
 
 **Date:** September 5, 2026

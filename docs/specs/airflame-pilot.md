@@ -1,9 +1,11 @@
 # SPEC: AirFlame Fuels Pilot Journey
 
-**Status:** Implemented and under release validation; public-surface handoff approved
+**Status:** Consultative revision implemented; deployment validation pending
 **Scenario:** AirFlame Fuels  
 **Primary user:** Jordan Blake, Operations Manager  
 **Purpose:** Define the first complete, testable TankFit AI journey.
+
+**September 6 revision:** [Consultative Sales](consultative-sales.md) supersedes the payment-first order/approval sequence formerly described in this document. The technical fixture stays the same. Current steps are validated request, scoped staff approval, proposal review, customer acceptance and test payment. Incomplete opportunities can reach Sales without a commercial request. Unaccepted revisions retain history. The default fleet model has no finite payback after recurring service costs; the former 59.43-month figure is retired.
 
 AirFlame is an editable preset and regression fixture, not a hard-coded customer-only workflow. The public Tankroy website, embedded TankFit AI assistant, full-page `/advisor`, `/demo/customer`, and `/demo/sales` must all use the same schemas, discovery logic, compatibility rules, tools, commerce validation, security controls, and approval state machine for independently entered custom scenarios.
 
@@ -82,7 +84,7 @@ The interface must show the matched catalog fields, applicable constraints, cata
 
 ## 6. Deterministic Commercial Validation
 
-At draft-order creation, the application must read the following fields from Neon Postgres rather than the JSON fallback:
+At pilot-request submission, the application must read the following fields from Neon Postgres rather than the JSON fallback:
 
 - Unit price
 - Monthly service price
@@ -90,9 +92,9 @@ At draft-order creation, the application must read the following fields from Neo
 - Availability status
 - Estimated delivery lead time in business days
 
-If the database cannot be reached, the visitor may continue browsing the catalog and compatibility result, but cannot submit the draft order or complete checkout.
+If the database cannot be reached, the visitor may continue browsing the catalog and compatibility result, but cannot submit the pilot request or complete checkout.
 
-The initial demo seed values produce a five-unit pilot that is in stock. The application must not assume these values remain current after the draft order is created; it must revalidate them again before simulated checkout.
+The initial demo seed values produce a five-unit pilot that is in stock. The application must not assume these values remain current after the pilot request is submitted; it must revalidate them again before proposal acceptance and simulated checkout.
 
 ## 7. ROI Demonstration
 
@@ -112,16 +114,16 @@ Editable synthetic inputs:
 
 Application code calculates avoided costs, estimated annual benefit, estimated first-year cost, net first-year impact, and simple payback period. The AI may explain these results but cannot change them.
 
-## 8. Order and Approval
+## 8. Consultative Request and Approval
 
-1. The visitor creates a draft order for five FL-100 monitors.
-2. The database revalidates commercial data.
-3. Stripe-hosted test Checkout collects test-only details for a fictional deposit. Live credentials and objects are rejected.
-4. Only a verified paid test session with the expected stored ID, amount and currency moves the order to `pending_approval`. Cancellation, provider failure or missing configuration leaves it in draft.
-5. The visitor explicitly enters session-scoped Demo Staff Mode.
-6. The demo approver reviews discovery answers, compatibility evidence, ROI assumptions, order values, and audit events.
-7. Approval, rejection, or change request records the role, reason, and timestamp.
-8. Only approval permits proposal generation.
+1. The visitor submits a validated pilot request for five FL-100 monitors. Current commercial values are read from Neon Postgres, and the requirements, recommendation evidence, ROI, commerce snapshot, and business brief are frozen as revision 1.
+2. The request enters `pending_approval`; no payment is requested yet.
+3. The visitor explicitly enters session-scoped Demo Staff Mode in the Sales Team Experience.
+4. The demo approver reviews discovery answers, compatibility evidence, ROI assumptions, order values, business objective, pilot success criteria, and audit events.
+5. Approval, rejection, or a change request records the role, reason, and timestamp. A change request can be superseded by a new revision before customer acceptance; prior snapshots and decisions remain in history.
+6. Approval creates eligibility for a clearly marked, non-binding proposal. The proposal is generated from the approved revision, not from mutable session values.
+7. The visitor returns to Customer Experience, reviews the proposal, and explicitly selects `Accept proposal` for that revision.
+8. Only after acceptance does Stripe-hosted test Checkout collect test-only details for a fictional deposit. A verified test session with the expected stored ID, amount and currency moves the request to `paid`; cancellation or provider failure leaves it accepted but unpaid.
 
 Customer order controls belong to Customer Experience. Approval and audit controls belong to the explicitly labeled `/demo/sales` Sales Team Experience. The public Tankroy catalog and advisor surfaces may explain the journey and hand off to the demo modes, but must not display approval controls or another session's order.
 
@@ -131,7 +133,7 @@ If an evaluator opens Sales Team Experience without an eligible current-session 
 
 Every page must display `DEMO - NOT A VALID QUOTE OR CONTRACT`. The proposal includes fictional parties, pilot scope, database-validated values, assumptions, approval note, evidence versions and synthetic-demo terms. It is generated only from an approved, unexpired, session-owned order's immutable snapshot. Legacy orders without snapshots fail closed. The English PDF normalizes unsupported font characters; original visitor text remains in the session.
 
-The prepared opportunity remains a draft until normal test checkout is verified.
+The prepared opportunity remains a pending request until it is approved, accepted, and (optionally) paid through the normal test Checkout path.
 
 ### Synthetic operating profiles
 

@@ -12,7 +12,7 @@ plataforma: REPLACE_WITH_ACTUAL_PLATFORM_COMMUNITY_POST_URL
 
 TankFit AI is an independent personal project created exclusively with synthetic information for the Jornada de Dados competition. Tankroy Systems Inc., every customer, product, price, transaction and document are fictional.
 
-The project explores a consultative sales journey: describe a need, validate a monitoring solution, inspect an illustrative business case, create a draft, complete test checkout, review as a sales specialist, and issue a clearly marked demo proposal after explicit approval.
+The project explores a consultative sales journey: describe a need, hand incomplete facts to Sales when necessary, validate a solution, inspect an illustrative business case, submit a pilot for human review, receive an approved demo proposal, explicitly accept it, and complete test checkout. Revisions retain the decision history.
 
 The language model decides what to say; deterministic code decides what can happen. One Next.js application shares a catalog, session contract and domain pipeline across a public Tankroy site, an embedded advisor, Customer Experience and Sales Team Experience.
 
@@ -23,9 +23,10 @@ flowchart LR
     Visitor[Visitor] --> Advisor[TankFit AI]
     Advisor --> Rules[Deterministic compatibility and ROI]
     Rules --> DB[(Neon Postgres)]
-    DB --> Checkout[Stripe test Checkout]
-    Checkout --> Approval[Session-scoped human approval]
+    DB --> Approval[Session-scoped human approval]
     Approval --> Proposal[Watermarked demo proposal]
+    Proposal --> Acceptance[Customer acceptance]
+    Acceptance --> Checkout[Stripe test Checkout]
     Advisor --> Providers[Gemini → Cerebras → Groq → OpenRouter → guided fallback]
 ```
 

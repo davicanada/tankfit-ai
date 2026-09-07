@@ -109,7 +109,10 @@ test("confirmed sessions lock the public chat with clear next actions", async ({
       page.getByRole("textbox", { name: "Operational brief" }),
     ).toBeEnabled({ timeout: 20000 });
     await expect(
-      page.getByRole("button", { name: "Create draft order", exact: true }),
+      page.getByRole("button", {
+        name: "Submit pilot for Sales review",
+        exact: true,
+      }),
     ).toHaveCount(0);
 
     await page

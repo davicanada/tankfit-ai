@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, gt, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, lt, sql, inArray, ne } from "drizzle-orm";
 import { calculateRoi } from "@/domain/journey/roi";
 import { evaluateJourney } from "@/domain/journey/evaluate";
 import { assertOrderTransition } from "@/domain/journey/order-state";
@@ -10,6 +10,7 @@ import {
   defaultAirFlameRequirements,
   emptyRequirements,
   defaultRoiAssumptions,
+  businessBriefSchema,
   roiAssumptionsSchema,
   type CommerceSnapshot,
   type JourneyView,
@@ -164,15 +165,15 @@ export async function buildJourneyView(
     ),
   });
   if (!session) throw new UserFacingError("Demo session not found.");
-  const [commerce, order, events] = await Promise.all([
+  const [commerce, orders, events] = await Promise.all([
     getCommerceSnapshot(
       session.recommendationStatus === "compatible"
         ? (session.recommendationProductId ?? undefined)
         : undefined,
     ),
-    db.query.demoOrders.findFirst({
+    db.query.demoOrders.findMany({
       where: eq(demoOrders.sessionId, sessionId),
-      orderBy: [desc(demoOrders.createdAt)],
+      orderBy: [desc(demoOrders.revision), desc(demoOrders.createdAt)],
     }),
     db.query.demoEvents.findMany({
       where: eq(demoEvents.sessionId, sessionId),
@@ -180,8 +181,11 @@ export async function buildJourneyView(
       limit: 200,
     }),
   ]);
+  const order = orders.find((entry) => entry.status !== "superseded");
   const proposal =
-    order?.status === "approved"
+    order &&
+    order.workflowVersion === 2 &&
+    ["approved", "accepted", "paid"].includes(order.status)
       ? await db.query.demoProposals.findFirst({
           where: and(
             eq(demoProposals.orderId, order.id),
@@ -191,6 +195,14 @@ export async function buildJourneyView(
         })
       : undefined;
   return {
+    salesRequested: session.salesRequested,
+    businessBrief: businessBriefSchema.parse(session.businessBrief),
+    revisions: orders.map((entry) => ({
+      id: entry.id,
+      revision: entry.revision,
+      status: entry.status,
+      decisionNote: entry.decisionNote,
+    })),
     sessionId,
     expiresAt: session.expiresAt.toISOString(),
     requirements: airFlameRequirementsSchema.parse(session.requirements),
@@ -216,6 +228,8 @@ export async function buildJourneyView(
     roi: session.roiResult,
     order: order
       ? {
+          workflowVersion: order.workflowVersion,
+          revision: order.revision,
           id: order.id,
           status: order.status as OrderStatus,
           quantity: order.quantity,
@@ -244,13 +258,17 @@ async function confirmInTransaction(
   session: Session,
   rawRequirements: unknown,
   rawRoi: unknown,
+  rawBrief: unknown = session.businessBrief,
 ) {
   const existing = await tx.query.demoOrders.findFirst({
-    where: eq(demoOrders.sessionId, session.id),
+    where: and(
+      eq(demoOrders.sessionId, session.id),
+      ne(demoOrders.status, "superseded"),
+    ),
   });
   if (existing)
     throw new UserFacingError(
-      "This opportunity is frozen after order creation. Reset the demo to start a new revision.",
+      "This request is frozen. Start a revision before changing its requirements.",
     );
   const requirements = airFlameRequirementsSchema.parse(rawRequirements);
   const roiAssumptions = roiAssumptionsSchema.parse(rawRoi);
@@ -270,6 +288,7 @@ async function confirmInTransaction(
       })
     : null;
   const update = {
+    businessBrief: businessBriefSchema.parse(rawBrief),
     requirements,
     roiAssumptions,
     roiResult,
@@ -296,9 +315,10 @@ export async function confirmRequirements(
   sessionId: string,
   requirements: unknown,
   roi: unknown,
+  businessBrief?: unknown,
 ) {
   return withSession(sessionId, (tx, session) =>
-    confirmInTransaction(tx, session, requirements, roi),
+    confirmInTransaction(tx, session, requirements, roi, businessBrief),
   );
 }
 
@@ -317,7 +337,10 @@ export async function saveDiscovery(
         "The conversation changed. Refresh before sending another message.",
       );
     const order = await tx.query.demoOrders.findFirst({
-      where: eq(demoOrders.sessionId, sessionId),
+      where: and(
+        eq(demoOrders.sessionId, sessionId),
+        ne(demoOrders.status, "superseded"),
+      ),
     });
     if (order || session.requirementsConfirmed)
       throw new UserFacingError(
@@ -335,9 +358,17 @@ export async function saveDiscovery(
 
 async function draftInTransaction(tx: Transaction, session: Session) {
   const existing = await tx.query.demoOrders.findFirst({
-    where: eq(demoOrders.sessionId, session.id),
+    where: and(
+      eq(demoOrders.sessionId, session.id),
+      ne(demoOrders.status, "superseded"),
+    ),
   });
   if (existing) return existing.id;
+  const previous = await tx.query.demoOrders.findMany({
+    where: eq(demoOrders.sessionId, session.id),
+  });
+  if (previous.length >= 10)
+    throw new UserFacingError("This demo has reached its ten-revision limit.");
   const requirements = airFlameRequirementsSchema.parse(session.requirements);
   const compatibility = evaluateJourney(requirements);
   if (
@@ -373,7 +404,9 @@ async function draftInTransaction(tx: Transaction, session: Session) {
   await tx.insert(demoOrders).values({
     id,
     sessionId: session.id,
-    status: "draft",
+    status: "pending_approval",
+    workflowVersion: 2,
+    revision: previous.length + 1,
     productId: item.productId,
     quantity: requirements.pilotQuantity,
     currency: item.currency,
@@ -384,6 +417,7 @@ async function draftInTransaction(tx: Transaction, session: Session) {
     fictionalDepositCents: 25_000,
     leadTimeBusinessDays: item.leadTimeBusinessDays,
     solutionSnapshot: {
+      businessBrief: businessBriefSchema.parse(session.businessBrief),
       requirements,
       roiAssumptions,
       roi,
@@ -395,12 +429,12 @@ async function draftInTransaction(tx: Transaction, session: Session) {
   });
   await tx
     .update(demoSessions)
-    .set({ roiResult: roi })
+    .set({ roiResult: roi, salesRequested: true })
     .where(eq(demoSessions.id, session.id));
   await event(
     tx,
     session.id,
-    "draft_order_created",
+    "pilot_request_submitted",
     "visitor",
     {
       productId: item.productId,
@@ -419,7 +453,10 @@ export async function createDraftOrder(sessionId: string) {
 export async function prepareAirFlameOpportunity(sessionId: string) {
   return withSession(sessionId, async (tx, session) => {
     const existing = await tx.query.demoOrders.findFirst({
-      where: eq(demoOrders.sessionId, sessionId),
+      where: and(
+        eq(demoOrders.sessionId, sessionId),
+        ne(demoOrders.status, "superseded"),
+      ),
     });
     if (existing) return existing.id;
     const confirmed = await confirmInTransaction(
@@ -458,7 +495,7 @@ async function validateCommerce(tx: Transaction, order: Order) {
     item.monthlyServiceCents !== order.monthlyServiceCents
   )
     throw new UserFacingError(
-      "Commerce data changed. Reset the demo and create a new order with current values.",
+      "Commerce data changed. An unaccepted proposal needs a new revision with current values. Accepted requests require a fresh demo.",
     );
 }
 
@@ -470,9 +507,15 @@ export async function readCheckoutOrder(sessionId: string, orderId: string) {
         eq(demoOrders.sessionId, sessionId),
       ),
     });
-    if (!order || order.status !== "draft" || !order.solutionSnapshot)
+    if (
+      !order ||
+      order.workflowVersion !== 2 ||
+      order.status !== "accepted" ||
+      !order.acceptedAt ||
+      !order.solutionSnapshot
+    )
       throw new UserFacingError(
-        "Only a current draft can enter test checkout.",
+        "Accept the approved proposal before entering test checkout.",
       );
     await validateCommerce(tx, order);
     return order;
@@ -485,6 +528,27 @@ export async function attachCheckout(
   checkoutSessionId: string,
 ) {
   return withSession(sessionId, async (tx) => {
+    const existing = await tx.query.demoOrders.findFirst({
+      where: and(
+        eq(demoOrders.id, orderId),
+        eq(demoOrders.sessionId, sessionId),
+      ),
+    });
+    if (
+      !existing ||
+      existing.workflowVersion !== 2 ||
+      existing.status !== "accepted" ||
+      !existing.acceptedAt
+    )
+      throw new UserFacingError(
+        "Only an accepted proposal can start checkout.",
+      );
+    if (existing.checkoutSessionId) {
+      if (existing.checkoutSessionId !== checkoutSessionId)
+        throw new UserFacingError("Checkout already attached.");
+      return;
+    }
+    await validateCommerce(tx, existing);
     const [order] = await tx
       .update(demoOrders)
       .set({ checkoutSessionId })
@@ -492,11 +556,13 @@ export async function attachCheckout(
         and(
           eq(demoOrders.id, orderId),
           eq(demoOrders.sessionId, sessionId),
-          eq(demoOrders.status, "draft"),
+          eq(demoOrders.status, "accepted"),
+          eq(demoOrders.workflowVersion, 2),
         ),
       )
       .returning();
-    if (!order) throw new UserFacingError("The draft is no longer available.");
+    if (!order)
+      throw new UserFacingError("The accepted request is no longer available.");
     await event(tx, sessionId, "test_checkout_started", "visitor", {}, orderId);
   });
 }
@@ -521,6 +587,8 @@ export async function completeVerifiedCheckout(
     });
     if (
       !order ||
+      order.workflowVersion !== 2 ||
+      !order.acceptedAt ||
       !order.solutionSnapshot ||
       payment.livemode ||
       !payment.paid ||
@@ -529,12 +597,12 @@ export async function completeVerifiedCheckout(
       payment.currency.toUpperCase() !== order.currency
     )
       throw new UserFacingError("Test payment verification failed.");
-    if (order.status !== "draft") return; // Verified duplicate callback: no duplicate events.
-    await validateCommerce(tx, order);
+    if (order.status === "paid") return; // Verified duplicate callback.
+    assertOrderTransition(order.status as OrderStatus, "paid");
     await tx
       .update(demoOrders)
       .set({
-        status: "pending_approval",
+        status: "paid",
         checkoutCompletedAt: new Date(),
         updatedAt: new Date(),
       })
@@ -557,7 +625,7 @@ export async function completeVerifiedCheckout(
     await event(
       tx,
       sessionId,
-      "order_submitted_for_approval",
+      "pilot_payment_completed",
       "system",
       {},
       orderId,
@@ -580,6 +648,7 @@ export async function decideOrder(input: {
     });
     if (
       !order ||
+      order.workflowVersion !== 2 ||
       !order.solutionSnapshot ||
       order.status !== "pending_approval"
     )
@@ -587,6 +656,11 @@ export async function decideOrder(input: {
         "Only a verified pending order can receive a decision.",
       );
     assertOrderTransition(order.status as OrderStatus, input.decision);
+    if (!input.note.trim() || input.note.length > 500)
+      throw new UserFacingError(
+        "Enter a decision note of 1 to 500 characters.",
+      );
+    if (input.decision === "approved") await validateCommerce(tx, order);
     await tx
       .update(demoOrders)
       .set({
@@ -642,11 +716,143 @@ export async function getProposalData(proposalId: string, sessionId: string) {
     where: and(
       eq(demoOrders.id, proposal.orderId),
       eq(demoOrders.sessionId, sessionId),
-      eq(demoOrders.status, "approved"),
+      inArray(demoOrders.status, ["approved", "accepted", "paid"]),
+      eq(demoOrders.workflowVersion, 2),
     ),
   });
   if (!order?.solutionSnapshot) return null;
   return { proposal, order, snapshot: order.solutionSnapshot };
+}
+
+export async function requestSalesReview(
+  sessionId: string,
+  rawRequirements: unknown,
+  rawBrief: unknown,
+) {
+  return withSession(sessionId, async (tx) => {
+    const existing = await tx.query.demoOrders.findFirst({
+      where: and(
+        eq(demoOrders.sessionId, sessionId),
+        ne(demoOrders.status, "superseded"),
+      ),
+    });
+    if (existing)
+      throw new UserFacingError("Start a revision to change this request.");
+    const requirements = airFlameRequirementsSchema.parse(rawRequirements);
+    const businessBrief = businessBriefSchema.parse(rawBrief);
+    await tx
+      .update(demoSessions)
+      .set({
+        requirements,
+        businessBrief,
+        salesRequested: true,
+        requirementsConfirmed: false,
+        recommendationStatus: null,
+        recommendationProductId: null,
+        recommendationReasons: null,
+        recommendationRuleVersion: null,
+        roiResult: null,
+      })
+      .where(eq(demoSessions.id, sessionId));
+    await event(tx, sessionId, "sales_review_requested", "visitor", {
+      compatibilityStatus: evaluateJourney(requirements).status,
+      // Free-form business context is kept in the private session, not audit metadata.
+      objectiveProvided: Boolean(businessBrief.objective),
+    });
+  });
+}
+
+export async function acceptProposal(sessionId: string, orderId: string) {
+  return withSession(sessionId, async (tx) => {
+    const order = await tx.query.demoOrders.findFirst({
+      where: and(
+        eq(demoOrders.id, orderId),
+        eq(demoOrders.sessionId, sessionId),
+      ),
+    });
+    if (!order || order.workflowVersion !== 2 || !order.solutionSnapshot)
+      throw new UserFacingError("Approved proposal not found.");
+    if (order.status === "accepted" && order.acceptedAt) return;
+    assertOrderTransition(order.status as OrderStatus, "accepted");
+    const proposal = await tx.query.demoProposals.findFirst({
+      where: and(
+        eq(demoProposals.orderId, orderId),
+        eq(demoProposals.sessionId, sessionId),
+        gt(demoProposals.expiresAt, new Date()),
+      ),
+    });
+    if (!proposal)
+      throw new UserFacingError("Approved proposal is missing or expired.");
+    await validateCommerce(tx, order);
+    await tx
+      .update(demoOrders)
+      .set({
+        status: "accepted",
+        acceptedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(demoOrders.id, orderId), eq(demoOrders.sessionId, sessionId)),
+      );
+    await event(
+      tx,
+      sessionId,
+      "proposal_accepted",
+      "visitor",
+      { revision: order.revision, proposalId: proposal.id },
+      orderId,
+    );
+  });
+}
+
+export async function reviseRequest(sessionId: string, orderId: string) {
+  return withSession(sessionId, async (tx) => {
+    const order = await tx.query.demoOrders.findFirst({
+      where: and(
+        eq(demoOrders.id, orderId),
+        eq(demoOrders.sessionId, sessionId),
+      ),
+    });
+    if (
+      !order ||
+      order.workflowVersion !== 2 ||
+      order.checkoutSessionId ||
+      order.acceptedAt
+    )
+      throw new UserFacingError(
+        "This request cannot be revised. Start a fresh demo.",
+      );
+    assertOrderTransition(order.status as OrderStatus, "superseded");
+    if (order.revision >= 10)
+      throw new UserFacingError(
+        "This demo has reached its ten-revision limit.",
+      );
+    await tx
+      .update(demoOrders)
+      .set({ status: "superseded", updatedAt: new Date() })
+      .where(
+        and(eq(demoOrders.id, orderId), eq(demoOrders.sessionId, sessionId)),
+      );
+    await tx
+      .update(demoSessions)
+      .set({
+        requirementsConfirmed: false,
+        recommendationStatus: null,
+        recommendationProductId: null,
+        recommendationReasons: null,
+        recommendationRuleVersion: null,
+        roiResult: null,
+      })
+      .where(eq(demoSessions.id, sessionId));
+    await event(
+      tx,
+      sessionId,
+      "request_superseded",
+      "visitor",
+      { revision: order.revision },
+      orderId,
+    );
+  });
 }
 
 export async function resetDemoSession(sessionId: string) {

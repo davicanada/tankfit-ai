@@ -14,10 +14,14 @@ import {
   decideOrderAction,
   exitStaffModeAction,
   prepareOpportunityAction,
+  requestSalesReviewAction,
+  acceptProposalAction,
+  reviseRequestAction,
 } from "@/app/demo/actions";
 import {
   emptyRequirements,
   defaultRoiAssumptions,
+  emptyBusinessBrief,
   tankTypes,
   instrumentationTypes,
   measurementMethods,
@@ -69,6 +73,7 @@ export function AirFlameJourney({
   const [requirements, setRequirements] =
     useState<AirFlameRequirements>(emptyRequirements);
   const [roi, setRoi] = useState(defaultRoiAssumptions);
+  const [businessBrief, setBusinessBrief] = useState(emptyBusinessBrief);
   const [brief, setBrief] = useState("");
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
@@ -85,8 +90,10 @@ export function AirFlameJourney({
     setView(result.view);
     setRequirements(result.view.requirements);
     setRoi(result.view.roiAssumptions);
+    setBusinessBrief(result.view.businessBrief);
     if (result.view.requirementsConfirmed)
       window.dispatchEvent(new Event("tankfit-requirements-confirmed"));
+    else window.dispatchEvent(new Event("tankfit-requirements-reopened"));
     if (result.checkoutUrl) window.location.assign(result.checkoutUrl);
   }
   useEffect(() => {
@@ -151,7 +158,7 @@ export function AirFlameJourney({
       <p role="status" aria-live="polite" className="text-sm text-amber-200">
         {isPending ? "Working…" : message}
       </p>
-      {sales && !view?.order && (
+      {sales && !view?.order && !view?.salesRequested && (
         <Card>
           <CardContent className="space-y-4 pt-6">
             <h2 className="text-xl font-semibold">
@@ -159,8 +166,8 @@ export function AirFlameJourney({
             </h2>
             <p>
               Continue Customer Experience, or explicitly load a private
-              AirFlame draft. A prepared draft does not bypass test payment or
-              approval.
+              AirFlame request. It requires review, customer acceptance and test
+              payment.
             </p>
             <Button
               disabled={isPending || !view}
@@ -168,6 +175,110 @@ export function AirFlameJourney({
             >
               Load prepared AirFlame opportunity
             </Button>
+          </CardContent>
+        </Card>
+      )}
+      {customer && !frozen && (
+        <Card>
+          <CardContent className="space-y-4 pt-6">
+            <h2 className="text-xl font-semibold">
+              What would a successful pilot achieve?
+            </h2>
+            <p className="text-sm">
+              Optional fictional context for Sales. You can request help even if
+              technical details are unknown.
+            </p>
+            {(["objective", "timeline", "successCriteria"] as const).map(
+              (key) => (
+                <label className="block space-y-1" key={key}>
+                  <span>
+                    {key === "objective"
+                      ? "Business objective"
+                      : key === "timeline"
+                        ? "Target timeline"
+                        : "Pilot success criteria"}
+                  </span>
+                  <Textarea
+                    maxLength={key === "timeline" ? 200 : 500}
+                    value={businessBrief[key]}
+                    onChange={(e) =>
+                      setBusinessBrief({
+                        ...businessBrief,
+                        [key]: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+              ),
+            )}
+            <Button
+              disabled={isPending || !view}
+              variant="outline"
+              onClick={() =>
+                run(() =>
+                  requestSalesReviewAction({ requirements, businessBrief }),
+                )
+              }
+            >
+              Request Sales help
+            </Button>
+            {view?.salesRequested && (
+              <p role="status">
+                Opportunity saved for the Sales demonstration. No staff
+                notification is sent.
+              </p>
+            )}
+            {view?.salesRequested && (
+              <Button asChild variant="outline">
+                <Link href="/demo/sales">
+                  Continue in Sales Team Experience
+                </Link>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      {sales && view?.salesRequested && (
+        <Card>
+          <CardContent className="space-y-3 pt-6">
+            <h2 className="text-xl font-semibold">Opportunity brief</h2>
+            <p>
+              Objective: {view.businessBrief.objective || "Not specified yet"}
+            </p>
+            <p>
+              Timeline: {view.businessBrief.timeline || "Not specified yet"}
+            </p>
+            <p>
+              Pilot success criteria:{" "}
+              {view.businessBrief.successCriteria ||
+                "Agree on readings, alert usefulness and manual-check effort before a rollout decision."}
+            </p>
+            {!view.order && (
+              <>
+                <p>
+                  Next action: help the customer clarify the pending facts, then
+                  validate a configuration. No payment is needed for this
+                  review.
+                </p>
+                <p>Assessment: {label(localResult.status)}</p>
+                <ul>
+                  {localResult.reasons.map((reason) => (
+                    <li key={reason}>{label(reason)}</li>
+                  ))}
+                </ul>
+                <details>
+                  <summary>Customer-stated facts</summary>
+                  <pre className="whitespace-pre-wrap break-words text-xs">
+                    {JSON.stringify(view.requirements, null, 2)}
+                  </pre>
+                </details>
+                <Button asChild>
+                  <Link href="/demo/customer">
+                    Continue in Customer Experience
+                  </Link>
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
@@ -322,6 +433,7 @@ export function AirFlameJourney({
                   confirmRequirementsAction({
                     requirements,
                     roiAssumptions: roi,
+                    businessBrief,
                   }),
                 )
               }
@@ -374,8 +486,16 @@ export function AirFlameJourney({
                 <p className="text-sm">
                   Simple payback:{" "}
                   {view.roi.estimatedPaybackMonths?.toFixed(2) ?? "Not reached"}{" "}
-                  months. Synthetic assumptions, not a financial forecast. Fleet
-                  rollout is separate from the pilot.
+                  {view.roi.estimatedPaybackMonths !== null
+                    ? "months."
+                    : "under these assumptions."}{" "}
+                  Synthetic assumptions, not a financial forecast. Fleet rollout
+                  is separate from the pilot.
+                </p>
+                <p className="text-sm">
+                  Payback uses initial hardware cost divided by annual benefit
+                  after recurring service. Installation, taxes, freight and
+                  maintenance are excluded.
                 </p>
               </>
             )}
@@ -404,6 +524,7 @@ export function AirFlameJourney({
                       confirmRequirementsAction({
                         requirements,
                         roiAssumptions: roi,
+                        businessBrief,
                       }),
                     )
                   }
@@ -434,7 +555,7 @@ export function AirFlameJourney({
                   disabled={isPending}
                   onClick={() => run(createOrderAction)}
                 >
-                  Create draft order
+                  Submit pilot for Sales review
                 </Button>
               )}
           </CardContent>
@@ -444,7 +565,8 @@ export function AirFlameJourney({
         <Card>
           <CardContent className="space-y-4 pt-6">
             <h2 className="text-xl font-semibold">
-              Pilot order · {label(view.order.status)}
+              Pilot request · {label(view.order.status)} · Revision{" "}
+              {view.order.revision}
             </h2>
             <p>
               {view.order.quantity} units · hardware{" "}
@@ -452,10 +574,39 @@ export function AirFlameJourney({
               {money(view.order.monthlyServiceCad)}/month
             </p>
             <p className="text-sm text-muted-foreground">
-              Frozen fictional scope. Reset to create a new revision. No real
-              goods or money.
+              Frozen fictional scope. Unaccepted requests can be revised. No
+              real goods or money.
             </p>
-            {customer && view.order.status === "draft" && (
+            {view.order.workflowVersion !== 2 && (
+              <p>
+                This is a historical demo workflow. Reset the demo to try the
+                new proposal-first journey.
+              </p>
+            )}
+            {customer &&
+              view.order.status === "approved" &&
+              view.order.workflowVersion === 2 && (
+                <>
+                  <p>
+                    Review the approved proposal before accepting this revision.
+                    Acceptance enables a CAD 250 test deposit. Hardware and
+                    recurring service remain the separate values shown above;
+                    this demo does not collect the remaining balance or activate
+                    a subscription.
+                  </p>
+                  <Button
+                    disabled={isPending}
+                    onClick={() =>
+                      run(() =>
+                        acceptProposalAction({ orderId: view.order!.id }),
+                      )
+                    }
+                  >
+                    Accept proposal
+                  </Button>
+                </>
+              )}
+            {customer && view.order.status === "accepted" && (
               <>
                 <p>
                   Stripe sandbox deposit:{" "}
@@ -482,11 +633,9 @@ export function AirFlameJourney({
                 </div>
               </>
             )}
-            {sales && view.order.status === "draft" && (
+            {sales && ["approved", "accepted"].includes(view.order.status) && (
               <Button asChild>
-                <Link href="/demo/customer">
-                  Complete test checkout as customer
-                </Link>
+                <Link href="/demo/customer">Continue as customer</Link>
               </Button>
             )}
             {customer && view.order.status === "pending_approval" && (
@@ -498,6 +647,7 @@ export function AirFlameJourney({
             )}
             {sales &&
               view.order.status === "pending_approval" &&
+              view.order.workflowVersion === 2 &&
               (!view.staffMode ? (
                 <Button
                   disabled={isPending}
@@ -558,6 +708,46 @@ export function AirFlameJourney({
             {view.order.decisionNote && (
               <p>Decision note: {view.order.decisionNote}</p>
             )}
+            {customer &&
+              view.order.workflowVersion === 2 &&
+              [
+                "pending_approval",
+                "approved",
+                "changes_requested",
+                "rejected",
+              ].includes(view.order.status) && (
+                <Button
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() =>
+                    run(() => reviseRequestAction({ orderId: view.order!.id }))
+                  }
+                >
+                  Revise request
+                </Button>
+              )}
+            {sales &&
+              ["changes_requested", "rejected"].includes(view.order.status) && (
+                <Button asChild variant="outline">
+                  <Link href="/demo/customer">
+                    Return to customer for revision
+                  </Link>
+                </Button>
+              )}
+            {view.order.status === "paid" && (
+              <div className="space-y-2">
+                <h3 className="font-semibold">Test payment complete</h3>
+                <p>
+                  The approved pilot has completed the demo payment journey.
+                </p>
+                <p>
+                  Proposed next step: evaluate readings, alert usefulness and
+                  manual-check effort against the pilot criteria, then decide
+                  whether to expand, adjust or stop. Fulfillment and telemetry
+                  are not simulated.
+                </p>
+              </div>
+            )}
             {view.proposalId && (
               <Button asChild>
                 <a href={`/api/proposals/${view.proposalId}`}>
@@ -565,6 +755,19 @@ export function AirFlameJourney({
                 </a>
               </Button>
             )}
+          </CardContent>
+        </Card>
+      )}
+      {view && view.revisions.length > 1 && (
+        <Card>
+          <CardContent className="space-y-3 pt-6">
+            <h2 className="text-xl font-semibold">Revision history</h2>
+            {view.revisions.map((entry) => (
+              <p key={entry.id}>
+                Revision {entry.revision}: {label(entry.status)}
+                {entry.decisionNote ? ` — ${entry.decisionNote}` : ""}
+              </p>
+            ))}
           </CardContent>
         </Card>
       )}

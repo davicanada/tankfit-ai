@@ -23,27 +23,25 @@ export function calculateRoi(input: {
     assumptions.costPerManualCheckCad *
     (assumptions.manualCheckReductionPercent / 100);
   const estimatedAnnualBenefitCad =
-    avoidedRunoutCostCad +
-    avoidedEmergencyCostCad +
-    avoidedManualCheckCostCad;
+    avoidedRunoutCostCad + avoidedEmergencyCostCad + avoidedManualCheckCostCad;
   const estimatedFirstYearRolloutCostCad =
     fleetSize * (commerce.unitPriceCad + commerce.monthlyServiceCad * 12);
+  const annualServiceCostCad = fleetSize * commerce.monthlyServiceCad * 12;
+  const annualNetBenefitCad = estimatedAnnualBenefitCad - annualServiceCostCad;
 
   return {
     avoidedRunoutCostCad: money(avoidedRunoutCostCad),
     avoidedEmergencyCostCad: money(avoidedEmergencyCostCad),
     avoidedManualCheckCostCad: money(avoidedManualCheckCostCad),
     estimatedAnnualBenefitCad: money(estimatedAnnualBenefitCad),
-    estimatedFirstYearRolloutCostCad: money(
-      estimatedFirstYearRolloutCostCad,
-    ),
+    estimatedFirstYearRolloutCostCad: money(estimatedFirstYearRolloutCostCad),
     estimatedFirstYearNetCad: money(
       estimatedAnnualBenefitCad - estimatedFirstYearRolloutCostCad,
     ),
     estimatedPaybackMonths:
-      estimatedAnnualBenefitCad > 0
+      annualNetBenefitCad > 0
         ? money(
-            (estimatedFirstYearRolloutCostCad / estimatedAnnualBenefitCad) * 12,
+            ((fleetSize * commerce.unitPriceCad) / annualNetBenefitCad) * 12,
           )
         : null,
   };
