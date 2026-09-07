@@ -3,9 +3,9 @@
 | Field        | Value                                                                           |
 | ------------ | ------------------------------------------------------------------------------- |
 | Product      | TankFit AI                                                                      |
-| Version      | 0.9                                                                             |
+| Version      | 1.0                                                                             |
 | Status       | Completion revision under implementation and verification; owner review pending |
-| Date         | August 31, 2026                                                                 |
+| Date         | September 6, 2026                                                              |
 | Owner        | Davi Almeida                                                                    |
 | Product type | Public portfolio prototype                                                      |
 
@@ -13,7 +13,7 @@
 
 TankFit AI is the embedded, AI-assisted solution advisor on the fictional **Tankroy Systems Inc.** public website. Tankroy sells remote tank-monitoring solutions to fuel distributors, industrial operators, farms, utilities, and other businesses that store liquids, gases, or solids. The same Next.js application also provides a deliberately separated sales workspace for reviewing a synthetic opportunity.
 
-Customers frequently understand their operational problem but do not know which sensor, connectivity option, mounting method, or service model they need. TankFit AI turns an informal description of that problem into a technically compatible product recommendation, a transparent ROI estimate, a draft order, and a simulated proposal.
+Customers frequently understand their operational problem but do not know which sensor, connectivity option, mounting method, or service model they need. TankFit AI turns an informal description of that problem into a technically compatible product recommendation, a transparent ROI estimate, a validated pilot request, and a simulated proposal.
 
 The AI manages the conversation and explains recommendations. Deterministic application code controls compatibility, product specifications, availability, pricing, calculations, approval requirements, and order state. No real payment, binding quote, valid technical certification, or legally effective document is produced.
 
@@ -56,7 +56,7 @@ Tankroy Systems needs a guided sales experience that combines natural-language d
 
 ## 4. Product Vision
 
-Enable a prospective customer to move from an uncertain operational need to an explainable, technically valid draft solution in one guided session, while keeping every consequential decision under deterministic code or human control.
+Enable a prospective customer to move from an uncertain operational need to an explainable, technically valid pilot request in one guided session, while keeping every consequential decision under deterministic code or human control.
 
 ## 5. Goals
 
@@ -67,8 +67,8 @@ Enable a prospective customer to move from an uncertain operational need to an e
 - See the evidence and constraints behind each recommendation.
 - Compare a primary recommendation with compatible alternatives.
 - Estimate potential operational value using explicit, editable assumptions.
-- Configure a fictional demo kit or draft order.
-- Complete a simulated checkout and receive a non-binding proposal after staff approval.
+- Configure a fictional demo kit or pilot request.
+- Receive an approved, non-binding proposal, explicitly accept it, and complete a simulated checkout.
 
 ### 5.2 Business Goals
 
@@ -119,7 +119,7 @@ The MVP will not:
 
 **Name:** Alex Tremblay  
 **Role:** Tankroy Systems solution specialist  
-**Need:** Review the customer's requirements, recommendation evidence, assumptions, and draft order  
+**Need:** Review the customer's requirements, recommendation evidence, assumptions, and pilot request
 **Success:** Approves, rejects, or requests changes without reconstructing the entire conversation
 
 ## 8. MVP Scope
@@ -162,7 +162,7 @@ The MVP is one responsive public web application with two intentionally separate
 
 1. **Public Tankroy website:** home, use cases, catalog, product details, and an embedded TankFit AI assistant. Anonymous visitors can browse without an account and start a custom or preset discovery flow.
 2. **Demo Hub:** an explicitly labeled `/demo` entry point lets evaluators choose Customer Experience or Sales Team Experience.
-3. **Sales workspace:** requirements review, deterministic evidence, draft order, simulated checkout, approval, audit, and proposal generation. The public competition build exposes this through `/demo/sales`; state-changing staff controls still require session- and order-scoped `Demo Staff Mode`.
+3. **Sales workspace:** requirements review, deterministic evidence, pilot request, approval, proposal, acceptance, test checkout, and audit. The public competition build exposes this through `/demo/sales`; state-changing staff controls still require session- and order-scoped `Demo Staff Mode`.
 
 Both surfaces share one Next.js deployment, database, catalog, compatibility engine, provider router, and security boundary. They are not separate products or backends. Telegram, WhatsApp, native mobile applications, a CMS, and a real authenticated staff portal are future possibilities, not MVP requirements.
 
@@ -181,23 +181,25 @@ The presets are onboarding aids, portfolio demonstrations, and repeatable test f
 2. The application clearly states that the company, products, data, prices, and transaction are fictional.
 3. The visitor browses the catalog or opens the floating `Ask TankFit AI` assistant from a public page.
 4. The visitor describes a custom fictional operational need in natural language or selects and optionally edits a sample scenario.
-5. TankFit AI asks targeted discovery questions until the minimum compatibility fields are complete.
+5. TankFit AI adapts discovery to the visitor's knowledge. Unknown technical facts may be handed to Sales for clarification through an explicit private opportunity request.
 6. The rules engine filters the catalog and returns only compatible products.
 7. The AI explains the primary recommendation, constraints, evidence, and compatible alternatives.
 8. The visitor adjusts operational assumptions and views a deterministic ROI estimate.
-9. In Customer Experience, the visitor configures a demo kit or draft order.
+9. In Customer Experience, the visitor supplies optional fictional business objectives, timeline and pilot success criteria, then configures a pilot request.
 10. The application validates price, fictional availability, compatibility, and required fields again.
-11. The visitor completes a simulated payment or checkout step using test data only.
-12. The order enters `pending_approval`; no final proposal is issued yet.
+11. The visitor submits a compatible pilot request; its scope is frozen and assigned a revision number.
+12. The request enters `pending_approval`; no payment is requested yet.
 13. The visitor returns to the Demo Hub and opens Sales Team Experience with the same session-scoped opportunity.
 14. The visitor explicitly enters `Demo Staff Mode` using a short-lived signed token restricted to the current synthetic session and order.
 15. Acting as a fictional Tankroy Systems solution specialist, the visitor reviews the conversation summary, requirements, recommendation, assumptions, and order.
 16. The demo approver approves, rejects, or requests changes; the role change and decision are recorded in the audit timeline.
 17. After approval, the application generates a clearly marked, non-binding proposal document.
-18. The visitor returns to Customer Experience, checks the final status, and downloads the simulated proposal.
+18. The visitor returns to Customer Experience, downloads and reviews the approved proposal, explicitly accepts that revision, then completes Stripe test Checkout. Only a verified test payment records `paid`. Before acceptance, changes create a new revision while preserving prior snapshots, decisions and conversation.
 19. The anonymous demo session and its generated artifacts expire automatically after 24 hours.
 
 An evaluator may also open the Demo Hub first. Customer Experience starts the public journey. Sales Team Experience either continues the evaluator's current synthetic opportunity or, after an explicit action, creates a private AirFlame fixture in that evaluator's own session. A prepared fixture is never a shared mutable customer or a shortcut around deterministic validation.
+
+The authoritative state and revision contract is [Consultative Sales](specs/consultative-sales.md), with rationale in [ADR-0011](adrs/0011-consultative-sales-lifecycle.md). The target is consultative tank-monitoring qualification, not universal coverage of business sales processes. Pilot evaluation criteria are captured as hypotheses; fulfillment and actual measurement remain outside the MVP.
 
 ## 10. Functional Requirements
 
@@ -242,26 +244,30 @@ An evaluator may also open the Demo Hub first. Customer Experience starts the pu
 - Inputs and assumptions must be visible and editable.
 - Outputs must include the calculation method and a disclaimer.
 - The AI may explain the result but must not alter calculated values.
+- Simple payback deducts recurring annual service from annual gross benefit before recovering initial hardware. Nonpositive annual net benefit means payback is not reached under those assumptions. The first-year net result remains separate.
 
-### FR-6: Draft Order
+### FR-6: Pilot Request and Revisions
 
-- The visitor must be able to add compatible products and fictional services to a draft order.
+- The visitor must be able to add compatible products and fictional services to a pilot request.
 - Price, stock quantity, availability, and delivery lead time must be revalidated against the application database when the order is created.
 - The system must reject incompatible or unavailable items even if requested through the chat.
 - The visitor must be able to edit quantities before submission.
+- A pending, rejected, change-requested or approved but unaccepted request may be superseded to create a new revision. Preserve its snapshot and audit; require a new approval. Accepted requests cannot be revised in this MVP.
 
 ### FR-7: Simulated Checkout
 
 - The system must never accept or request real card information.
 - The submitted competition payment path must use a provider sandbox. Internal payment fixtures are limited to automated tests and must not silently replace an unavailable sandbox.
 - All checkout screens must state that no money will move.
-- A successful simulation must create an auditable payment event linked to the draft order.
+- A successful simulation must create an auditable payment event linked to the accepted pilot request.
+- Test Checkout requires explicit acceptance of the current approved proposal. Successful verified payment changes `accepted` to `paid`; payment never grants staff approval.
 
 ### FR-8: Human Approval
 
 - Final proposal generation must require approval by an authorized fictional staff user.
 - The agent must not be able to approve its own recommendation or order.
 - The approver must see the structured requirements, evidence, unresolved issues, ROI assumptions, order, and audit timeline.
+- Sales may review a private incomplete opportunity without a commercial request or payment. Missing compatibility evidence still prevents approval of a product proposal.
 - Approval, rejection, and change requests must record actor, timestamp, and reason.
 - In the public demo, the visitor may explicitly assume the `demo_approver` role only for the visitor's current synthetic session.
 - Demo approval authorization must use a short-lived, server-signed token and must never expose another visitor's session or a general administrative dashboard.
@@ -323,7 +329,7 @@ The agent may:
 - Call read-only catalog and compatibility tools.
 - Explain deterministic recommendations and calculations.
 - Summarize the conversation for the visitor and approver.
-- Request creation of a draft order through validated application tools.
+- Explain how the visitor can submit a pilot request through explicit interface controls; no mutation tool is exposed to the model.
 
 ### 11.2 Agent Prohibitions
 
@@ -366,7 +372,7 @@ The deterministic guided mode must allow visitors to complete discovery, compati
 - Extracted technical requirements
 - Compatibility results and evidence
 - ROI assumptions and outputs
-- Draft order and line items
+- Pilot request, revision, and line items
 - Simulated payment event
 - Approval event and reason
 - Generated proposal metadata
@@ -456,7 +462,7 @@ Target for the public MVP: **80% or higher** across the three presets and a main
 
 - Median time to first useful response: under 4 seconds under normal provider availability.
 - Median number of discovery questions: six or fewer for a prebuilt scenario.
-- Draft-order completion rate: 50% or higher for visitors who reach a recommendation in usability testing.
+- Pilot-request submission rate: 50% or higher for visitors who reach a recommendation in usability testing.
 
 ## 16. MVP Acceptance Criteria
 
@@ -567,10 +573,10 @@ Any future decision to split the backend into independently deployed services mu
 
 ### Phase 4: Transaction and Approval
 
-- Add ROI calculation, draft order, simulated checkout, approval dashboard, and proposal generation.
+- Add ROI calculation, pilot-request revisions, simulated checkout, approval workspace, and proposal generation.
 - Add audit timeline, security controls, and cost metrics.
 
-**Implementation status:** Complete for the AirFlame golden path. Anonymous sessions, commercial revalidation, deterministic ROI, order state, fictional deposit authorization, signed Demo Staff Mode, approval decisions, audit events, and on-demand proposal generation are implemented.
+**Implementation status:** The consultative AirFlame path is implemented on the feature branch: anonymous sessions, commercial revalidation, recurring-cost ROI, revision-aware order state, fictional deposit authorization, signed Demo Staff Mode, approval decisions, customer acceptance, audit events, and on-demand proposal generation are covered by local checks. Deployment verification and owner review remain pending.
 
 ### Phase 5: Public Release
 
@@ -588,7 +594,7 @@ Any future decision to split the backend into independently deployed services mu
 - Add surface-aware navigation, disclaimers, accessibility coverage, and E2E tests proving that public pages cannot expose staff actions.
 - Support both continuation of the evaluator's own customer-created opportunity and explicit creation of a private prepared AirFlame sales fixture.
 
-**Implementation status:** Public widget, Demo Hub, Customer Experience and Sales Team Experience are implemented on `codex/competition-completion`; full release verification and owner-reviewed deployment remain pending. See ADR-0008 and the dated verification evidence.
+**Implementation status:** Public widget, Demo Hub, Customer Experience and Sales Team Experience are implemented on this consultative revision branch; full release verification and owner-reviewed deployment remain pending. See ADR-0011 and the dated baseline verification evidence.
 
 ## 20. Preset Demo Scenarios and Rationale
 

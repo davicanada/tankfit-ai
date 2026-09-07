@@ -1,5 +1,7 @@
 # Final Release Verification — September 6, 2026
 
+> Historical baseline record. The September 6 consultative-sales revision supersedes the payment-first ordering documented below; this file is retained for audit history and is not current-release evidence.
+
 This record documents the final technical verification performed before social publication and competition submission. It does not itself publish or submit the project.
 
 ## Verified release

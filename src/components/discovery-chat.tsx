@@ -43,8 +43,14 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
       setRequirementsConfirmed(true);
       setSessionStateKnown(true);
     };
+    const reopen = () => {
+      setRequirementsConfirmed(false);
+      setSessionStateKnown(true);
+      setError("");
+    };
     window.addEventListener("tankfit-session-reset", reset);
     window.addEventListener("tankfit-requirements-confirmed", confirm);
+    window.addEventListener("tankfit-requirements-reopened", reopen);
     fetch("/api/discovery")
       .then((r) => r.json())
       .then((data) => {
@@ -63,6 +69,7 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
       active = false;
       window.removeEventListener("tankfit-session-reset", reset);
       window.removeEventListener("tankfit-requirements-confirmed", confirm);
+      window.removeEventListener("tankfit-requirements-reopened", reopen);
     };
   }, []);
   useEffect(() => {
@@ -143,7 +150,10 @@ export function DiscoveryChat({ compact = false }: { compact?: boolean }) {
         ))}
       </div>
       {messages.length === 0 && !locked && (
-        <div aria-label="Suggested conversation starters" className="flex flex-wrap gap-2">
+        <div
+          aria-label="Suggested conversation starters"
+          className="flex flex-wrap gap-2"
+        >
           {starterPrompts.map((prompt) => (
             <Button
               key={prompt}

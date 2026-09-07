@@ -6,6 +6,8 @@ import { demoSessions, demoOrders, demoEvents } from "@/db/schema";
 import {
   defaultAirFlameRequirements,
   defaultRoiAssumptions,
+  emptyRequirements,
+  emptyBusinessBrief,
 } from "@/domain/journey/types";
 import {
   confirmRequirements,
@@ -16,11 +18,41 @@ import {
   getProposalData,
   buildJourneyView,
   prepareAirFlameOpportunity,
+  acceptProposal,
+  reviseRequest,
+  requestSalesReview,
+  readCheckoutOrder,
 } from "@/lib/journey-service";
 
-const sessions = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
-const [owner, foreign, expired, approvedOwner] = sessions;
-describe("isolated Postgres journey boundaries", () => {
+const sessions = Array.from({ length: 9 }, () => randomUUID());
+const [
+  owner,
+  foreign,
+  expired,
+  revisionOwner,
+  incomplete,
+  raceOwner,
+  legacyOwner,
+  changesOwner,
+  staleOwner,
+] = sessions;
+async function submit(id: string) {
+  await confirmRequirements(
+    id,
+    defaultAirFlameRequirements,
+    defaultRoiAssumptions,
+  );
+  return createDraftOrder(id);
+}
+async function approve(id: string, orderId: string) {
+  await decideOrder({
+    sessionId: id,
+    orderId,
+    decision: "approved",
+    note: "Synthetic five-site pilot reviewed.",
+  });
+}
+describe("consultative Postgres lifecycle", () => {
   beforeAll(async () => {
     if (!process.env.DATABASE_URL)
       throw new Error("Integration tests require a configured test database.");
@@ -29,7 +61,7 @@ describe("isolated Postgres journey boundaries", () => {
         .insert(demoSessions)
         .values({
           id,
-          requirements: defaultAirFlameRequirements,
+          requirements: emptyRequirements,
           roiAssumptions: defaultRoiAssumptions,
           expiresAt: new Date(
             Date.now() + (id === expired ? -60_000 : 3_600_000),
@@ -37,21 +69,26 @@ describe("isolated Postgres journey boundaries", () => {
         });
   });
   afterAll(async () => {
-    // Delete only exact UUIDs created by this test run, never shared catalog rows.
+    // Exact UUIDs created above; never delete shared commerce rows.
     for (const id of sessions)
       await getDb().delete(demoSessions).where(eq(demoSessions.id, id));
   });
-  it("serializes duplicate drafts, freezes scope, isolates and gates proposals", async () => {
+
+  it("requires approved proposal acceptance before checkout and verifies payment exactly once", async () => {
     await confirmRequirements(
       owner,
       defaultAirFlameRequirements,
       defaultRoiAssumptions,
     );
-    const orders = await Promise.all([
+    const ids = await Promise.all([
       createDraftOrder(owner),
       createDraftOrder(owner),
     ]);
-    expect(orders[0]).toBe(orders[1]);
+    expect(ids[0]).toBe(ids[1]);
+    const orderId = ids[0];
+    expect((await buildJourneyView(owner, false)).order?.status).toBe(
+      "pending_approval",
+    );
     await expect(
       confirmRequirements(
         owner,
@@ -59,19 +96,44 @@ describe("isolated Postgres journey boundaries", () => {
         defaultRoiAssumptions,
       ),
     ).rejects.toThrow("frozen");
+    await expect(readCheckoutOrder(owner, orderId)).rejects.toThrow();
     await expect(
-      decideOrder({
-        sessionId: owner,
-        orderId: orders[0],
-        decision: "approved",
-        note: "Premature approval",
-      }),
+      attachCheckout(owner, orderId, "cs_test_early"),
     ).rejects.toThrow();
-    await expect(
-      attachCheckout(foreign, orders[0], "cs_test_foreign"),
-    ).rejects.toThrow();
+    await expect(acceptProposal(owner, orderId)).rejects.toThrow();
+    expect((await buildJourneyView(owner, false)).proposalId).toBeNull();
+    await expect(approve(foreign, orderId)).rejects.toThrow();
+    await approve(owner, orderId);
+    const approved = await buildJourneyView(owner, false);
+    expect(approved.proposalId).toBeTruthy();
+    expect(await getProposalData(approved.proposalId!, foreign)).toBeNull();
+    expect(
+      (await getProposalData(approved.proposalId!, owner))?.snapshot
+        .requirements.fleetSize,
+    ).toBe(500);
+    expect(
+      (await getProposalData(approved.proposalId!, owner))?.snapshot.roi
+        .estimatedPaybackMonths,
+    ).toBeNull();
+    await expect(readCheckoutOrder(owner, orderId)).rejects.toThrow();
+    await expect(acceptProposal(foreign, orderId)).rejects.toThrow();
+    await Promise.all([
+      acceptProposal(owner, orderId),
+      acceptProposal(owner, orderId),
+    ]);
+    expect((await readCheckoutOrder(owner, orderId)).status).toBe("accepted");
+    await expect(reviseRequest(owner, orderId)).rejects.toThrow();
     const checkoutSessionId = `cs_test_${randomUUID()}`;
-    await attachCheckout(owner, orders[0], checkoutSessionId);
+    await expect(
+      attachCheckout(foreign, orderId, checkoutSessionId),
+    ).rejects.toThrow();
+    await Promise.all([
+      attachCheckout(owner, orderId, checkoutSessionId),
+      attachCheckout(owner, orderId, checkoutSessionId),
+    ]);
+    await expect(
+      attachCheckout(owner, orderId, "cs_test_replacement"),
+    ).rejects.toThrow();
     const payment = {
       checkoutSessionId,
       amount: 25_000,
@@ -79,116 +141,193 @@ describe("isolated Postgres journey boundaries", () => {
       paid: true,
       livemode: false,
     };
+    for (const invalid of [
+      { livemode: true },
+      { paid: false },
+      { amount: 1 },
+      { currency: "usd" },
+      { checkoutSessionId: "cs_test_wrong" },
+    ]) {
+      await expect(
+        completeVerifiedCheckout(owner, orderId, { ...payment, ...invalid }),
+      ).rejects.toThrow();
+    }
     await expect(
-      completeVerifiedCheckout(owner, orders[0], {
-        ...payment,
-        livemode: true,
-      }),
-    ).rejects.toThrow();
-    await expect(
-      completeVerifiedCheckout(owner, orders[0], { ...payment, amount: 1 }),
-    ).rejects.toThrow();
-    await expect(
-      completeVerifiedCheckout(owner, orders[0], { ...payment, paid: false }),
+      completeVerifiedCheckout(foreign, orderId, payment),
     ).rejects.toThrow();
     await Promise.all([
-      completeVerifiedCheckout(owner, orders[0], payment),
-      completeVerifiedCheckout(owner, orders[0], payment),
+      completeVerifiedCheckout(owner, orderId, payment),
+      completeVerifiedCheckout(owner, orderId, payment),
     ]);
-    const events = await getDb().query.demoEvents.findMany({
-      where: eq(demoEvents.sessionId, owner),
+    const paid = await buildJourneyView(owner, false);
+    expect(paid.order?.status).toBe("paid");
+    expect(paid.proposalId).toBe(approved.proposalId);
+    expect(await getProposalData(paid.proposalId!, owner)).toBeTruthy();
+    for (const type of [
+      "pilot_request_submitted",
+      "proposal_accepted",
+      "test_checkout_started",
+      "test_payment_verified",
+    ])
+      expect(
+        paid.events.filter((event) => event.eventType === type),
+      ).toHaveLength(1);
+    await expect(reviseRequest(owner, orderId)).rejects.toThrow();
+    await getDb()
+      .update(demoSessions)
+      .set({ expiresAt: new Date(Date.now() - 1000) })
+      .where(eq(demoSessions.id, owner));
+    expect(await getProposalData(paid.proposalId!, owner)).toBeNull();
+  });
+
+  it("preserves approved snapshots and conversation while requiring fresh revision approval", async () => {
+    const first = await submit(revisionOwner);
+    await approve(revisionOwner, first);
+    const before = await buildJourneyView(revisionOwner, false);
+    await getDb()
+      .update(demoSessions)
+      .set({
+        discoveryMessages: [{ role: "user", content: "A fictional pilot." }],
+      })
+      .where(eq(demoSessions.id, revisionOwner));
+    await expect(reviseRequest(foreign, first)).rejects.toThrow();
+    await reviseRequest(revisionOwner, first);
+    expect(await getProposalData(before.proposalId!, revisionOwner)).toBeNull();
+    await expect(acceptProposal(revisionOwner, first)).rejects.toThrow();
+    await expect(approve(revisionOwner, first)).rejects.toThrow();
+    const open = await buildJourneyView(revisionOwner, false);
+    expect(open.order).toBeNull();
+    expect(open.requirementsConfirmed).toBe(false);
+    expect(open.conversation).toHaveLength(1);
+    await confirmRequirements(
+      revisionOwner,
+      { ...defaultAirFlameRequirements, pilotQuantity: 3 },
+      defaultRoiAssumptions,
+    );
+    const second = await createDraftOrder(revisionOwner);
+    expect(second).not.toBe(first);
+    const revised = await buildJourneyView(revisionOwner, false);
+    expect(revised.order?.revision).toBe(2);
+    expect(revised.order?.status).toBe("pending_approval");
+    expect(revised.proposalId).toBeNull();
+    const old = await getDb().query.demoOrders.findFirst({
+      where: eq(demoOrders.id, first),
     });
-    expect(
-      events.filter((e) => e.eventType === "test_payment_verified"),
-    ).toHaveLength(1);
+    expect(old?.solutionSnapshot?.requirements.pilotQuantity).toBe(5);
+    expect(old?.decisionNote).toBeTruthy();
+    expect(old?.status).toBe("superseded");
+  });
+
+  it("hands off incomplete facts without creating a request, approval or payment", async () => {
+    const brief = {
+      objective: "Reduce manual checks",
+      timeline: "This quarter",
+      successCriteria: "Compare manual checks before and during the pilot",
+    };
+    await requestSalesReview(
+      incomplete,
+      { ...emptyRequirements, material: "heating_oil" },
+      brief,
+    );
+    const view = await buildJourneyView(incomplete, false);
+    expect(view.salesRequested).toBe(true);
+    expect(view.businessBrief).toEqual(brief);
+    expect(view.requirements.gaugeInterface).toBe("unknown");
+    expect(view.order).toBeNull();
+    expect(view.proposalId).toBeNull();
+    await expect(createDraftOrder(incomplete)).rejects.toThrow();
     await expect(
-      decideOrder({
-        sessionId: foreign,
-        orderId: orders[0],
-        decision: "approved",
-        note: "Foreign attempt",
+      requestSalesReview(incomplete, emptyRequirements, {
+        ...emptyBusinessBrief,
+        objective: "x".repeat(501),
       }),
     ).rejects.toThrow();
+  });
+
+  it("serializes conflicting Sales decisions and acceptance versus revision", async () => {
+    const first = await submit(raceOwner);
     const decisions = await Promise.allSettled([
+      approve(raceOwner, first),
       decideOrder({
-        sessionId: owner,
-        orderId: orders[0],
-        decision: "approved",
-        note: "Synthetic test approval",
-      }),
-      decideOrder({
-        sessionId: owner,
-        orderId: orders[0],
+        sessionId: raceOwner,
+        orderId: first,
         decision: "rejected",
-        note: "Racing decision",
+        note: "Alternate review",
       }),
     ]);
     expect(
       decisions.filter((result) => result.status === "fulfilled"),
     ).toHaveLength(1);
-    const view = await buildJourneyView(owner, false);
-    if (view.proposalId) {
-      expect(await getProposalData(view.proposalId, foreign)).toBeNull();
-      const data = await getProposalData(view.proposalId, owner);
-      expect(data?.snapshot.requirements.fleetSize).toBe(500);
-      await getDb()
-        .update(demoSessions)
-        .set({ expiresAt: new Date(Date.now() - 1000) })
-        .where(eq(demoSessions.id, owner));
-      expect(await getProposalData(view.proposalId, owner)).toBeNull();
-    }
-  });
-  it("always verifies an approved immutable snapshot and expiry", async () => {
-    await confirmRequirements(
-      approvedOwner,
-      defaultAirFlameRequirements,
-      defaultRoiAssumptions,
+    await reviseRequest(raceOwner, first);
+    const second = await submit(raceOwner);
+    await approve(raceOwner, second);
+    const race = await Promise.allSettled([
+      acceptProposal(raceOwner, second),
+      reviseRequest(raceOwner, second),
+    ]);
+    expect(race.filter((result) => result.status === "fulfilled")).toHaveLength(
+      1,
     );
-    const orderId = await createDraftOrder(approvedOwner);
-    const checkoutSessionId = `cs_test_${randomUUID()}`;
-    await attachCheckout(approvedOwner, orderId, checkoutSessionId);
-    await completeVerifiedCheckout(approvedOwner, orderId, {
-      checkoutSessionId,
-      amount: 25_000,
-      currency: "cad",
-      paid: true,
-      livemode: false,
-    });
-    await decideOrder({
-      sessionId: approvedOwner,
-      orderId,
-      decision: "approved",
-      note: "Synthetic integration approval",
-    });
-    const view = await buildJourneyView(approvedOwner, false);
-    expect(view.proposalId).toBeTruthy();
-    const proposalId = view.proposalId!;
-    const data = await getProposalData(proposalId, approvedOwner);
-    expect(data?.snapshot.requirements).toEqual(defaultAirFlameRequirements);
-    expect(await getProposalData(proposalId, foreign)).toBeNull();
-    await getDb()
-      .update(demoSessions)
-      .set({ expiresAt: new Date(Date.now() - 1000) })
-      .where(eq(demoSessions.id, approvedOwner));
-    expect(await getProposalData(proposalId, approvedOwner)).toBeNull();
   });
-  it("creates a private prepared fixture once and denies expired sessions", async () => {
+
+  it("allows a change-request revision without resetting the session", async () => {
+    const orderId = await submit(changesOwner);
+    await decideOrder({
+      sessionId: changesOwner,
+      orderId,
+      decision: "changes_requested",
+      note: "Clarify the pilot quantity.",
+    });
+    expect((await buildJourneyView(changesOwner, false)).proposalId).toBeNull();
+    await reviseRequest(changesOwner, orderId);
+    const next = await submit(changesOwner);
+    expect(next).not.toBe(orderId);
+    expect(
+      (await buildJourneyView(changesOwner, false)).revisions,
+    ).toHaveLength(2);
+  });
+
+  it("creates a private prepared fixture once and denies expired and legacy mutations", async () => {
     const ids = await Promise.all([
       prepareAirFlameOpportunity(foreign),
       prepareAirFlameOpportunity(foreign),
     ]);
     expect(ids[0]).toBe(ids[1]);
-    const order = await getDb().query.demoOrders.findFirst({
-      where: eq(demoOrders.id, ids[0]),
-    });
-    expect(order?.sessionId).toBe(foreign);
-    expect(order?.status).toBe("draft");
-    const events = await getDb().query.demoEvents.findMany({
-      where: eq(demoEvents.sessionId, foreign),
-    });
+    const view = await buildJourneyView(foreign, false);
+    expect(view.order?.status).toBe("pending_approval");
     expect(
-      events.filter((e) => e.eventType === "prepared_sales_fixture"),
+      view.events.filter(
+        (event) => event.eventType === "prepared_sales_fixture",
+      ),
     ).toHaveLength(1);
     await expect(createDraftOrder(expired)).rejects.toThrow("expired");
+    const legacy = await submit(legacyOwner);
+    await getDb()
+      .update(demoOrders)
+      .set({ workflowVersion: 1 })
+      .where(eq(demoOrders.id, legacy));
+    await expect(approve(legacyOwner, legacy)).rejects.toThrow();
+    await expect(acceptProposal(legacyOwner, legacy)).rejects.toThrow();
+    await expect(readCheckoutOrder(legacyOwner, legacy)).rejects.toThrow();
+    await expect(reviseRequest(legacyOwner, legacy)).rejects.toThrow();
+  });
+
+  it("rejects changed commerce before approval and checkout without modifying catalog rows", async () => {
+    const orderId = await submit(staleOwner);
+    // Tamper only with this test-owned frozen row to represent a stale snapshot.
+    await getDb()
+      .update(demoOrders)
+      .set({ commerceVersion: "stale" })
+      .where(eq(demoOrders.id, orderId));
+    await expect(approve(staleOwner, orderId)).rejects.toThrow(
+      "Commerce data changed",
+    );
+    expect((await buildJourneyView(staleOwner, false)).proposalId).toBeNull();
+    const events = await getDb().query.demoEvents.findMany({
+      where: eq(demoEvents.sessionId, staleOwner),
+    });
+    expect(events.some((event) => event.eventType === "order_approved")).toBe(
+      false,
+    );
   });
 });

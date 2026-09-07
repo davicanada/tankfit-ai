@@ -11,17 +11,19 @@ For a narrated end-to-end example with dialogue and expected system states, see
 2. Describe a fictional monitoring problem in your preferred language. Answer discovery questions, then follow **Review facts and continue the customer journey**.
 3. Alternatively open `/demo/customer`, select **AirFlame Fuels**, and review its editable technical facts. The example covers 500 tanks but only a five-unit pilot.
 4. Select **Confirm requirements**. Inspect the deterministic match, database-backed price/stock/lead time and illustrative ROI. You can edit assumptions and recalculate before creating an order.
-5. Select **Create draft order**. Its scope is now frozen; use **Reset demo** for a different revision.
-6. Select **Open Stripe test checkout**. This requires configured owner-controlled sandbox credentials. Use only Stripe's test card and the supplied fictional identity; never real personal or payment information.
-7. Return to the demo and use **Check test payment status** if the signed callback has not yet updated the order. A cancelled, declined or unavailable checkout must not produce approval eligibility.
+5. Optionally enter a business objective, timeline and pilot criteria. **Request Sales help** saves an incomplete private opportunity without an order or payment. Unknown facts remain unknown.
+6. For a confirmed compatible configuration, select **Submit pilot for Sales review**. The request is frozen as a revision in `pending_approval`; continue to Sales Team Experience.
+7. After Sales approval, review **Download fictional proposal**, then select **Accept proposal**. Only then does **Open Stripe test checkout** appear. Use only the supplied fictional identity and Stripe test details.
+8. Return and use **Check test payment status** if necessary. Verified payment records **Paid**; cancellation or decline leaves **Accepted**. The approved proposal remains available. Pilot evaluation is a proposed next step, not simulated fulfillment.
+9. Before acceptance, **Revise request** preserves history and unlocks the same session's facts. Resubmit for a new approval; accepted/paid requests cannot be revised.
 
 ## Sales Team Experience
 
 1. Open `/demo/sales` in the same browser session. Review the conversation, confirmed requirements, ROI assumptions, order and audit.
-2. A fresh session can explicitly **Load prepared AirFlame opportunity**. This creates a private draft, not a paid order. Follow Customer Experience to complete test checkout.
-3. Only an eligible paid test order exposes **Enter Demo Staff Mode**. This is a short-lived token for this session/order, not general administrator access.
+2. A fresh session can explicitly **Load prepared AirFlame opportunity**. This creates a private request awaiting review. An incomplete customer handoff instead shows pending evidence and the business brief; no commercial approval is possible yet.
+3. An eligible validated request exposes **Enter Demo Staff Mode** before payment. This is a short-lived token for this session/request, not general administrator access.
 4. Enter a fictional decision note and approve, request changes or reject. Only approval permits **Download fictional proposal**.
-5. Verify the two-page document's `DEMO - NOT A VALID QUOTE OR CONTRACT` marking. Use **Reset demo** to remove this session's records and start again.
+5. Verify the two-page document's `DEMO - NOT A VALID QUOTE OR CONTRACT` marking. Return to the customer perspective for acceptance and test Checkout. A change request returns to the customer for revision. **Reset demo** removes the session's records.
 
 ## Useful Negative Checks
 

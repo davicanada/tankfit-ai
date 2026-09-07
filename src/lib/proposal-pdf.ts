@@ -415,7 +415,7 @@ export async function createProposalPdf(input: ProposalInput) {
       label: "Estimated payback",
       value:
         input.roiResult.estimatedPaybackMonths === null
-          ? "Not available"
+          ? "Not reached under these assumptions"
           : `${input.roiResult.estimatedPaybackMonths} months`,
       y,
       regular,
@@ -434,7 +434,8 @@ export async function createProposalPdf(input: ProposalInput) {
   const terms = [
     "This document is generated from synthetic data for a personal, independent competition project.",
     "Every company, person, product, price, stock value, metric, payment, and approval represented here is fictional.",
-    "The deposit was verified in Stripe's test environment. No real money or goods are involved.",
+    "Approval precedes customer acceptance and a test-only deposit. This proposal is not proof of payment. No real money or goods are involved.",
+    "Payback deducts annual recurring service from annual benefit before recovering hardware cost. Installation, taxes, freight and maintenance are excluded.",
     "Compatibility and ROI are educational demonstrations, not engineering, safety, financial, or commercial advice.",
   ];
   for (const term of terms) {

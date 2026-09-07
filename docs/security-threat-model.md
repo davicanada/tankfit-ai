@@ -161,7 +161,7 @@ Before public release:
 
 The initial conversational milestone maps the controls above to executable code and tests:
 
-- `src/app/api/advisor/route.ts` accepts only bounded same-origin JSON requests, applies a request limit before provider work, validates a strict schema, and recalculates compatibility on the server.
+- `src/app/api/discovery/route.ts` accepts only bounded same-origin JSON requests, applies a request limit before provider work, validates a strict schema, and recalculates compatibility on the server. The retired `/api/advisor` route is intentionally unavailable.
 - `src/lib/ai/provider-router.ts` keeps credentials server-only, gives the model no mutation tools, treats the complete browser transcript as untrusted data, limits each provider to one bounded attempt, and ends in deterministic guided mode.
 - `src/lib/ai/prompt.ts` restricts conversation scope, grounded product evidence, language behavior, sensitive-data requests, and authoritative safety or installation advice. The prompt is defense in depth and grants no authority.
 - React renders provider output as escaped plain text; raw HTML and Markdown execution are not enabled.
@@ -172,6 +172,15 @@ The short burst limiter and circuit breaker apply to one warm application instan
 The public widget, `/advisor`, `/demo/customer`, and `/demo/sales` must use the same server-managed session scope. A client-controlled route, query parameter, or widget state cannot promote a visitor to staff mode, select another order, or mark an opportunity as prepared.
 
 ## 12. Residual Risks
+
+### Consultative revision controls (ADR-0011)
+
+- New same-origin Server Actions derive session scope on the server and validate bounded business briefs (500/200/500 characters), request UUIDs and nonempty decision notes. Handoff does not create an order, permission, payment or notification.
+- Workflow-2 requests follow review, approval, exact-revision acceptance, then test payment. Legacy workflow-1 records cannot enter these new mutations. Old deployments continue to insert workflow 1 by database default.
+- Acceptance and revision serialize on the existing session-row lock. Superseded snapshots remain immutable; proposal reads deny superseded records. Staff claims for a previous request ID cannot authorize a new revision.
+- Accepted requests cannot be revised or have their Checkout ID replaced. Duplicate verified callbacks are idempotent. A verified callback records actual test-payment outcome against the frozen accepted scope even if descriptive/current commerce later changes; commerce is revalidated before approval, acceptance and Checkout creation. No fulfillment is performed.
+- Bound commercial revisions to ten per session. Discovery allows twelve exchanges, at most 2,000 visitor characters and 6,000 total context characters before a request; reply remains at most 1,200 characters. Existing global AI budgets and per-request limits remain enforced. A conversation-limit response offers guided review or Sales help.
+- Mapping: `integration/journey.test.ts` exercises incomplete handoff, legacy/cross-session/expired denial, stale commerce, frozen revisions, acceptance races and payment replay. `e2e/customer-journey.spec.ts` checks the visible customer/Sales sequence, unknown-fact handoff, revision and proposal privacy. Domain tests verify recurring-cost payback and allowed/forbidden transitions.
 
 ### Completion revision controls (ADR-0008)
 

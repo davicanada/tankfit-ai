@@ -2,7 +2,7 @@
 
 I built TankFit AI for the Jornada de Dados sales-agent challenge.
 
-TankFit AI is an end-to-end AI-assisted sales experience for Tankroy Systems Inc., an entirely fictional remote tank-monitoring company. A visitor can describe an operational need in natural language, review structured requirements, receive a compatible product recommendation, inspect a transparent ROI estimate, create a fictional order, complete Stripe test Checkout, switch to a session-scoped sales review, approve the pilot, and download a clearly marked demo proposal.
+TankFit AI is an end-to-end AI-assisted sales experience for Tankroy Systems Inc., an entirely fictional remote tank-monitoring company. A visitor can describe a need, request Sales help even when technical facts are missing, validate a compatible pilot, and inspect an illustrative business case. Sales reviews and approves the proposal before the customer accepts it and completes Stripe test Checkout. Revisions preserve the earlier decisions and evidence.
 
 The central engineering rule is simple: the language model decides what to say; deterministic code decides what can happen.
 

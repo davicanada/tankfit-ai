@@ -1,292 +1,214 @@
 # Full Fictional Workflow Simulation
 
-This is a narrated happy-path example for the Tankroy public website and the
-TankFit AI internal demonstration workspace. Every organization, person,
-product, specification, price, payment, and business result below is fictional
-and synthetic. Do not enter real personal, contact, payment, or confidential
-information.
+**Revision:** Consultative workflow 2; see [the specification](../specs/consultative-sales.md).
+**Owner:** Davi Almeida
 
-## Scenario
+All organizations, people, products, specifications, prices, payments and results
+are synthetic. This is an independent personal project for the Jornada de Dados
+competition. The dialogue below is illustrative, not an actual test transcript
+or a guarantee of exact model wording.
 
-AirFlame Fuels is a fictional regional heating-oil distributor with 500 rural
-tanks. The operations team wants fewer run-outs, unnecessary deliveries, and
-manual checks. It wants to test five tanks before considering a larger
-fictional rollout.
+## The business situation
 
-The visitor's fictional requirements are:
+AirFlame Fuels manages 500 fictional heating-oil tanks across rural sites. The
+operations team wants fewer run-outs and manual checks. It will evaluate five
+sites before deciding whether a larger rollout makes sense.
 
-| Requirement | Value |
+The website belongs to fictional Tankroy Systems Inc. TankFit AI is its embedded
+advisor and the name of the Sales demonstration workspace.
+
+## 1. The customer arrives with a problem
+
+The customer opens the Tankroy website and **Ask TankFit AI**.
+
+> **Customer:** We spend too much time checking tanks manually. I don't know
+> which equipment we need. Can you help?
+
+> **TankFit AI:** I can help narrow down the options. What do the tanks store,
+> and how do you check their level today?
+
+> **Customer:** Heating oil. Our team reads the mechanical float gauges. There
+> are 500 tanks at separate sites, but we want to try five first.
+
+> **TankFit AI:** A small pilot could help you evaluate whether remote readings
+> are useful before considering the whole fleet. Are the pilot tanks above
+> ground or underground?
+
+> **Customer:** Above-ground horizontal tanks.
+
+> **TankFit AI:** FloatLink is a possible catalog candidate for this type of
+> application. Its gauge interface still needs to be checked. Do you already
+> have confirmation of the interface used by those five gauges?
+
+> **Customer:** I don't know what interface they use.
+
+> **TankFit AI:** That's okay. The interface is the connection between the
+> existing gauge and the monitor. We can leave it unknown and pass the
+> opportunity to the Sales demonstration for clarification. In Customer
+> Experience, select Request Sales help to save it for review.
+
+The visitor does not have to become an equipment specialist to make progress.
+Unknown interface and coverage facts still prevent a commercial recommendation.
+The assistant cannot turn uncertainty into compatibility.
+
+## 2. An incomplete opportunity reaches Sales
+
+The customer follows **Review facts and continue the customer journey** and
+checks the structured facts. They optionally enter:
+
+- **Business objective:** Reduce manual checks and avoid run-outs.
+- **Target timeline:** Evaluate a five-site pilot this quarter.
+- **Pilot success criteria:** Compare manual-check effort and evaluate whether
+  readings and low-level alerts are useful before deciding on expansion.
+
+The customer selects **Request Sales help**. The server saves the brief and
+technical facts in the current private session, records the handoff, and leaves
+unknown fields unknown. No commercial request, payment or proposal exists yet.
+
+The evaluator selects **Continue in Sales Team Experience**. Sales can see the
+business context, customer-stated facts, conversation and unresolved assessment.
+Its next action is to clarify the missing evidence.
+
+This mode switch lets one evaluator play both sides. It does not contact a real
+salesperson. A production adoption would require authenticated staff, assigned
+ownership and actual follow-up; those services are outside this competition demo.
+
+## 3. The fictional facts are clarified
+
+In this example, the evaluator supplies reviewed synthetic facts in Customer
+Experience after acting through the Sales review. No real engineering check
+has taken place.
+
+| Requirement | Confirmed fictional value |
 | --- | --- |
-| Stored material | Heating oil |
-| Fleet size | 500 tanks |
-| Pilot quantity | 5 monitors |
-| Tank installation | Above-ground, horizontal |
-| Existing instrument | Mechanical float gauge |
-| Gauge interface | Confirmed compatible fictional interface |
-| Connectivity | LTE-M cellular |
-| Reading frequency | Daily |
-| Alert | Low-level threshold |
-| Outdoor temperature | -25°C to 35°C |
+| Organization | AirFlame Fuels |
+| Material | Heating oil |
+| Fleet / pilot | 500 tanks / 5 monitors |
+| Tank type | Above-ground horizontal |
+| Existing instrumentation | Mechanical float gauge |
+| Gauge interface | Confirmed compatible fictional adapter |
+| Measurement preference | Existing float-gauge interface |
+| Site distribution | Distributed |
+| Connectivity | Confirmed LTE-M availability |
+| Reporting / alerts | Daily / low-level alerts |
+| Temperature | -25°C to 35°C |
 | Regulated location | No |
 
-AirFlame is only a convenient editable preset. A visitor who enters the same
-normalized facts for another fictional organization must receive the same
-deterministic result.
+Ordinary cellular reception must not be treated as evidence of LTE-M support.
+The evaluator deliberately supplies the fictional confirmation. If evidence
+remains unknown, the opportunity stays in review and cannot be submitted as a
+compatible pilot.
 
-## Flow at a glance
+The customer selects **Confirm requirements**. Deterministic rules select
+**FloatLink FL-100** because the supported material, tank, gauge interface,
+direct LTE-M connectivity and operating profile match. An equivalent custom
+organization receives the same result; the AirFlame name is irrelevant to ranking.
 
-```text
-Tankroy public site
-       |
-       v
-TankFit AI discovery (plain-language conversation)
-       |
-       v
-Customer Experience: review facts -> deterministic validation
-       |
-       v
-Draft five-unit pilot -> current Postgres commerce validation
-       |
-       v
-Stripe test Checkout -> signed callback and reconciliation
-       |
-       v
-Sales Team Experience: scoped review -> explicit decision
-       |
-       v
-Approved fictional proposal (watermarked PDF)
-```
+## 4. The customer sees commercial facts and an honest business case
 
-## Complete walkthrough
+Postgres supplies current price, availability and lead time. If the current
+database still contains the illustrative seed values, the example is:
 
-### 1. A visitor starts on the public Tankroy site
-
-The visitor opens the public Tankroy home page, sees the fictional-data notice,
-browses the catalog, and opens **Ask TankFit AI**. The assistant is a website
-conversation, not a hidden administrator or a purchasing authority.
-
-The visitor begins with a broad question:
-
-> **Visitor:** What products do you offer?
-
-> **TankFit AI:** Tankroy Systems Inc. has a fictional catalog of remote tank
-> monitoring products, including FloatLink, RadarSight, PressureLink,
-> HydroSense, GasWeight, ConnectHub, SolarRelay, and SiteDisplay. I can explain
-> a product or help narrow down a solution. Are you looking for level
-> monitoring for a particular tank or fluid?
-
-The answer gives a useful catalog overview first. It does not start with a
-long technical questionnaire.
-
-### 2. The assistant discovers the need progressively
-
-The visitor describes the business problem in ordinary language:
-
-> **Visitor:** We manage 500 rural heating-oil tanks. We want to reduce
-> run-outs and emergency deliveries, and test five sites first.
-
-> **TankFit AI:** That sounds like a five-monitor pilot across a distributed
-> heating-oil fleet. Are the pilot tanks above ground or underground?
-
-> **Visitor:** Above-ground horizontal tanks.
-
-> **TankFit AI:** Do they already use mechanical float gauges with a confirmed
-> compatible interface?
-
-> **Visitor:** Yes, they do.
-
-> **TankFit AI:** What connectivity is available at the pilot sites: LTE-M,
-> another cellular option, gateway coverage, or unknown?
-
-> **Visitor:** LTE-M cellular coverage is available.
-
-> **TankFit AI:** How often should the pilot report readings?
-
-> **Visitor:** Once a day.
-
-> **TankFit AI:** Should it alert the team when a tank reaches a low-level
-> threshold?
-
-> **Visitor:** Yes.
-
-> **TankFit AI:** What outdoor temperature range should the pilot cover?
-
-> **Visitor:** From -25 to 35 degrees Celsius.
-
-> **TankFit AI:** Does the installation require regulated or hazardous-location
-> review?
-
-> **Visitor:** No.
-
-> **TankFit AI:** Thanks. FloatLink FL-100 is the strongest current catalog
-> candidate for these stated facts. I will not finalize compatibility in chat.
-> Review the structured facts in Customer Experience so the deterministic
-> assessment can validate them.
-
-The assistant keeps the interaction accessible by asking one focused question
-at a time. If the visitor answers “I don't know,” the field remains explicitly
-unknown. The assistant never guesses, approves an order, changes a price, or
-turns a conversational statement into a transaction by itself.
-
-If the visitor instead asks for satellite connectivity, the assistant explains
-that the fictional catalog does not list satellite support, asks whether LTE-M
-is an acceptable alternative, and routes an unresolved case to technical review.
-No order can be created from that unresolved path.
-
-### 3. The visitor reviews facts in Customer Experience
-
-The visitor selects **Review facts and continue the customer journey**. In
-**Customer Experience**, the extracted values are editable and shown in a
-structured form. The visitor checks the five-unit pilot separately from the
-500-tank fleet and selects **Confirm requirements**.
-
-The server then runs the deterministic compatibility rules. The model's prose
-is not the source of truth.
-
-The result shown to the visitor is:
-
-- **Status:** Compatible
-- **Primary product:** FloatLink FL-100
-- **Quantity:** Five pilot monitors
-- **Why it matches:** heating-oil support, above-ground tank support,
-  confirmed mechanical-float interface, direct LTE-M for distributed sites,
-  and no shared gateway requirement
-- **Evidence:** matched catalog fields and recorded catalog/rule versions
-
-Fields that are not needed for this product remain explicitly unknown instead
-of being silently inferred. Any edit to a compatibility-critical field reruns
-the same deterministic assessment.
-
-### 4. The visitor reviews current commercial data and the business case
-
-After confirmation, the application reads the current fictional commerce
-snapshot from Postgres. The descriptive JSON catalog remains useful for
-browsing, but it cannot confirm transactional facts.
-
-For this demonstration seed, the visitor sees:
-
-| Commercial fact | Current fictional value |
+| Item | Fictional value |
 | --- | ---: |
-| FloatLink FL-100 unit price | CAD 189 |
-| Monthly service per monitor | CAD 4 |
-| Available stock | 48 units |
-| Estimated lead time | 3 business days |
-| Five-unit hardware subtotal | CAD 945 |
-| Monthly service for the pilot | CAD 20 |
+| Unit hardware | CAD 189 |
+| Service per monitor | CAD 4/month |
+| Five-unit hardware | CAD 945 |
+| Five-unit service | CAD 20/month |
+| Stock / lead time | 48 units / 3 business days |
+| Test deposit after acceptance | CAD 250 |
 
-The page also displays an **illustrative fleet business case** using editable
-synthetic assumptions. The default 500-tank calculation is CAD 23,928 estimated
-annual benefit, CAD 118,500 estimated first-year fleet rollout cost, CAD
--94,572 estimated first-year net impact, and a 59.43-month simple payback.
-These are not a quote, forecast, or promise; the five-unit pilot and the
-possible fleet rollout are intentionally shown as separate scopes.
+These are scenario illustrations, not a live stock or price assertion.
 
-### 5. The visitor creates a frozen draft order
+The 500-tank fleet estimate is separate from this five-unit pilot:
 
-The visitor selects **Create draft order**. The server locks a session-owned
-five-unit pilot snapshot and revalidates product, stock, price, currency, and
-lead time in a transaction. The order is still only a fictional draft.
+- Gross annual benefit: CAD 23,928.
+- Annual recurring service: CAD 24,000.
+- Annual benefit after service: CAD -72.
+- Initial hardware: CAD 94,500.
+- First-year net impact: CAD -94,572.
+- Payback: **not reached under these assumptions**.
 
-The page shows **Pilot order · draft** and explains that the scope is frozen.
-To test a different revision, the visitor must select **Reset demo** and start
-a new session-owned journey.
+The application must not manufacture a positive business case. The pilot may
+help test assumptions, but it does not promise savings or justify expansion by
+itself. Installation, tax, freight, maintenance and financing are excluded.
 
-### 6. The visitor completes a Stripe test checkout
+## 5. Sales reviews a pilot request before payment
 
-The visitor selects **Open Stripe test checkout**. The hosted page is explicitly
-test-only. For the happy path, the visitor uses:
+The customer selects **Submit pilot for Sales review**. The server revalidates
+compatibility and current commerce, freezes the scope as revision 1 and creates
+a private request in `pending_approval`.
 
-- Stripe test card: `4242 4242 4242 4242`
-- Any future expiry date
-- Any fictional three-digit CVC
-- A fictional identity such as `Demo Visitor` and
-  `demo@example.invalid`
+The customer continues to Sales Team Experience. The reviewer explicitly selects
+**Enter Demo Staff Mode**, reviews the brief, facts, calculations, commercial
+values and history, then enters:
 
-The displayed fictional deposit is CAD 250. No real money, product, or customer
-record is created. The signed callback and server reconciliation verify the
-stored Checkout ID, test mode, expected amount, and currency before changing
-state.
+> **Decision note:** Approve this synthetic five-site evaluation only. The
+> stated facts match the catalog. The fleet business case does not demonstrate
+> payback; evaluate the pilot criteria before any expansion decision.
 
-After returning to the app, the visitor selects **Check test payment status**
-if the callback has not appeared yet. A successful verified test payment moves
-the order from `draft` to `pending_approval` and records an audit event. A
-cancellation, decline, provider failure, missing configuration, wrong amount,
-or live-mode object leaves the order ineligible for approval.
+The reviewer selects **Approve pilot**. Only this explicit authorized decision
+enables the proposal. The model cannot invoke it. No payment has been requested.
 
-### 7. The opportunity moves to Sales Team Experience
+## 6. The customer reviews the proposal and accepts it
 
-The visitor selects **Continue in Sales Team Experience**. This is a deliberate
-presentation-mode handoff using the same unguessable anonymous session. It is
-not a general staff role and it does not expose another visitor's data.
+**Download fictional proposal** is now available before checkout. Every PDF page
+shows **DEMO - NOT A VALID QUOTE OR CONTRACT**. It contains the frozen pilot
+scope, commercial values, assumptions, evidence and approval note. It does not
+claim that a payment has already occurred.
 
-The Sales Team Experience shows:
+The customer reviews that revision and selects **Accept proposal**. The server
+checks approval, ownership, expiry and current commerce before recording
+acceptance. Selecting this control is the explicit customer decision; a chat
+message or a visit to the page cannot substitute for it.
 
-- The conversation transcript and normalized requirements
-- The deterministic compatibility result and evidence
-- The current commercial snapshot
-- ROI assumptions and calculated result
-- The frozen order and its payment/audit history
+If the customer needs an amendment before acceptance, they select **Revise
+request**. The previous request becomes superseded, its evidence and decision
+remain in the history, and its proposal link stops being eligible. The customer
+edits the facts and submits a new revision for fresh approval.
 
-Only now does the reviewer select **Enter Demo Staff Mode**. The mode is short
-lived and scoped to this session and order only.
+A Sales **Changes requested** or **Rejected** decision also allows this revision
+path. Acceptance locks the revision against changes because payment may be in
+progress. Refunds and cancellation of accepted orders are outside this demo.
 
-### 8. Sales reviews and makes an explicit decision
+## 7. The customer completes test Checkout
 
-The reviewer enters a fictional note:
+Only after acceptance does **Open Stripe test checkout** appear. The sandbox
+simulates the CAD 250 deposit using the test details displayed in the app.
+No real card or personal details should be entered.
 
-> **Decision note:** The synthetic five-site pilot matches the confirmed
-> heating-oil, above-ground, compatible-float, LTE-M requirements. Proceed with
-> proposal generation for evaluation only.
+The pilot hardware and monthly service are separate displayed values. This demo
+does not collect the remaining balance or activate a recurring subscription.
 
-The reviewer selects **Approve pilot**. The server validates that the order is
-still the current session's verified `pending_approval` order and records the
-decision, actor, note, and timestamp. The AI cannot call this mutation and
-cannot approve its own output.
+Returning from Checkout does not prove payment. A signed Stripe callback or
+**Check test payment status** verifies the stored test Checkout ID, amount,
+currency and paid status. The request then becomes `paid` exactly once.
 
-The same screen also supports **Request changes** or **Reject**. Either choice
-stops proposal generation until a new valid workflow is completed.
+Cancellation, decline or provider failure leaves an accepted but unpaid request.
+Sales approval is not repeated. The previously approved proposal remains
+downloadable and is not a payment receipt.
 
-### 9. The visitor downloads the fictional proposal
+## 8. The next business decision is pilot evaluation
 
-After approval, **Download fictional proposal** becomes available. The
-proposal is generated only from the approved order's immutable snapshot and
-contains:
+The customer sees **Test payment complete** and the proposed evaluation step:
+compare readings, alert usefulness and manual-check effort with the agreed
+criteria, then decide whether to expand, adjust or stop.
 
-- Fictional parties and five-unit pilot scope
-- Database-validated commercial values
-- Synthetic ROI assumptions and calculations
-- Compatibility evidence and recorded versions
-- The sales decision note and approval timestamp
-- Synthetic-demo terms
+Actual delivery, installation, telemetry and follow-up are not implemented.
+The demo proves the consultative sales process through approved proposal,
+customer acceptance and verified sandbox payment.
 
-Every page is marked:
+## Milestones and responsibility
 
-> **DEMO - NOT A VALID QUOTE OR CONTRACT**
+| Milestone | Responsible party | What it permits |
+| --- | --- | --- |
+| Discovery | Customer and AI | Capture explicit facts and explain the catalog |
+| Incomplete handoff | Customer | Save a private opportunity for Sales review |
+| Validated pilot request | Deterministic server rules | Submit frozen scope for approval |
+| Approved proposal | Scoped human reviewer | Issue a private fictional proposal |
+| Accepted proposal | Customer | Enable test Checkout for that revision |
+| Paid | Verified Stripe test result | Display completion |
+| Revision before acceptance | Customer | Preserve history and seek a new approval |
 
-The proposal is private to the session. An unrelated browser session cannot
-open its URL.
-
-### 10. The demo is safely repeatable
-
-The visitor selects **Reset demo** to remove the current session's temporary
-records and can replay the scenario with different fictional facts. A new
-custom organization with equivalent normalized requirements should produce the
-same FL-100 result. A changed tank type, unknown interface, unavailable
-connectivity, unsupported material, or unresolved safety evidence should stop
-the commercial path and return technical review instead of forcing a match.
-
-## What the workflow demonstrates
-
-| Layer | What it is responsible for |
-| --- | --- |
-| TankFit AI | Understands language, extracts explicit facts, asks helpful questions, and explains validated results |
-| Deterministic domain rules | Decide compatibility, required evidence, and whether a product can proceed |
-| Postgres commerce snapshot | Supplies current price, stock, availability, and lead time for transactions |
-| Stripe test integration | Simulates payment and verifies a signed, test-only callback |
-| Sales Team Experience | Lets an explicitly scoped reviewer approve, request changes, or reject |
-| Proposal generator | Produces a private, watermarked document only after approval |
-
-This separation is the core safety and evaluation story: the AI makes the
-conversation natural, while deterministic code and current transactional data
-decide what the system is allowed to do.
-
+The same session lets an evaluator experience both perspectives. It does not
+represent a universal CRM or real employee identity management.

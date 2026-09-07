@@ -35,6 +35,9 @@ export const orderStatuses = [
   "approved",
   "changes_requested",
   "rejected",
+  "accepted",
+  "paid",
+  "superseded",
 ] as const;
 
 export type OrderStatus = (typeof orderStatuses)[number];
@@ -104,6 +107,7 @@ export const airFlameRequirementsSchema = z
 
 export type AirFlameRequirements = z.infer<typeof airFlameRequirementsSchema>;
 export type SolutionSnapshot = {
+  businessBrief?: BusinessBrief;
   requirements: AirFlameRequirements;
   roiAssumptions: RoiAssumptions;
   roi: RoiResult;
@@ -151,6 +155,14 @@ export type CommerceSnapshot = {
 };
 
 export type JourneyView = {
+  salesRequested: boolean;
+  businessBrief: BusinessBrief;
+  revisions: {
+    id: string;
+    revision: number;
+    status: string;
+    decisionNote: string | null;
+  }[];
   sessionId: string;
   expiresAt: string;
   requirements: AirFlameRequirements;
@@ -166,6 +178,8 @@ export type JourneyView = {
   roiAssumptions: RoiAssumptions;
   roi: RoiResult | null;
   order: {
+    workflowVersion: number;
+    revision: number;
     id: string;
     status: OrderStatus;
     quantity: number;
@@ -185,6 +199,20 @@ export type JourneyView = {
     createdAt: string;
     metadata: Record<string, unknown>;
   }[];
+};
+
+export const businessBriefSchema = z
+  .object({
+    objective: z.string().trim().max(500),
+    timeline: z.string().trim().max(200),
+    successCriteria: z.string().trim().max(500),
+  })
+  .strict();
+export type BusinessBrief = z.infer<typeof businessBriefSchema>;
+export const emptyBusinessBrief: BusinessBrief = {
+  objective: "",
+  timeline: "",
+  successCriteria: "",
 };
 
 export const defaultAirFlameRequirements: AirFlameRequirements = {

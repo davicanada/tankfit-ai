@@ -4,7 +4,7 @@
 
 I created TankFit AI for the Jornada de Dados challenge. The case is Tankroy Systems Inc., an entirely fictional remote tank-monitoring company whose customers usually understand their operational problem but do not know which monitoring product fits it.
 
-The public experience combines a fictional company website and catalog with an embedded advisor. An evaluator can then complete the same opportunity through Customer Experience and Sales Team Experience: discovery, deterministic compatibility, editable ROI assumptions, a database-validated draft, Stripe test Checkout, explicit human approval, an audit timeline, and a two-page demo proposal.
+The public experience combines a fictional company website and catalog with an embedded advisor. An evaluator can complete the same private opportunity through Customer Experience and Sales Team Experience: discovery or incomplete-fact handoff, deterministic compatibility, editable ROI assumptions, a validated pilot request, explicit human approval, a two-page demo proposal, customer acceptance, and Stripe test Checkout. Revisions preserve prior evidence and decisions in the audit history.
 
 My most important design decision was to separate conversation from authority. The AI can interpret needs, ask questions, and explain validated evidence. Deterministic TypeScript and Postgres transactions control compatibility, product facts, price, stock, lead time, calculations, payment state, approval, and proposal eligibility.
 

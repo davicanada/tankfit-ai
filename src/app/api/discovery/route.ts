@@ -84,11 +84,15 @@ export async function POST(request: Request) {
       .filter((m) => m.role === "user")
       .map((m) => m.content)
       .join("\n");
-    if (brief.length > 2000 || messages.length > 11)
+    if (
+      brief.length > 2000 ||
+      messages.length > 23 ||
+      messages.reduce((total, entry) => total + entry.content.length, 0) > 6000
+    )
       return json(
         {
           error:
-            "Conversation limit reached. Continue with the guided fields or reset the demo.",
+            "Conversation limit reached. Continue with the guided fields or Request Sales help in Customer Experience.",
         },
         400,
       );

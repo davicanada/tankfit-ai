@@ -24,7 +24,7 @@ describe("createProposalPdf", () => {
           estimatedAnnualBenefitCad: 23928,
           estimatedFirstYearRolloutCostCad: 118500,
           estimatedFirstYearNetCad: -94572,
-          estimatedPaybackMonths: 59.43,
+          estimatedPaybackMonths: null,
         },
         quantity: 5,
         productId: "TR-FL100",

@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   airFlameRequirementsSchema,
   roiAssumptionsSchema,
+  businessBriefSchema,
   type JourneyView,
 } from "@/domain/journey/types";
 import { UserFacingError } from "@/domain/journey/errors";
@@ -17,6 +18,9 @@ import {
   resetDemoSession,
   prepareAirFlameOpportunity,
   recordSessionEvent,
+  requestSalesReview,
+  acceptProposal,
+  reviseRequest,
 } from "@/lib/journey-service";
 import {
   clearStaffToken,
@@ -53,8 +57,8 @@ async function currentView(sessionId: string) {
   const baseView = await buildJourneyView(sessionId, false);
   const staffMode = Boolean(
     claims &&
-      claims.sessionId === sessionId &&
-      claims.orderId === baseView.order?.id,
+    claims.sessionId === sessionId &&
+    claims.orderId === baseView.order?.id,
   );
   return staffMode ? buildJourneyView(sessionId, true) : baseView;
 }
@@ -116,12 +120,17 @@ export async function analyzeBriefAction(input: {
 export async function confirmRequirementsAction(input: {
   requirements: unknown;
   roiAssumptions: unknown;
+  businessBrief?: unknown;
 }): Promise<ActionResult> {
   try {
     const session = await requireDemoSession();
     const requirements = airFlameRequirementsSchema.parse(input.requirements);
     const roiAssumptions = roiAssumptionsSchema.parse(input.roiAssumptions);
-    await confirmRequirements(session.id, requirements, roiAssumptions);
+    const brief =
+      input.businessBrief === undefined
+        ? undefined
+        : businessBriefSchema.parse(input.businessBrief);
+    await confirmRequirements(session.id, requirements, roiAssumptions, brief);
     return { ok: true, view: await currentView(session.id) };
   } catch (error) {
     return { ok: false, error: safeMessage(error) };
@@ -182,6 +191,7 @@ export async function enterStaffModeAction(input: {
     const view = await buildJourneyView(session.id, false);
     if (
       view.order?.id !== orderId ||
+      view.order.workflowVersion !== 2 ||
       view.order.status !== "pending_approval"
     ) {
       throw new UserFacingError(
@@ -202,7 +212,7 @@ const decisionInputSchema = z
   .object({
     orderId: z.string().uuid(),
     decision: z.enum(["approved", "changes_requested", "rejected"]),
-    note: z.string().trim().max(500),
+    note: z.string().trim().min(1, "Enter a decision note.").max(500),
   })
   .strict();
 
@@ -236,6 +246,57 @@ export async function exitStaffModeAction(): Promise<ActionResult> {
     await recordSessionEvent(session.id, "demo_staff_mode_exited", {});
     await clearStaffToken();
     return { ok: true, view: await buildJourneyView(session.id, false) };
+  } catch (error) {
+    return { ok: false, error: safeMessage(error) };
+  }
+}
+
+export async function requestSalesReviewAction(input: {
+  requirements: unknown;
+  businessBrief: unknown;
+}): Promise<ActionResult> {
+  try {
+    const session = await requireDemoSession();
+    const parsed = z
+      .object({
+        requirements: airFlameRequirementsSchema,
+        businessBrief: businessBriefSchema,
+      })
+      .strict()
+      .parse(input);
+    await requestSalesReview(
+      session.id,
+      parsed.requirements,
+      parsed.businessBrief,
+    );
+    return { ok: true, view: await currentView(session.id) };
+  } catch (error) {
+    return { ok: false, error: safeMessage(error) };
+  }
+}
+
+export async function acceptProposalAction(input: {
+  orderId: string;
+}): Promise<ActionResult> {
+  try {
+    const session = await requireDemoSession();
+    const { orderId } = orderInputSchema.parse(input);
+    await acceptProposal(session.id, orderId);
+    return { ok: true, view: await currentView(session.id) };
+  } catch (error) {
+    return { ok: false, error: safeMessage(error) };
+  }
+}
+
+export async function reviseRequestAction(input: {
+  orderId: string;
+}): Promise<ActionResult> {
+  try {
+    const session = await requireDemoSession();
+    const { orderId } = orderInputSchema.parse(input);
+    await reviseRequest(session.id, orderId);
+    await clearStaffToken();
+    return { ok: true, view: await currentView(session.id) };
   } catch (error) {
     return { ok: false, error: safeMessage(error) };
   }

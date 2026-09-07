@@ -14,6 +14,7 @@ import type {
   RoiAssumptions,
   RoiResult,
   SolutionSnapshot,
+  BusinessBrief,
 } from "@/domain/journey/types";
 
 export const commerceItems = pgTable("commerce_items", {
@@ -45,6 +46,11 @@ export const demoSessions = pgTable(
     requirementsConfirmed: boolean("requirements_confirmed")
       .default(false)
       .notNull(),
+    salesRequested: boolean("sales_requested").default(false).notNull(),
+    businessBrief: jsonb("business_brief")
+      .$type<BusinessBrief>()
+      .default({ objective: "", timeline: "", successCriteria: "" })
+      .notNull(),
     discoveryMessages: jsonb("discovery_messages")
       .$type<{ role: "user" | "assistant"; content: string }[]>()
       .default([])
@@ -67,6 +73,9 @@ export const demoOrders = pgTable(
       .notNull()
       .references(() => demoSessions.id, { onDelete: "cascade" }),
     status: text("status").notNull(),
+    workflowVersion: integer("workflow_version").default(1).notNull(),
+    revision: integer("revision").default(1).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
     productId: text("product_id").notNull(),
     quantity: integer("quantity").notNull(),
     currency: text("currency").notNull(),
