@@ -42,6 +42,7 @@ AirFlame, AgricuFlow, and Boreal Beverage are optional presets and repeatable te
 - [Product Requirements Document](docs/prd.md)
 - [Architecture](docs/architecture.md)
 - [AirFlame Pilot SPEC](docs/specs/airflame-pilot.md)
+- [Consultative Sales SPEC](docs/specs/consultative-sales.md)
 - [Tankroy Public Experience SPEC](docs/specs/tankroy-public-experience.md)
 - [Architecture Decision Records](docs/adrs)
 - [Engineering Process](docs/engineering-process.md)
@@ -55,6 +56,7 @@ AirFlame, AgricuFlow, and Boreal Beverage are optional presets and repeatable te
 - [Coding-Agent Harness and Rationale](docs/agent-harness.md)
 - [Agent Context and Rules](AGENTS.md)
 - [Completion Safety and Test Payments](docs/adrs/0008-completion-safety-and-test-payments.md)
+- [Consultative Sales Lifecycle ADR](docs/adrs/0011-consultative-sales-lifecycle.md)
 - [Draft Submission Card](docs/submission/project-card.md)
 
 ## Catalog
