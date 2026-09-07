@@ -360,7 +360,7 @@ The application will use a provider-independent AI interface. The planned fallba
 
 Each provider call must have a timeout, limited retries, structured error classification, and circuit-breaker behavior. Provider model IDs and order must be configurable without changing business logic.
 
-The deterministic guided mode must allow visitors to complete discovery, compatibility filtering, product comparison, ROI calculation, and draft-order creation when every AI provider is unavailable. It may be less conversational, but the core product journey must remain functional.
+The deterministic guided mode must allow visitors to complete discovery, compatibility filtering, product comparison, ROI calculation, and pilot-request submission when every AI provider is unavailable. It may be less conversational, but the core product journey must remain functional.
 
 ## 12. Data Requirements
 
@@ -473,7 +473,7 @@ The MVP is ready for public release when:
 3. Compatibility tests cover every supported material and measurement method.
 4. Product facts, price, stock quantity, delivery lead time, availability, calculations, and order state come exclusively from deterministic sources.
 5. At least two AI providers and the deterministic fallback have been tested successfully.
-6. Disabling every AI key still leaves a usable guided recommendation and draft-order flow.
+6. Disabling every AI key still leaves a usable guided recommendation and pilot-request flow.
 7. A simulated checkout produces no real transaction.
 8. A proposal cannot be generated without a recorded human approval.
 9. The audit view reconstructs the major decisions and state transitions of a session.
@@ -510,7 +510,7 @@ The MVP is ready for public release when:
 - Database credentials and AI-provider keys will remain server-side in Vercel environment variables.
 - The AI-provider adapter will call Gemini, Cerebras, Groq, and OpenRouter from the backend only; the browser will communicate exclusively with TankFit AI's own endpoints.
 - Fictional descriptive product metadata and compatibility attributes will have a versioned JSON fallback committed to the repository. Product images will be optimized static assets under the Next.js `public` directory for the MVP.
-- The JSON fallback may support catalog browsing, compatibility filtering, and recommendations when the database is unavailable, but it must not confirm transactional price, stock, availability, or delivery lead time. Draft-order submission and checkout must pause until those fields can be revalidated against the application database.
+- The JSON fallback may support catalog browsing, compatibility filtering, and recommendations when the database is unavailable, but it must not confirm transactional price, stock, availability, or delivery lead time. Pilot-request submission and checkout must pause until those fields can be revalidated against the application database.
 - Generated proposal files may be created on demand and stored temporarily in a Vercel-compatible object store; their database metadata and storage objects must share the 24-hour expiration policy.
 - Persistent distributed rate limiting may use a Vercel-compatible Redis service if application-level and provider-level quotas are insufficient; this decision belongs in an infrastructure ADR.
 - The public MVP must operate within free-tier limits.

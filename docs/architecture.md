@@ -71,7 +71,7 @@ The single agent may interpret needs, request missing information, call narrowly
 
 The first conversational implementation uses sequential, completed-response fallback rather than immediate token streaming. This allows a failed provider response to be discarded before another provider is selected. Provider order, model IDs, timeouts, and output limits are configuration; they do not alter domain behavior. See [`adrs/0005-ai-provider-fallback.md`](adrs/0005-ai-provider-fallback.md).
 
-The implemented orchestrator extracts bounded requirements, invokes deterministic compatibility, and supplies validated descriptive evidence to the reply model. It does not register mutation tools with the model. The interface invokes ROI, current commerce, drafts and status through session-scoped services. Earlier tool names describe domain responsibilities, not an implemented autonomous tool-calling API.
+The implemented orchestrator extracts bounded requirements, invokes deterministic compatibility, and supplies validated descriptive evidence to the reply model. It does not register mutation tools with the model. The interface invokes ROI, current commerce, pilot requests and status through session-scoped services. Earlier tool names describe domain responsibilities, not an implemented autonomous tool-calling API.
 
 `/api/discovery` is the live conversation endpoint. The previous stateless `/api/advisor` returns HTTP 410 so a base-only result cannot bypass full operating-profile checks.
 
