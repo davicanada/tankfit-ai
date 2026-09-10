@@ -33,10 +33,13 @@ September 7, 2026:
 > treated as a suitable solution. What kind of tank is it—for example,
 > above-ground horizontal, vertical, underground and vented, or a gas cylinder?
 
-The guided assessment remained in technical review. Fleet size became 500, but
-pilot quantity remained 1 despite the phrase “five-tank pilot.” The visitor must
-review and correct it to 5. This observed extraction limitation means the chat
-must not be presented as an infallible replacement for structured confirmation.
+The original verification exposed a defect: the pilot quantity remained 1 even
+though “five-tank pilot” was explicit. The cause was limited numeric-only
+fallback parsing combined with the provider result being normalized over the
+empty-form default. The defect is fixed by the explicit-quantity reconciliation
+described in [ADR-0011](../adrs/0011-reconcile-explicit-quantities.md). The
+visitor still reviews and confirms the extracted value; chat is not an
+authorization surface.
 
 The following illustrative conversation expands the story for a novice visitor:
 
@@ -248,25 +251,37 @@ process beyond the implemented transaction.
 
 The initial local browser run on September 7, 2026 captured the observed chat
 exchange above, structured fact updates, business brief entry and an explicit
-Sales handoff. The remaining dialogue is illustrative; this document is not a
-verbatim transcript of a single continuous browser session.
+Sales handoff. That run revealed the quantity defect described in section 1.
+The remaining dialogue is illustrative; this document is not a verbatim
+transcript of a single continuous browser session.
 
-The September 10 refresh uses the existing automated suites:
+The September 10 refresh uses the existing automated suites plus quantity
+regression tests:
 
 - `npm run validate`: catalog, assets and security-boundary validation passed.
 - `npm run test:integration`: all 7 PostgreSQL tests passed, including incomplete
   handoff, revisions, concurrent decisions, acceptance, exact payment matching,
   duplicate callbacks, changed commerce, expiry and legacy-state rejection.
+- `src/lib/ai/discovery.test.ts`: 10 unit tests passed, including written pilot
+  quantities and English, Portuguese, Spanish, French, Italian and German
+  wording.
 - `e2e/customer-journey.spec.ts`: browser coverage checks novice handoff and the
   request → changes requested → revision → approval → private PDF → acceptance
   flow on desktop and mobile Chromium. The novice handoff passed on both; the
   full mobile flow passed. The first desktop lifecycle run exceeded its 60-second
   total limit, so it was repeated with a 180-second command-line limit and
-  passed in approximately 72 seconds. All four scenarios passed across these
-  runs, with the desktop timing limitation retained in this record.
+  passed in approximately 72 seconds. The final rerun passed all six cases
+  (three scenarios on each viewport) with the same 180-second test limit.
+- The same E2E file includes a route-and-form regression that sends the written
+  “five-tank pilot” phrase and asserts `Pilot Quantity = 5` on desktop and mobile.
 
 The first local attempt could not initialize a session. The repeat used a
 process-only temporary signing secret; no credential was committed or printed.
+
+After the fix, the same sentence was replayed through `/api/discovery` in the
+local browser. The server returned `POST /api/discovery 200`, and the rendered
+structured form showed `Pilot Quantity = 5`. This confirms the correction at the
+route and UI boundary, rather than only in an isolated parser test.
 
 The browser suite stops when test Checkout becomes available. The payment
 transition is exercised with integration fixtures; it is not evidence of a

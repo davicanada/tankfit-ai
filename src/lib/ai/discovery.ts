@@ -81,6 +81,250 @@ const explicitTankTypePatterns: Record<
     /upright cylinder bank|bank of upright cylinders|banco de cilindros verticais/iu,
 };
 
+const cardinalValues = new Map<string, number>([
+  ["zero", 0],
+  ["one", 1],
+  ["two", 2],
+  ["three", 3],
+  ["four", 4],
+  ["five", 5],
+  ["six", 6],
+  ["seven", 7],
+  ["eight", 8],
+  ["nine", 9],
+  ["ten", 10],
+  ["eleven", 11],
+  ["twelve", 12],
+  ["thirteen", 13],
+  ["fourteen", 14],
+  ["fifteen", 15],
+  ["sixteen", 16],
+  ["seventeen", 17],
+  ["eighteen", 18],
+  ["nineteen", 19],
+  ["twenty", 20],
+  ["thirty", 30],
+  ["forty", 40],
+  ["fifty", 50],
+  ["sixty", 60],
+  ["seventy", 70],
+  ["eighty", 80],
+  ["ninety", 90],
+  ["um", 1],
+  ["uma", 1],
+  ["dois", 2],
+  ["duas", 2],
+  ["tres", 3],
+  ["quatro", 4],
+  ["cinco", 5],
+  ["seis", 6],
+  ["sete", 7],
+  ["oito", 8],
+  ["nove", 9],
+  ["dez", 10],
+  ["onze", 11],
+  ["doze", 12],
+  ["treze", 13],
+  ["quatorze", 14],
+  ["catorze", 14],
+  ["quinze", 15],
+  ["dezesseis", 16],
+  ["dezassete", 17],
+  ["dezoito", 18],
+  ["dezenove", 19],
+  ["vinte", 20],
+  ["trinta", 30],
+  ["quarenta", 40],
+  ["cinquenta", 50],
+  ["sessenta", 60],
+  ["setenta", 70],
+  ["oitenta", 80],
+  ["noventa", 90],
+  ["uno", 1],
+  ["una", 1],
+  ["dos", 2],
+  ["tres", 3],
+  ["cuatro", 4],
+  ["cinco", 5],
+  ["seis", 6],
+  ["siete", 7],
+  ["ocho", 8],
+  ["nueve", 9],
+  ["diez", 10],
+  ["once", 11],
+  ["doce", 12],
+  ["trece", 13],
+  ["catorce", 14],
+  ["quince", 15],
+  ["dieciseis", 16],
+  ["diecisiete", 17],
+  ["dieciocho", 18],
+  ["diecinueve", 19],
+  ["veinte", 20],
+  ["un", 1],
+  ["une", 1],
+  ["deux", 2],
+  ["trois", 3],
+  ["quatre", 4],
+  ["cinq", 5],
+  ["six", 6],
+  ["sept", 7],
+  ["huit", 8],
+  ["neuf", 9],
+  ["dix", 10],
+  ["onze", 11],
+  ["douze", 12],
+  ["treize", 13],
+  ["quatorze", 14],
+  ["quinze", 15],
+  ["seize", 16],
+  ["dix-sept", 17],
+  ["dix-huit", 18],
+  ["dix-neuf", 19],
+  ["vingt", 20],
+  ["due", 2],
+  ["tre", 3],
+  ["cinque", 5],
+  ["sette", 7],
+  ["otto", 8],
+  ["nove", 9],
+  ["dieci", 10],
+  ["undici", 11],
+  ["dodici", 12],
+  ["tredici", 13],
+  ["quattordici", 14],
+  ["quindici", 15],
+  ["sedici", 16],
+  ["diciassette", 17],
+  ["diciotto", 18],
+  ["diciannove", 19],
+  ["venti", 20],
+  ["ein", 1],
+  ["eine", 1],
+  ["eins", 1],
+  ["zwei", 2],
+  ["drei", 3],
+  ["vier", 4],
+  ["funf", 5],
+  ["sechs", 6],
+  ["sieben", 7],
+  ["acht", 8],
+  ["neun", 9],
+  ["zehn", 10],
+  ["elf", 11],
+  ["zwolf", 12],
+  ["dreizehn", 13],
+  ["vierzehn", 14],
+  ["funfzehn", 15],
+  ["sechzehn", 16],
+  ["siebzehn", 17],
+  ["achtzehn", 18],
+  ["neunzehn", 19],
+  ["zwanzig", 20],
+]);
+
+const numberWordPattern = [...cardinalValues.keys()]
+  .sort((a, b) => b.length - a.length)
+  .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+  .join("|");
+const quantityTokenPattern = `(?:\\d{1,5}|${numberWordPattern})`;
+const pilotNounContextPattern =
+  "pilot|trial|pilot project|pilot program|piloto|pilote|pilota|pilotversuch|projeto piloto";
+const pilotActionContextPattern =
+  "start|begin|try|test|evaluate|comecar|iniciar|testar|avaliar|avaliacao";
+const fleetNounContextPattern = "fleet|frota";
+const fleetActionContextPattern =
+  "manage|operate|cover|serve|own|portfolio|gerimos|operamos|atendemos";
+const quantityUnitPattern =
+  "units?|tanks?|monitors?|sites?|devices?|gauges?|unidades?|tanques?|monitores?|locais?|dispositivos?|reservatorios?";
+
+function normalizeQuantityText(value: string) {
+  return value
+    .toLocaleLowerCase("en")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ß/g, "ss");
+}
+
+function parseQuantityToken(token: string) {
+  const normalized = normalizeQuantityText(token).replace(/\s+/g, " ");
+  const numeric = Number(normalized);
+  if (Number.isInteger(numeric)) return numeric;
+  const direct = cardinalValues.get(normalized);
+  if (direct !== undefined) return direct;
+  const parts = normalized.split(/[ -]+/);
+  if (parts.length === 2) {
+    const tens = cardinalValues.get(parts[0]);
+    const units = cardinalValues.get(parts[1]);
+    if (tens !== undefined && tens >= 20 && units !== undefined && units < 10)
+      return tens + units;
+  }
+  return null;
+}
+
+function explicitQuantityFromBrief(
+  brief: string,
+  kind: "fleet" | "pilot",
+): number | null {
+  const text = normalizeQuantityText(brief);
+  const patterns =
+    kind === "pilot"
+      ? [
+          new RegExp(
+            `(?:${pilotNounContextPattern})[^.!?]{0,40}?(?:of|with|for|de|com|para|di|con|mit)\\s*\\b(${quantityTokenPattern})\\b`,
+            "iu",
+          ),
+          new RegExp(
+            `\\b(${quantityTokenPattern})\\b\\s*(?:-|\\s)+(?:(?:${quantityUnitPattern})\\s*)?(?:${pilotNounContextPattern})\\b`,
+            "iu",
+          ),
+          new RegExp(
+            `(?:${pilotActionContextPattern})[^.!?]{0,30}?\\b(${quantityTokenPattern})\\b(?=\\s*(?:-|\\s)*(?:${quantityUnitPattern}|first|initial|pilot)\\b)`,
+            "iu",
+          ),
+        ]
+      : [
+          new RegExp(
+            `(?:${fleetNounContextPattern})[^.!?]{0,40}?(?:of|with|for|de|com|di|con|mit)\\s*\\b(${quantityTokenPattern})\\b`,
+            "iu",
+          ),
+          new RegExp(
+            `(?:${fleetActionContextPattern})[^.!?]{0,40}?\\b(${quantityTokenPattern})\\b(?=[^.!?]{0,100}\\b(?:${quantityUnitPattern})\\b)`,
+            "iu",
+          ),
+        ];
+  for (const pattern of patterns) {
+    const match = pattern.exec(text);
+    if (!match) continue;
+    const quantity = parseQuantityToken(match[1]);
+    if (
+      quantity !== null &&
+      quantity >= 1 &&
+      quantity <= (kind === "pilot" ? 100 : 10_000)
+    )
+      return quantity;
+  }
+  return null;
+}
+
+/**
+ * Provider extraction is useful but untrusted. Reconcile only unambiguous
+ * quantities explicitly written by the visitor so a provider cannot silently
+ * turn "five-tank pilot" into the empty-form default of one.
+ */
+export function reconcileExplicitQuantities(
+  requirements: AirFlameRequirements,
+  brief: string,
+): AirFlameRequirements {
+  const fleetSize = explicitQuantityFromBrief(brief, "fleet");
+  const pilotQuantity = explicitQuantityFromBrief(brief, "pilot");
+  return {
+    ...requirements,
+    ...(fleetSize === null ? {} : { fleetSize }),
+    ...(pilotQuantity === null ? {} : { pilotQuantity }),
+  };
+}
+
 /** Do not turn dimensions or a material into an unstated tank orientation. */
 export function reconcileExplicitTankType(
   requirements: AirFlameRequirements,
@@ -102,10 +346,10 @@ export function normalizeExtraction(value: unknown): AirFlameRequirements {
 
 export function deterministicExtraction(brief: string): AirFlameRequirements {
   const extracted: Partial<AirFlameRequirements> = {};
-  const fleet = brief.match(/(?:fleet|manage|operat\w*)\D{0,20}(\d{1,5})/i);
-  const pilot = brief.match(/(?:pilot|start|begin)\D{0,20}(\d{1,3})/i);
-  if (fleet) extracted.fleetSize = Number(fleet[1]);
-  if (pilot) extracted.pilotQuantity = Number(pilot[1]);
+  const fleetSize = explicitQuantityFromBrief(brief, "fleet");
+  const pilotQuantity = explicitQuantityFromBrief(brief, "pilot");
+  if (fleetSize !== null) extracted.fleetSize = fleetSize;
+  if (pilotQuantity !== null) extracted.pilotQuantity = pilotQuantity;
   const material = explicitMaterial(brief);
   if (material) extracted.material = material;
   if (/above[ -]?ground.*horizontal|horizontal.*above[ -]?ground/i.test(brief))
@@ -205,9 +449,12 @@ export async function extractAirFlameBrief(input: {
         providerOptions: candidate.providerOptions,
       });
       return {
-        requirements: reconcileExplicitTankType(
-          reconcileExplicitMaterial(
-            normalizeExtraction(result.output),
+        requirements: reconcileExplicitQuantities(
+          reconcileExplicitTankType(
+            reconcileExplicitMaterial(
+              normalizeExtraction(result.output),
+              input.brief,
+            ),
             input.brief,
           ),
           input.brief,

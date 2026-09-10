@@ -5,6 +5,7 @@ import {
   deterministicExtraction,
   normalizeExtraction,
   reconcileExplicitMaterial,
+  reconcileExplicitQuantities,
   reconcileExplicitTankType,
 } from "./discovery";
 
@@ -24,6 +25,42 @@ describe("AirFlame discovery fallback", () => {
     expect(result.connectivity).toBe("unavailable");
     expect(result.minimumTemperatureC).toBe(-20);
     expect(result.maximumTemperatureC).toBe(30);
+  });
+  it("captures written pilot quantities instead of retaining the empty-form default", () => {
+    const brief =
+      "We manage 500 rural heating-oil tanks with float gauges and want a five-tank pilot.";
+    const providerRequirements = normalizeExtraction({
+      fleetSize: 500,
+      pilotQuantity: 1,
+    });
+
+    expect(deterministicExtraction(brief).fleetSize).toBe(500);
+    expect(deterministicExtraction(brief).pilotQuantity).toBe(5);
+    expect(
+      reconcileExplicitQuantities(providerRequirements, brief).pilotQuantity,
+    ).toBe(5);
+  });
+  it("recognizes written quantities in common multilingual pilot wording", () => {
+    const phrases = [
+      ["We want a pilot of seven units.", 7],
+      ["Queremos um piloto de cinco tanques.", 5],
+      ["Queremos un piloto de cuatro tanques.", 4],
+      ["Nous voulons un pilote de six réservoirs.", 6],
+      ["Vogliamo un pilota di otto serbatoi.", 8],
+      ["Wir möchten einen Pilotversuch mit neun Tanks.", 9],
+    ] as const;
+
+    for (const [brief, expected] of phrases) {
+      expect(deterministicExtraction(brief).pilotQuantity).toBe(expected);
+    }
+  });
+  it("does not treat unrelated measurements as a pilot quantity", () => {
+    const result = deterministicExtraction(
+      "Test the tank temperature between 20 and 40 C before choosing a pilot size.",
+    );
+
+    expect(result.fleetSize).toBe(1);
+    expect(result.pilotQuantity).toBe(1);
   });
   it("keeps multilingual explicit material fallback conservative", () => {
     for (const phrase of [
