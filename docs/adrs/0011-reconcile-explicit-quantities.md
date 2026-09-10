@@ -21,8 +21,10 @@ the same sanitized brief with a small deterministic quantity parser. It accepts
 digits and conservative cardinal words in pilot and fleet contexts, including
 the supported primary-language phrasing covered by tests. It replaces only the
 `pilotQuantity` or `fleetSize` field when one unambiguous quantity is found and
-the value is within the existing schema bounds. It does not infer quantity from
-dimensions, prices, dates or unrelated numbers.
+the value is within the existing schema bounds. Negated and bounded phrases,
+such as “we do not want a five-tank pilot” or “no more than five units,” remain
+unconfirmed. It does not infer quantity from dimensions, prices, dates or
+unrelated numbers.
 
 The same reconciliation runs for provider extraction and deterministic fallback.
 The guided form remains the confirmation surface, and the server revalidates the
@@ -53,6 +55,8 @@ the visitor uses digits in a more complex sentence.
   the form as five while remaining subject to explicit confirmation.
 - Ambiguous or unrecognized quantities remain at the existing unknown/default
   behavior and cannot create a consequential request without review.
+- Negated and upper-bound quantities are treated as ambiguous rather than exact
+  scope.
 - Provider-independent fallback behavior is consistent for the quantity fields.
 - The parser is intentionally bounded; additional language or number forms need
   tests before they are added.

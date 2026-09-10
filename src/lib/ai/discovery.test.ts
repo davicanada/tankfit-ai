@@ -62,6 +62,18 @@ describe("AirFlame discovery fallback", () => {
     expect(result.fleetSize).toBe(1);
     expect(result.pilotQuantity).toBe(1);
   });
+  it("keeps negated or bounded quantities unconfirmed", () => {
+    expect(
+      deterministicExtraction("We do not want a five-tank pilot.").pilotQuantity,
+    ).toBe(1);
+    expect(
+      deterministicExtraction("No pilot of five units is required.").pilotQuantity,
+    ).toBe(1);
+    expect(
+      deterministicExtraction("We want no more than five units in the pilot.")
+        .pilotQuantity,
+    ).toBe(1);
+  });
   it("keeps multilingual explicit material fallback conservative", () => {
     for (const phrase of [
       "eau",

@@ -262,6 +262,16 @@ function parseQuantityToken(token: string) {
   return null;
 }
 
+function isNegatedQuantity(text: string, match: RegExpExecArray) {
+  const tokenOffset = match[0].indexOf(match[1]);
+  if (tokenOffset < 0 || match.index === undefined) return false;
+  const beforeToken = text.slice(0, match.index + tokenOffset);
+  const sentencePrefix = beforeToken.split(/[.!?;,]/u).at(-1) ?? beforeToken;
+  return /\b(?:not|no|without|unknown|dont|do not|does not|nao|sem)\b[^.!?;,]{0,30}$/iu.test(
+    sentencePrefix,
+  );
+}
+
 function explicitQuantityFromBrief(
   brief: string,
   kind: "fleet" | "pilot",
@@ -296,6 +306,7 @@ function explicitQuantityFromBrief(
   for (const pattern of patterns) {
     const match = pattern.exec(text);
     if (!match) continue;
+    if (isNegatedQuantity(text, match)) continue;
     const quantity = parseQuantityToken(match[1]);
     if (
       quantity !== null &&

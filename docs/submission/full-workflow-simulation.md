@@ -264,7 +264,8 @@ regression tests:
   duplicate callbacks, changed commerce, expiry and legacy-state rejection.
 - `src/lib/ai/discovery.test.ts`: 10 unit tests passed, including written pilot
   quantities and English, Portuguese, Spanish, French, Italian and German
-  wording.
+  wording, plus negation and unrelated-measurement guards. The final discovery
+  count is 12 tests (90 unit tests across the project in the full check).
 - `e2e/customer-journey.spec.ts`: browser coverage checks novice handoff and the
   request → changes requested → revision → approval → private PDF → acceptance
   flow on desktop and mobile Chromium. The novice handoff passed on both; the
