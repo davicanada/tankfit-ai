@@ -1,12 +1,13 @@
-# Full Fictional Workflow Simulation
+# Full Fictional Workflow Simulation and Verification
 
 **Revision:** Consultative workflow 2; see [the specification](../specs/consultative-sales.md).
 **Owner:** Davi Almeida
 
 All organizations, people, products, specifications, prices, payments and results
 are synthetic. This is an independent personal project for the Jornada de Dados
-competition. The dialogue below is illustrative, not an actual test transcript
-or a guarantee of exact model wording.
+competition. This version replaces the previous simulation. Dialogue is
+illustrative except for the explicitly identified observed exchange. Model
+wording can vary; server-controlled milestones must remain the same.
 
 ## The business situation
 
@@ -20,6 +21,24 @@ advisor and the name of the Sales demonstration workspace.
 ## 1. The customer arrives with a problem
 
 The customer opens the Tankroy website and **Ask TankFit AI**.
+
+The following exchange was observed during local browser verification on
+September 7, 2026:
+
+> **Customer:** We manage 500 rural heating-oil tanks with float gauges. We want
+> fewer run-outs and a five-tank pilot.
+
+> **TankFit AI:** FloatLink FL-100 is the strongest catalog match for the details
+> confirmed so far. Some information still needs confirmation before it can be
+> treated as a suitable solution. What kind of tank is it—for example,
+> above-ground horizontal, vertical, underground and vented, or a gas cylinder?
+
+The guided assessment remained in technical review. Fleet size became 500, but
+pilot quantity remained 1 despite the phrase “five-tank pilot.” The visitor must
+review and correct it to 5. This observed extraction limitation means the chat
+must not be presented as an infallible replacement for structured confirmation.
+
+The following illustrative conversation expands the story for a novice visitor:
 
 > **Customer:** We spend too much time checking tanks manually. I don't know
 > which equipment we need. Can you help?
@@ -68,6 +87,15 @@ unknown fields unknown. No commercial request, payment or proposal exists yet.
 The evaluator selects **Continue in Sales Team Experience**. Sales can see the
 business context, customer-stated facts, conversation and unresolved assessment.
 Its next action is to clarify the missing evidence.
+
+> **Sales representative (illustrative):** Your objective is fewer manual
+> checks, with a five-site evaluation before expansion. We still need the
+> fictional gauge-interface and LTE-M coverage facts confirmed. We can keep
+> them unknown while that information is gathered.
+
+The Sales workspace shows context for this discussion; it does not implement
+a human-to-customer messaging channel. The evaluator supplies the clarification
+in Customer Experience to continue the demonstration.
 
 This mode switch lets one evaluator play both sides. It does not contact a real
 salesperson. A production adoption would require authenticated staff, assigned
@@ -133,6 +161,10 @@ The application must not manufacture a positive business case. The pilot may
 help test assumptions, but it does not promise savings or justify expansion by
 itself. Installation, tax, freight, maintenance and financing are excluded.
 
+> **Customer (illustrative):** These assumptions do not justify a fleet rollout.
+> We want to evaluate five sites first and measure whether the operational
+> benefits support a later decision.
+
 ## 5. Sales reviews a pilot request before payment
 
 The customer selects **Submit pilot for Sales review**. The server revalidates
@@ -149,6 +181,13 @@ values and history, then enters:
 
 The reviewer selects **Approve pilot**. Only this explicit authorized decision
 enables the proposal. The model cannot invoke it. No payment has been requested.
+
+An alternative exercised by the browser suite is **Changes Requested**. Sales
+enters “Please review the pilot facts before resubmission.” The customer follows
+**Return to customer for revision**, selects **Revise request**, reviews the
+facts, confirms and resubmits. Revision 1 is superseded and revision 2 needs
+fresh approval. This is an optional correction loop, not a mandatory second
+review for every customer.
 
 ## 6. The customer reviews the proposal and accepts it
 
@@ -197,6 +236,42 @@ criteria, then decide whether to expand, adjust or stop.
 Actual delivery, installation, telemetry and follow-up are not implemented.
 The demo proves the consultative sales process through approved proposal,
 customer acceptance and verified sandbox payment.
+
+> **Sales representative (illustrative):** Compare the evaluation results with
+> the agreed criteria, revisit the assumptions, and decide whether to expand,
+> adjust the scope or stop.
+
+No measured pilot result is asserted. This follow-up is a suggested business
+process beyond the implemented transaction.
+
+## Verification record and limits
+
+The initial local browser run on September 7, 2026 captured the observed chat
+exchange above, structured fact updates, business brief entry and an explicit
+Sales handoff. The remaining dialogue is illustrative; this document is not a
+verbatim transcript of a single continuous browser session.
+
+The September 10 refresh uses the existing automated suites:
+
+- `npm run validate`: catalog, assets and security-boundary validation passed.
+- `npm run test:integration`: all 7 PostgreSQL tests passed, including incomplete
+  handoff, revisions, concurrent decisions, acceptance, exact payment matching,
+  duplicate callbacks, changed commerce, expiry and legacy-state rejection.
+- `e2e/customer-journey.spec.ts`: browser coverage checks novice handoff and the
+  request → changes requested → revision → approval → private PDF → acceptance
+  flow on desktop and mobile Chromium. The novice handoff passed on both; the
+  full mobile flow passed. The first desktop lifecycle run exceeded its 60-second
+  total limit, so it was repeated with a 180-second command-line limit and
+  passed in approximately 72 seconds. All four scenarios passed across these
+  runs, with the desktop timing limitation retained in this record.
+
+The first local attempt could not initialize a session. The repeat used a
+process-only temporary signing secret; no credential was committed or printed.
+
+The browser suite stops when test Checkout becomes available. The payment
+transition is exercised with integration fixtures; it is not evidence of a
+fresh hosted Stripe Checkout payment. Section 7 describes the implemented
+payment continuation, which must be distinguished from this browser run.
 
 ## Milestones and responsibility
 
