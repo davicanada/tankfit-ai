@@ -131,6 +131,29 @@ test("AirFlame review, revision, approval, proposal and acceptance precede check
   }
 });
 
+test("discovery preserves an explicitly written pilot quantity", async ({
+  page,
+}) => {
+  await page.goto("/demo/customer");
+  const reset = page
+    .getByRole("button", { name: "Reset demo", exact: true })
+    .first();
+  await expect(reset).toBeVisible({ timeout: 20000 });
+  try {
+    await page
+      .getByRole("textbox", { name: "Message to TankFit AI" })
+      .fill(
+        "We manage 500 rural heating-oil tanks with float gauges. We want fewer run-outs and a five-tank pilot.",
+      );
+    await page.getByRole("button", { name: "Send message", exact: true }).click();
+    await expect(
+      page.getByRole("spinbutton", { name: "Pilot Quantity", exact: true }),
+    ).toHaveValue("5", { timeout: 20000 });
+  } finally {
+    if (await reset.isVisible()) await reset.click();
+  }
+});
+
 test("a novice can request Sales help with unknown technical facts", async ({
   page,
 }) => {
