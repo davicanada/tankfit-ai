@@ -18,7 +18,7 @@ export default function CatalogPage() {
             Catalog {catalog.catalogVersion}
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em] sm:text-5xl">
-            Fictional monitoring hardware, grounded in structured data.
+            Fictional monitoring hardware, grounded in structured data
           </h1>
           <p className="mt-5 text-base leading-7 text-muted-foreground">
             Every claim below is read from the versioned catalog. Prices, stock, and delivery estimates are intentionally excluded until they can be revalidated against the application database.

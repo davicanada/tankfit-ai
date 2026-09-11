@@ -22,7 +22,7 @@ export default function Home() {
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-[-0.04em] sm:text-6xl">
               From an operational problem to a{" "}
               <span className="text-primary">
-                grounded tank-monitoring fit.
+                grounded tank-monitoring fit
               </span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
@@ -78,7 +78,7 @@ export default function Home() {
                 No scenario loaded
               </p>
               <h2 className="mt-3 text-2xl font-semibold">
-                Start with your own fictional operation.
+                Start with your own fictional operation
               </h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
                 Describe what you store, how your tanks are monitored, and
@@ -120,7 +120,7 @@ export default function Home() {
             Two-layer architecture
           </p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-            Conversation can be flexible. Technical truth cannot.
+            Conversation can be flexible. Technical truth cannot
           </h2>
         </div>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
