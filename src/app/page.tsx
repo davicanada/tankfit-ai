@@ -20,16 +20,12 @@ export default function Home() {
               {tankroy.name} · fictional monitoring solutions
             </Badge>
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-[-0.04em] sm:text-6xl">
-              From an operational problem to a{" "}
-              <span className="text-primary">
-                grounded tank-monitoring fit
-              </span>
+              Find the right monitoring solution for your tanks
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Tankroy&apos;s fictional monitors help illustrate how fuel, water
-              and industrial-gas operators could understand their inventory.
-              Explore our synthetic catalog and ask TankFit AI which solution
-              fits your fictional needs.
+              Tell us what you store and what you need to improve. TankFit AI
+              helps you explore suitable products and understand when further
+              technical review is needed.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
