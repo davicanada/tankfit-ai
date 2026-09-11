@@ -4,7 +4,7 @@
 
 - `main` is the protected, releasable branch.
 - Work begins from an issue or documented requirement.
-- Branch names use `type/short-description`, such as `feat/airflame-discovery` or `docs/catalog-adr`.
+- Branch names use `type/short-description`, such as `feat/custom-discovery` or `docs/catalog-adr`.
 - Changes enter `main` through pull requests.
 - Direct pushes to `main` are disabled after the remote repository is created.
 - Each pull request links a PRD section, SPEC, ADR, or issue and includes validation evidence.
@@ -34,9 +34,9 @@ When the application is scaffolded, the protected branch will additionally requi
 - Linting
 - Unit tests for compatibility, recurring-cost ROI, order state, approval, proposal acceptance, revisions, and provider routing
 - Integration tests for database-scoped sessions and transaction revalidation
-- End-to-end test for the AirFlame consultative happy path and major failure paths
+- End-to-end test for a custom-scenario consultative happy path and major failure paths
 - Browser tests for the public Tankroy surface, Demo Hub, Customer Experience, Sales Team Experience, embedded advisor handoff, mobile behavior, and forbidden staff-control exposure
-- Integration tests for prepared sales-fixture creation, provenance, idempotency, deterministic validation, and two-session isolation
+- Integration tests for isolated fixture creation, provenance, idempotency, deterministic validation, and two-session isolation
 - Negative tests mapped to `docs/security-threat-model.md`
 - Static security-boundary validation and dependency review
 - Code and secret scanning after application scaffolding
@@ -61,14 +61,14 @@ AI-generated code is treated as untrusted until Davi Almeida reviews the diff an
 
 1. Merge a reviewed pull request into `main`.
 2. Let Vercel create and verify the production deployment.
-3. Run the AirFlame end-to-end smoke test in the order: request, approval, proposal, customer acceptance, then test payment.
+3. Run the custom-scenario end-to-end smoke test in the order: request, approval, proposal, customer acceptance, then test payment.
 4. Confirm deterministic mode with AI keys disabled.
 5. Confirm the synthetic-data disclaimer and proposal watermark.
 6. Confirm that expired or foreign sessions cannot be accessed.
 7. Confirm that a revision preserves the previous snapshot and requires fresh approval.
 8. Record known limitations in the release notes or README.
 9. Confirm there is no unresolved critical or high-severity security finding.
-10. Verify the public Tankroy website can launch the advisor and that both Demo Hub modes complete their documented AirFlame paths.
+10. Verify the public Tankroy website can launch the advisor and that both Demo Hub modes complete the documented custom-scenario path.
 
 ## 6. Security Change Review
 
@@ -88,8 +88,8 @@ The public Tankroy website and the session-scoped sales workspace are one produc
 1. Update the PRD, [`specs/tankroy-public-experience.md`](specs/tankroy-public-experience.md), architecture, threat model, and relevant ADRs (including ADR-0011) together.
 2. Implement public navigation, the advisor entry point, and the Demo Hub without duplicating the agent, catalog, customer components, or deterministic domain modules.
 3. Keep staff actions behind explicit workspace controls and server authorization; mode selection and browser visibility are never permission.
-4. Create a prepared AirFlame sales fixture only through an explicit validated Server Action that creates session-private records and records provenance.
-5. Add or update browser tests for public browsing, both demo modes, widget handoff, custom discovery, fixture isolation, mobile keyboard access, and the complete AirFlame path.
+4. Keep named scenario fixtures inside isolated test setup; never expose a prepared fixture action through the public Sales Team Experience.
+5. Add or update browser tests for public browsing, both demo modes, widget handoff, custom discovery, fixture isolation, mobile keyboard access, and the complete custom-scenario path.
 6. Re-run the full repository validation and record whether the production deployment has been updated. Documentation-only changes must not claim that the new surface is already live.
 
 ## 8. Branch Protection Checklist

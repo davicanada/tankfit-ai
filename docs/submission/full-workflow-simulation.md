@@ -11,12 +11,15 @@ wording can vary; server-controlled milestones must remain the same.
 
 ## The business situation
 
-AirFlame Fuels manages 500 fictional heating-oil tanks across rural sites. The
-operations team wants fewer run-outs and manual checks. It will evaluate five
-sites before deciding whether a larger rollout makes sense.
+A visitor describes a fictional regional distributor that manages 500
+heating-oil tanks across rural sites. The operations team wants fewer run-outs
+and manual checks, and will evaluate five sites before deciding whether a
+larger rollout makes sense.
 
 The website belongs to fictional Tankroy Systems Inc. TankFit AI is its embedded
-advisor and the name of the Sales demonstration workspace.
+advisor and the name of the Sales demonstration workspace. No customer is
+preloaded; the organization name and operating facts come from the visitor's
+own fictional brief.
 
 ## 1. The customer arrives with a problem
 
@@ -112,7 +115,7 @@ has taken place.
 
 | Requirement | Confirmed fictional value |
 | --- | --- |
-| Organization | AirFlame Fuels |
+| Organization | Visitor-provided fictional organization |
 | Material | Heating oil |
 | Fleet / pilot | 500 tanks / 5 monitors |
 | Tank type | Above-ground horizontal |
@@ -132,8 +135,8 @@ compatible pilot.
 
 The customer selects **Confirm requirements**. Deterministic rules select
 **FloatLink FL-100** because the supported material, tank, gauge interface,
-direct LTE-M connectivity and operating profile match. An equivalent custom
-organization receives the same result; the AirFlame name is irrelevant to ranking.
+direct LTE-M connectivity and operating profile match. The organization name
+does not influence ranking.
 
 ## 4. The customer sees commercial facts and an honest business case
 

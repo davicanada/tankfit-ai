@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Bot, Database, ShieldCheck } from "lucide-react";
 import { FictionNotice } from "@/components/fiction-notice";
@@ -6,18 +5,11 @@ import { ProductCard } from "@/components/product-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { evaluateCompatibility } from "@/domain/compatibility/evaluate";
-import { scenarioPresets } from "@/domain/compatibility/presets";
+import { COMPATIBILITY_RULE_VERSION } from "@/domain/compatibility/evaluate";
 import { catalog } from "@/lib/catalog";
 import { tankroy } from "@/lib/companies";
 
 export default function Home() {
-  const featuredResult = evaluateCompatibility(
-    catalog.products,
-    scenarioPresets[0].requirements,
-  );
-  const featuredProduct = featuredResult.primaryRecommendation?.product;
-
   return (
     <>
       <FictionNotice />
@@ -59,7 +51,7 @@ export default function Home() {
               <div>
                 <dt className="text-xs text-muted-foreground">Rule set</dt>
                 <dd className="mt-1 font-mono text-sm sm:text-lg">
-                  v{featuredResult.ruleVersion}
+                  v{COMPATIBILITY_RULE_VERSION}
                 </dd>
               </div>
               <div>
@@ -71,58 +63,54 @@ export default function Home() {
             </dl>
           </div>
 
-          {featuredProduct ? (
-            <Card className="relative overflow-hidden border-primary/20 bg-card/90 p-0 shadow-2xl shadow-black/20">
-              <div className="flex items-center justify-between border-b border-border/70 px-5 py-4">
-                <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-emerald-400" />
-                  <span className="font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground">
-                    Rules engine result
-                  </span>
-                </div>
-                <Badge className="bg-emerald-400/15 text-emerald-300">
-                  Compatible
-                </Badge>
+          <Card className="relative overflow-hidden border-primary/20 bg-card/90 p-0 shadow-2xl shadow-black/20">
+            <div className="flex items-center justify-between border-b border-border/70 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <span className="size-2 rounded-full bg-emerald-400" />
+                <span className="font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground">
+                  Custom discovery workspace
+                </span>
               </div>
-              <div className="grid sm:grid-cols-[0.9fr_1.1fr] lg:grid-cols-1 xl:grid-cols-[0.9fr_1.1fr]">
-                <div className="relative aspect-square bg-muted/40">
-                  <Image
-                    src={featuredProduct.image.path}
-                    alt={featuredProduct.image.alt}
-                    fill
-                    priority
-                    loading="eager"
-                    sizes="(max-width: 1024px) 45vw, 24vw"
-                    className="object-cover"
-                  />
-                </div>
-                <CardContent className="flex flex-col justify-center p-6">
-                  <p className="font-mono text-xs text-primary">
-                    {featuredProduct.id}
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold">
-                    {featuredProduct.name}
-                  </h2>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                    Recommended for the distributed AirFlame heating-oil pilot
-                    using confirmed float gauges and LTE-M.
-                  </p>
-                  <div className="mt-5 space-y-2 text-sm">
-                    {featuredResult.primaryRecommendation?.matchedFields
-                      .slice(0, 4)
-                      .map((field) => (
-                        <div key={field} className="flex items-center gap-2">
-                          <ShieldCheck className="size-4 text-emerald-400" />
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {field}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
+              <Badge className="bg-primary/15 text-primary">Start here</Badge>
+            </div>
+            <CardContent className="p-6">
+              <p className="font-mono text-xs uppercase tracking-[0.15em] text-primary">
+                No scenario loaded
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold">
+                Start with your own fictional operation.
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Describe what you store, how your tanks are monitored, and
+                what your team wants to improve. TankFit AI will ask focused
+                questions while the rules engine keeps unknown facts visible.
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                {["Describe the need", "Review the facts", "See a grounded fit"].map(
+                  (step, index) => (
+                    <div
+                      key={step}
+                      className="rounded-lg border border-border/70 bg-background/60 p-3"
+                    >
+                      <span className="font-mono text-xs text-primary">
+                        0{index + 1}
+                      </span>
+                      <p className="mt-2 text-sm font-medium">{step}</p>
+                    </div>
+                  ),
+                )}
               </div>
-            </Card>
-          ) : null}
+              <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
+                <ShieldCheck className="size-4 text-emerald-400" />
+                <span>Every recommendation is decided from confirmed requirements.</span>
+              </div>
+              <Button asChild className="mt-6">
+                <Link href="/advisor">
+                  Describe your situation <ArrowRight data-icon="inline-end" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
@@ -171,45 +159,46 @@ export default function Home() {
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">
-                Editable starting points
+                Custom-first discovery
               </p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-                Three presets, one rules pipeline
+                Your situation is the starting point
               </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                There is no preloaded customer or scripted scenario. Bring a
+                fictional operation in your own words and review what the
+                application can safely confirm.
+              </p>
             </div>
             <Button asChild variant="ghost">
               <Link href="/advisor">
-                Open advisor <ArrowRight data-icon="inline-end" />
+                Start discovery <ArrowRight data-icon="inline-end" />
               </Link>
             </Button>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {scenarioPresets.map((preset) => (
-              <Link
-                key={preset.id}
-                href={`/advisor?preset=${preset.id}`}
-                className="group"
-              >
-                <Card className="h-full bg-background/70 transition-colors group-hover:border-primary/50">
-                  <CardContent>
-                    <Image
-                      src={preset.logoPath}
-                      alt=""
-                      width={48}
-                      height={48}
-                    />
-                    <p className="mt-5 text-sm text-primary">
-                      {preset.company}
-                    </p>
-                    <h3 className="mt-1 text-lg font-semibold">
-                      {preset.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      {preset.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
+            {[
+              {
+                title: "Describe the operation",
+                text: "Use ordinary language. A company name is optional and all information stays fictional.",
+              },
+              {
+                title: "Clarify what matters",
+                text: "The assistant asks one relevant question at a time and leaves unknown facts unresolved.",
+              },
+              {
+                title: "Inspect the decision",
+                text: "The catalog and deterministic rules show the evidence behind a fit or a technical review.",
+              },
+            ].map((item) => (
+              <Card key={item.title} className="bg-background/70">
+                <CardContent>
+                  <h3 className="text-lg font-semibold">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    {item.text}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AirFlameJourney } from "@/components/airflame-journey";
+import { TankFitJourney } from "@/components/airflame-journey";
 import { FictionNotice } from "@/components/fiction-notice";
 
 export const metadata = { title: "Sales Team Experience" };
@@ -19,7 +19,7 @@ export default function SalesPage() {
             approval authority.
           </p>
         </header>
-        <AirFlameJourney mode="sales" />
+        <TankFitJourney mode="sales" />
       </section>
     </>
   );
