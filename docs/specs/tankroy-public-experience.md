@@ -2,16 +2,16 @@
 
 **Status:** Consultative revision implemented on feature branch; deployment validation pending
 
-**Version:** 0.3
-**Date:** September 6, 2026
+**Version:** 0.4
+**Date:** September 11, 2026
 **Owner:** Davi Almeida  
-**Related ADR:** [`0007-public-customer-and-sales-surfaces.md`](../adrs/0007-public-customer-and-sales-surfaces.md)
+**Related ADRs:** [`0007-public-customer-and-sales-surfaces.md`](../adrs/0007-public-customer-and-sales-surfaces.md), [`0012-custom-scenario-first-public-experience.md`](../adrs/0012-custom-scenario-first-public-experience.md)
 
 ## 1. Purpose
 
 September 6 revision: [Consultative Sales](consultative-sales.md) supersedes the earlier payment-first sequence. Prepared requests need staff approval and customer acceptance before Checkout. Incomplete private handoffs remain eligible for clarification, not commerce. Sandbox unavailability is visible and never an implicit payment success. The old stateless `/api/advisor` is retired with HTTP 410.
 
-This SPEC defines how TankFit AI is presented as part of the fictional Tankroy Systems Inc. website while preserving the existing end-to-end competition demonstration. The change is a product-surface reorganization, not a second application or a second agent.
+This SPEC defines how TankFit AI is presented as part of the fictional Tankroy Systems Inc. website. The public entry path is custom-scenario first: no customer, product recommendation or named scenario is preloaded. The change is a product-surface reorganization, not a second application or a second agent.
 
 All companies, people, products, specifications, prices, inventory, transactions, and documents remain fictional and synthetic. This is an independent personal project by Davi Almeida created exclusively for the Jornada de Dados competition.
 
@@ -49,10 +49,9 @@ For the competition MVP, `/demo/sales` is the safe Sales Team Experience. It is 
 1. **Experience the Customer Journey:** opens `/demo/customer` and demonstrates the public Tankroy website, catalog, embedded TankFit AI chatbox, discovery, recommendation, ROI, and customer-originated order flow.
 2. **Experience the Sales Team Workspace:** opens `/demo/sales` and demonstrates structured opportunity review, commercial state, approval, audit, and proposal generation.
 
-Sales Team Experience supports two safe starting conditions:
+Sales Team Experience supports one public starting condition:
 
-- Continue an eligible synthetic opportunity previously created by the same anonymous session in Customer Experience.
-- If none exists, show an explicit `Load prepared AirFlame opportunity` action. The action creates new session-owned records, runs normal deterministic and current commercial validation, and records `prepared_sales_fixture` provenance. It must not use a global shared order, mutate seed data, run automatically on `GET`, or bypass the approval state machine.
+- Continue an eligible synthetic opportunity previously created by the same anonymous session in Customer Experience. If none exists, show a clear empty state and direct the evaluator to Customer Experience. Named prepared scenarios remain integration-test fixtures and have no public action.
 
 The hub and mode routes are presentation controls. They are not roles, authentication, or authorization.
 
@@ -66,7 +65,7 @@ The hub and mode routes are presentation controls. They are not roles, authentic
 | `/advisor`              | Public TankFit AI     | Full-page conversational discovery and compatibility explanation                                                                       | Anonymous signed session                                                 |
 | `/demo`                 | Demo Hub              | Explain and select Customer Experience or Sales Team Experience                                                                        | Anonymous; no role granted                                               |
 | `/demo/customer`        | Customer Experience   | Test the public Tankroy site, chatbox, discovery, recommendation, ROI, and customer actions                                            | Anonymous signed session for stateful actions                            |
-| `/demo/sales`           | Sales Team Experience | Continue the current opportunity or explicitly create a private prepared AirFlame opportunity, then review approval and proposal state | Anonymous signed session; staff mutations require scoped Demo Staff Mode |
+| `/demo/sales`           | Sales Team Experience | Continue the current session's opportunity, or show an empty state, then review approval and proposal state | Anonymous signed session; staff mutations require scoped Demo Staff Mode |
 | `/api/discovery`        | Server boundary       | Persisted discovery and grounded explanation                                                                                           | Same-origin mutation, server-derived session                             |
 | `/api/payments/webhook` | Provider callback     | Verify test payment                                                                                                                    | Raw-body Stripe signature; live events rejected                          |
 | `/api/proposals/[id]`   | Server boundary       | Generate an approved synthetic proposal on demand                                                                                      | Same-origin, current-session authorization, unexpired record             |
@@ -77,7 +76,7 @@ The public navigation should describe the customer experience in Tankroy languag
 
 1. A visitor lands on the fictional Tankroy website and understands the synthetic-demo disclaimer.
 2. The visitor browses products or opens `Ask TankFit AI` from the home page, a use-case section, or a product page.
-3. TankFit AI first answers informational catalog questions directly. When the visitor asks for help choosing a solution, it progressively asks one compatibility-relevant question at a time and accepts non-technical answers, a custom fictional situation, or an editable preset.
+3. TankFit AI first answers informational catalog questions directly. When the visitor asks for help choosing a solution, it progressively asks one compatibility-relevant question at a time and accepts a custom fictional situation in ordinary language.
 4. Deterministic code evaluates compatibility against the versioned catalog and returns a recommendation, alternatives, or `technical_review_required` / `out_of_scope`.
 5. The visitor reviews facts, evidence, assumptions, and the illustrative ROI estimate.
 6. The visitor may request Sales help with incomplete facts, or submit a compatible pilot request for approval. Optional business context includes objectives, timeline and pilot success criteria.
@@ -86,7 +85,7 @@ The public navigation should describe the customer experience in Tankroy languag
 
 The widget may hand off to `/advisor` or Customer Experience through server-managed session state. It must not put secrets, raw database identifiers, or authorization claims in a client-controlled query string.
 
-An evaluator who wants to inspect only the Sales Team Experience may open it directly and explicitly create the prepared AirFlame opportunity. That path must produce the same deterministic recommendation and commercial checks as equivalent Customer Experience inputs.
+An evaluator who opens Sales Team Experience without a customer-created opportunity sees the empty state and can return to Customer Experience. Integration fixtures used by automated tests run through the same deterministic recommendation and commercial checks as equivalent custom inputs.
 
 ## 5. Deterministic and AI Boundaries
 
@@ -94,7 +93,7 @@ An evaluator who wants to inspect only the Sales Team Experience may open it dir
 - Deterministic code owns compatibility, product facts, commercial values, ROI arithmetic, order state, payment simulation, approval state, and proposal eligibility.
 - The public surface may display only catalog facts returned by validated server modules.
 - The internal surface may mutate state only through explicit, validated interface actions; the agent cannot approve, pay, or generate a proposal.
-- The same normalized requirements must yield the same deterministic result whether the visitor arrived from a preset, the widget, `/advisor`, or a custom scenario.
+- The same normalized requirements must yield the same deterministic result whether the visitor arrived from the widget, `/advisor`, or Customer Experience.
 
 ## 6. Acceptance Tests
 
@@ -107,11 +106,11 @@ An evaluator who wants to inspect only the Sales Team Experience may open it dir
 - Product-page facts and images match the versioned catalog; no AI-generated product claim appears without grounded evidence.
 - A visitor can begin with a custom scenario from the public site and reach the same deterministic result as the equivalent `/advisor` flow.
 - Public pages do not render approval, audit, order mutation, or proposal-download controls for another session.
-- The complete AirFlame golden path reaches recommendation, ROI, scoped staff approval, proposal download, customer acceptance and verified test payment, in that order.
+- A complete custom-scenario path reaches recommendation, ROI, scoped staff approval, proposal download, customer acceptance and verified test payment, in that order.
 - The Demo Hub presents both modes clearly and neither mode choice grants staff authorization.
 - Customer Experience uses the same public components and behavior as the Tankroy website rather than a second customer implementation.
 - Sales Team Experience continues only an eligible opportunity belonging to the current session.
-- Loading the prepared AirFlame opportunity requires an explicit mutation, creates session-private records, runs normal validation, and records fixture provenance.
+- Opening Sales without a current opportunity exposes no approval controls and does not create records; a customer-created opportunity must pass normal deterministic and commercial validation before Sales can review it.
 - Direct navigation to `/demo/sales` does not reveal approval controls or data from another session.
 - A session-scoped Demo Staff Mode token cannot be created by the model, reused for another order, or used after expiry.
 - AI-provider failure still leaves catalog browsing and deterministic guided discovery usable.

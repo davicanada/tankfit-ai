@@ -16,7 +16,6 @@ import {
   ensureDemoSession,
   requireDemoSession as readActionSession,
   resetDemoSession,
-  prepareAirFlameOpportunity,
   recordSessionEvent,
   requestSalesReview,
   acceptProposal,
@@ -166,16 +165,6 @@ export async function reconcileCheckoutAction(): Promise<ActionResult> {
   try {
     const session = await requireDemoSession();
     await reconcileTestCheckout(session.id);
-    return { ok: true, view: await currentView(session.id) };
-  } catch (error) {
-    return { ok: false, error: safeMessage(error) };
-  }
-}
-
-export async function prepareOpportunityAction(): Promise<ActionResult> {
-  try {
-    const session = await requireDemoSession();
-    await prepareAirFlameOpportunity(session.id);
     return { ok: true, view: await currentView(session.id) };
   } catch (error) {
     return { ok: false, error: safeMessage(error) };

@@ -38,7 +38,7 @@ flowchart LR
 
 ## Engineering lessons
 
-- Unknown requirements must stay unknown: convenient preset defaults can otherwise become false technical evidence.
+- Unknown requirements must stay unknown: preloaded scenario defaults can otherwise become false technical evidence. The public demo therefore starts with a custom fictional situation.
 - Successful payment, approval and document eligibility are separate state transitions, not statements an AI may invent.
 - An approved document needs a frozen input snapshot, not a fresh combination of mutable session and catalog records.
 - A successful happy path does not prove session isolation, concurrency safety, multilingual quality or provider fallback. Those require distinct evidence.

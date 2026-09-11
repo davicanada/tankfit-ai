@@ -1,4 +1,4 @@
-import { AirFlameJourney } from "@/components/airflame-journey";
+import { TankFitJourney } from "@/components/airflame-journey";
 import { DiscoveryChat } from "@/components/discovery-chat";
 import { FictionNotice } from "@/components/fiction-notice";
 
@@ -13,13 +13,13 @@ export default function AdvisorPage() {
             Find a fictional monitoring fit
           </h1>
           <p className="mt-4 text-muted-foreground">
-            Describe your needs in your language. TankFit AI explains;
-            deterministic rules decide. Review unknown facts using the guided
-            fields below.
+            Start with your own fictional operation in your language. TankFit AI
+            explains; deterministic rules decide. Review unknown facts using the
+            guided fields below.
           </p>
         </header>
         <DiscoveryChat />
-        <AirFlameJourney mode="advisor" />
+        <TankFitJourney mode="advisor" />
       </section>
     </>
   );

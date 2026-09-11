@@ -1,10 +1,42 @@
 import { test, expect } from "@playwright/test";
 
+async function fillCompatibleCustomScenario(page: import("@playwright/test").Page) {
+  await page
+    .getByLabel("Fictional organization", { exact: true })
+    .fill("Northstar Fictional Fuels");
+  const selects = [
+    ["Material", "heating_oil"],
+    ["Tank Type", "above_ground_horizontal"],
+    ["Existing Instrumentation", "mechanical_float_gauge"],
+    ["Gauge Interface", "confirmed_compatible"],
+    ["Connectivity", "lte_m"],
+    ["Site Distribution", "distributed"],
+    ["Measurement Preference", "existing_float_gauge_interface"],
+    ["Reading Frequency", "daily"],
+    ["Low Level Alerts", "true"],
+    ["Regulated Location", "false"],
+  ] as const;
+  for (const [label, value] of selects) {
+    await page
+      .getByRole("combobox", { name: label, exact: true })
+      .selectOption(value);
+  }
+  await page.getByLabel("Fleet Size", { exact: true }).fill("500");
+  await page.getByLabel("Pilot Quantity", { exact: true }).fill("5");
+  await page.getByLabel("Minimum Temperature C", { exact: true }).fill("-25");
+  await page.getByLabel("Maximum Temperature C", { exact: true }).fill("35");
+}
+
 test("public catalog and widget do not expose staff controls", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Tankroy home" })).toBeVisible();
+  await expect(page.getByText("Your situation is the starting point")).toBeVisible();
+  await expect(page.getByText("There is no preloaded customer or scripted scenario.")).toBeVisible();
+  await expect(page.getByText("AirFlame Fuels", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("AgricuFlow Cooperative", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Boreal Beverage Group", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Approve pilot" })).toHaveCount(
     0,
   );
@@ -60,6 +92,28 @@ test("demo hub separates customer and sales perspectives", async ({ page }) => {
   );
 });
 
+test("sales starts empty until the current session creates an opportunity", async ({
+  page,
+}) => {
+  test.skip(
+    process.env.E2E_DATABASE !== "1",
+    "Requires a configured isolated demo database and session signing secret.",
+  );
+  await page.goto("/demo/sales");
+  await expect(
+    page.getByRole("heading", { name: "No opportunity in this session" }),
+  ).toBeVisible({ timeout: 20000 });
+  await expect(
+    page.getByRole("link", { name: "Continue in Customer Experience" }),
+  ).toBeVisible();
+  await expect(page.getByText("AirFlame Fuels", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("AgricuFlow Cooperative", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Boreal Beverage Group", { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /Load prepared .* opportunity/ }),
+  ).toHaveCount(0);
+});
+
 test("confirmed sessions lock the public chat with clear next actions", async ({
   page,
 }) => {
@@ -68,6 +122,9 @@ test("confirmed sessions lock the public chat with clear next actions", async ({
     "Requires a configured isolated demo database and session signing secret.",
   );
   await page.goto("/demo/customer");
+  await expect(page.getByText("AirFlame Fuels", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("AgricuFlow Cooperative", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Boreal Beverage Group", { exact: true })).toHaveCount(0);
   const journeyReset = page.getByRole("button", {
     name: "Reset demo",
     exact: true,
@@ -75,12 +132,7 @@ test("confirmed sessions lock the public chat with clear next actions", async ({
   await expect(journeyReset).toBeVisible({ timeout: 20000 });
   try {
     await journeyReset.click();
-    await expect(
-      page.getByRole("button", { name: "AirFlame Fuels", exact: true }),
-    ).toBeEnabled({ timeout: 20000 });
-    await page
-      .getByRole("button", { name: "AirFlame Fuels", exact: true })
-      .click();
+    await fillCompatibleCustomScenario(page);
     await expect(page.getByText("Guided assessment: Compatible")).toBeVisible();
     await page
       .getByRole("button", { name: "Confirm requirements", exact: true })
@@ -115,9 +167,7 @@ test("confirmed sessions lock the public chat with clear next actions", async ({
       }),
     ).toHaveCount(0);
 
-    await page
-      .getByRole("button", { name: "AirFlame Fuels", exact: true })
-      .click();
+    await fillCompatibleCustomScenario(page);
     await page
       .getByRole("button", { name: "Confirm requirements", exact: true })
       .click();

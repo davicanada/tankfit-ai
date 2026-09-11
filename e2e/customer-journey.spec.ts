@@ -1,5 +1,32 @@
 import { test, expect } from "@playwright/test";
 
+async function fillCompatibleCustomScenario(page: import("@playwright/test").Page) {
+  await page
+    .getByLabel("Fictional organization", { exact: true })
+    .fill("Northstar Fictional Fuels");
+  const selects = [
+    ["Material", "heating_oil"],
+    ["Tank Type", "above_ground_horizontal"],
+    ["Existing Instrumentation", "mechanical_float_gauge"],
+    ["Gauge Interface", "confirmed_compatible"],
+    ["Connectivity", "lte_m"],
+    ["Site Distribution", "distributed"],
+    ["Measurement Preference", "existing_float_gauge_interface"],
+    ["Reading Frequency", "daily"],
+    ["Low Level Alerts", "true"],
+    ["Regulated Location", "false"],
+  ] as const;
+  for (const [label, value] of selects) {
+    await page
+      .getByRole("combobox", { name: label, exact: true })
+      .selectOption(value);
+  }
+  await page.getByLabel("Fleet Size", { exact: true }).fill("500");
+  await page.getByLabel("Pilot Quantity", { exact: true }).fill("5");
+  await page.getByLabel("Minimum Temperature C", { exact: true }).fill("-25");
+  await page.getByLabel("Maximum Temperature C", { exact: true }).fill("35");
+}
+
 test.beforeEach(() => {
   test.skip(
     process.env.E2E_DATABASE !== "1",
@@ -7,7 +34,7 @@ test.beforeEach(() => {
   );
 });
 
-test("AirFlame review, revision, approval, proposal and acceptance precede checkout", async ({
+test("custom scenario review, revision, approval, proposal and acceptance precede checkout", async ({
   page,
   browser,
 }) => {
@@ -16,9 +43,7 @@ test("AirFlame review, revision, approval, proposal and acceptance precede check
     page.getByRole("button", { name: "Reset demo", exact: true }).first();
   await expect(reset()).toBeVisible({ timeout: 20000 });
   try {
-    await page
-      .getByRole("button", { name: "AirFlame Fuels", exact: true })
-      .click();
+    await fillCompatibleCustomScenario(page);
     await page
       .getByRole("textbox", { name: "Business objective" })
       .fill("Reduce unnecessary manual checks");
@@ -189,7 +214,7 @@ test("a novice can request Sales help with unknown technical facts", async ({
       page.getByRole("button", { name: "Open Stripe test checkout" }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("button", { name: "Load prepared AirFlame opportunity" }),
+      page.getByRole("button", { name: /Load prepared .* opportunity/ }),
     ).toHaveCount(0);
   } finally {
     const reset = page

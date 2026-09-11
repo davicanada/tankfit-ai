@@ -2,7 +2,11 @@
 
 **Status:** Implemented release-candidate architecture with approved public-experience revision
 **Owner:** Davi Almeida  
-**Last updated:** September 6, 2026
+**Last updated:** September 11, 2026
+
+**Custom-first revision:** [ADR-0012](adrs/0012-custom-scenario-first-public-experience.md)
+removes named scenarios from the public entry path. Automated regression
+fixtures remain internal and cannot be selected through the website.
 
 **September 6 consultative revision:** [ADR-0011](adrs/0011-consultative-sales-lifecycle.md) and [the lifecycle SPEC](specs/consultative-sales.md) supersede the payment-first workflow. Private incomplete handoffs precede validated requests; staff approval enables a proposal, customer acceptance enables Checkout, and verified payment records `paid`. Unaccepted revisions preserve prior immutable snapshots. New records explicitly use workflow version 2; migrations leave the database default at 1 so concurrent older deployments remain identifiable.
 
@@ -44,7 +48,12 @@ flowchart LR
 
 All organizations, products, people, transactions, prices, and documents represented by the system are fictional and synthetic.
 
-The visitor may begin with an editable preset or an independent custom fictional scenario. Both entry paths create the same requirement structure and pass through the same tools, rules, authorization, and audit pipeline. Presets are fixtures, not privileged code paths.
+The visitor begins with an independent custom fictional scenario. The public
+experience does not preload a customer, recommendation or named scenario.
+Internal fixtures used by automated tests create the same requirement
+structure and pass through the same tools, rules, authorization and audit
+pipeline; fixture names are never rendered publicly or used as compatibility
+shortcuts.
 
 ## 3. Application Structure
 
@@ -54,7 +63,7 @@ The MVP is one Next.js application deployed to Vercel using the Node.js runtime.
 - **Embedded advisor surface:** a compact TankFit AI widget may appear on public pages, while `/advisor` provides the full-page accessible conversation. Both use the same session and server-side advisor route.
 - **Demo Hub:** `/demo` explains the fictional perspectives and links to `/demo/customer` and `/demo/sales`. Choosing a route changes presentation only and grants no permission.
 - **Customer Experience:** `/demo/customer` demonstrates the same Tankroy site, chatbox, catalog, advisor, session contract, and deterministic modules used by the public customer surface.
-- **Sales Team Experience:** `/demo/sales` presents requirements review, commercial validation, pilot-request state, Demo Staff Mode, approval, audit, and proposal generation. It can continue the current session's opportunity or explicitly create a session-private prepared AirFlame opportunity through normal server validation. It is not a general staff dashboard.
+- **Sales Team Experience:** `/demo/sales` presents requirements review, commercial validation, pilot-request state, Demo Staff Mode, approval, audit, and proposal generation. It can continue only the current session's opportunity; an empty session is directed to Customer Experience. It is not a general staff dashboard.
 - **Server Components** read internal catalog and session data directly on the server and pass serializable results to interactive components.
 - **Server Actions** handle interface-originated mutations such as editing requirements, submitting or revising a pilot request, changing demo roles, accepting a proposal, and recording approval decisions.
 - **Route Handlers** are reserved for streaming conversational responses, AI-provider calls, simulated external callbacks, and proposal downloads.
@@ -87,16 +96,20 @@ Custom-scenario text cannot create new product categories, tools, URLs, file pat
 | Fictional company names and logo paths                     | Versioned company registry                                                                          | Local reviewed logo assets and registry remain available without a database            |
 | Price, stock, availability, delivery lead time             | Postgres                                                                                            | No transactional confirmation; order and checkout pause                                |
 | Requirements, conversation summary, order and audit events | Postgres, scoped to anonymous session                                                               | No cross-session fallback                                                              |
-| Prepared Sales Team Experience opportunity                 | Newly created Postgres records scoped to the evaluator's anonymous session, with fixture provenance | Create only after an explicit validated action; never use a shared mutable opportunity |
+| Sales Team Experience opportunity                         | Postgres records created by the current session's explicit customer action | Empty state until a customer-created opportunity exists; no public prepared fixture action |
 | Compatibility and ROI outputs                              | Deterministic code plus versioned inputs                                                            | Recalculate from available validated inputs                                            |
 | Proposal document                                          | Generated on demand from approved Postgres state; Postgres stores only scoped metadata              | Regenerate only from an approved, unexpired order                                      |
 | AI response                                                | Selected provider                                                                                   | Try configured providers, then deterministic guided mode                               |
 
 ## 6. Human Approval Boundary
 
-The public demonstration uses a short-lived, server-signed token that lets an evaluator explicitly enter Demo Staff Mode for only the current synthetic session and order. Opening `/demo/sales`, selecting Sales Team Experience, or loading a prepared fixture does not grant this token. This proves the approval state transition without exposing a general administrative area.
+The public demonstration uses a short-lived, server-signed token that lets an evaluator explicitly enter Demo Staff Mode for only the current synthetic session and order. Opening `/demo/sales`, selecting Sales Team Experience, or loading an internal test fixture does not grant this token. This proves the approval state transition without exposing a general administrative area.
 
-If Sales Team Experience is opened without an eligible opportunity, an explicit Server Action may create a prepared AirFlame opportunity. The action validates same-origin request context, creates new session-owned records, runs the same deterministic recommendation and current commercial validation as Customer Experience, and records `prepared_sales_fixture` provenance in the audit timeline. The fixture is never a shared mutable order and cannot be used to access another session.
+If Sales Team Experience is opened without an eligible opportunity, it shows a
+safe empty state and directs the evaluator to Customer Experience. Test-only
+fixtures may be created by integration setup through the same deterministic and
+current commercial validation used by the product; they are not exposed as a
+public action or shared mutable order.
 
 The agent cannot issue the token, assume the role, approve an order, or generate the final proposal. A production system would replace this demonstration mechanism with authenticated staff identities and separate authorization.
 
@@ -110,8 +123,7 @@ The agent cannot issue the token, assume the role, approve an order, or generate
 | Stock changes before proposal acceptance or checkout | Reject the stale revision and require a new validated request; never silently oversell                              |
 | Compatibility is unknown                          | Return `technical_review_required`                                                                                    |
 | Test payment fails                                | Keep the accepted request unpaid; never imply payment or repeat staff approval                                       |
-| Sales Team Experience has no eligible opportunity | Show an empty state and an explicit prepared-fixture action; do not enumerate or reuse another session's data         |
-| Prepared fixture creation fails                   | Roll back partial records, grant no role, and leave the workspace in its safe empty state                             |
+| Sales Team Experience has no eligible opportunity | Show an empty state and direct the evaluator to Customer Experience; do not enumerate or reuse another session's data |
 | Approval token is invalid or expired              | Deny the action without revealing session data                                                                        |
 | Proposal generation fails                         | Preserve approved state and allow a safe retry from the same approved record                                          |
 | Malicious or malformed input fails validation     | Reject before database, provider, file, or state-transition work and record a bounded security event                  |

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   initializeJourneyAction,
   resetJourneyAction,
@@ -13,7 +13,6 @@ import {
   enterStaffModeAction,
   decideOrderAction,
   exitStaffModeAction,
-  prepareOpportunityAction,
   requestSalesReviewAction,
   acceptProposalAction,
   reviseRequestAction,
@@ -29,8 +28,6 @@ import {
   type JourneyView,
 } from "@/domain/journey/types";
 import { supportedMaterials } from "@/domain/compatibility/types";
-import { scenarioPresets } from "@/domain/compatibility/presets";
-import { journeyPresets } from "@/domain/journey/presets";
 import { evaluateJourney } from "@/domain/journey/evaluate";
 import { humanizeCatalogValue } from "@/lib/catalog";
 import { Button } from "@/components/ui/button";
@@ -64,7 +61,7 @@ const label = (value: string) =>
   humanizeCatalogValue(value.replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase());
 type Result = Awaited<ReturnType<typeof initializeJourneyAction>>;
 
-export function AirFlameJourney({
+export function TankFitJourney({
   mode = "customer",
 }: {
   mode?: "customer" | "sales" | "advisor";
@@ -78,6 +75,7 @@ export function AirFlameJourney({
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const requestVersion = useRef(0);
   const sales = mode === "sales";
   const customer = mode === "customer";
   const frozen = Boolean(view?.order);
@@ -98,14 +96,14 @@ export function AirFlameJourney({
   }
   useEffect(() => {
     let active = true;
-    void initializeJourneyAction().then((result) => {
-      if (active) apply(result);
-    });
-    const refresh = () => {
+    const load = () => {
+      const version = ++requestVersion.current;
       void initializeJourneyAction().then((result) => {
-        if (active) apply(result);
+        if (active && version === requestVersion.current) apply(result);
       });
     };
+    load();
+    const refresh = load;
     window.addEventListener("tankfit-discovery-updated", refresh);
     return () => {
       active = false;
@@ -114,20 +112,16 @@ export function AirFlameJourney({
   }, []);
   function run(action: () => Promise<Result>) {
     setMessage("");
+    const version = ++requestVersion.current;
     startTransition(async () => {
       try {
-        apply(await action());
+        const result = await action();
+        if (version === requestVersion.current) apply(result);
       } catch {
-        setMessage("This step is temporarily unavailable. Please retry.");
+        if (version === requestVersion.current)
+          setMessage("This step is temporarily unavailable. Please retry.");
       }
     });
-  }
-  function preset(index: number) {
-    setRequirements(journeyPresets[index]);
-    setBrief("");
-    setMessage(
-      "Editable fictional preset loaded. Review every field before confirming.",
-    );
   }
   const localResult = evaluateJourney(requirements);
   return (
@@ -161,19 +155,14 @@ export function AirFlameJourney({
       {sales && !view?.order && !view?.salesRequested && (
         <Card>
           <CardContent className="space-y-4 pt-6">
-            <h2 className="text-xl font-semibold">
-              No order in this private session
-            </h2>
+            <h2 className="text-xl font-semibold">No opportunity in this session</h2>
             <p>
-              Continue Customer Experience, or explicitly load a private
-              AirFlame request. It requires review, customer acceptance and test
-              payment.
+              Start in Customer Experience and describe a fictional operation.
+              Once the customer submits a request, Sales can review that same
+              session-owned opportunity.
             </p>
-            <Button
-              disabled={isPending || !view}
-              onClick={() => run(prepareOpportunityAction)}
-            >
-              Load prepared AirFlame opportunity
+            <Button asChild>
+              <Link href="/demo/customer">Continue in Customer Experience</Link>
             </Button>
           </CardContent>
         </Card>
@@ -293,25 +282,6 @@ export function AirFlameJourney({
               technical fields with unknown values. Review the extraction; it is
               not an engineering assessment.
             </p>
-            <div className="flex flex-wrap gap-2">
-              {scenarioPresets.map((p, i) => (
-                <Button
-                  key={p.id}
-                  variant="outline"
-                  disabled={frozen || isPending}
-                  onClick={() => preset(i)}
-                >
-                  {p.company}
-                </Button>
-              ))}
-              <Button
-                variant="ghost"
-                disabled={frozen || isPending}
-                onClick={() => setRequirements(emptyRequirements)}
-              >
-                Custom scenario
-              </Button>
-            </div>
             <label className="block space-y-2">
               <span>Operational brief</span>
               <Textarea

@@ -1,16 +1,16 @@
 # Release Readiness
 
-**Consultative revision in progress, September 6, 2026:** ADR-0011 changes payment ordering, revisions, incomplete Sales handoff and payback. The baseline verification below describes the prior release and is not evidence that this revision has passed. Fresh checks and owner review are required before merging the updated PR #19.
+**Custom-first consultative revision in progress, September 11, 2026:** ADR-0011 changes payment ordering, revisions, incomplete Sales handoff and payback; ADR-0012 removes named scenarios from the public entry path. The baseline verification below describes the prior release and is not evidence that this revision has passed. Fresh checks and owner review are required before merging this branch.
 
-**Status, September 6, 2026:** The earlier payment-first release was verified on production at [tankfit-ai.vercel.app](https://tankfit-ai.vercel.app/) from merge commit `679c78b`. The consultative-sales revision is not deployed yet; its local checks and owner review must complete before it can replace that baseline. Social publication and the competition submission remain intentionally deferred to Davi Almeida.
+**Status, September 11, 2026:** The earlier payment-first release was verified on production at [tankfit-ai.vercel.app](https://tankfit-ai.vercel.app/) from merge commit `679c78b`. The custom-first consultative revision is not deployed yet; its local checks and owner review must complete before it can replace that baseline. Social publication and the competition submission remain intentionally deferred to Davi Almeida.
 
-Fresh local evidence for this revision is recorded in [Consultative Revision Verification](consultative-release-verification-2026-09-06.md).
+Fresh local evidence for this revision is recorded in [Custom-First Revision Verification](custom-first-verification-2026-09-11.md).
 
 ## Completed implementation
 
 - Tankroy public home, catalog and embedded TankFit AI conversation.
 - Separate Customer and Sales experiences sharing one private anonymous session.
-- General bounded discovery, editable presets, explicit unknowns and synthetic operating-profile validation.
+- General bounded discovery, custom-first entry, explicit unknowns and synthetic operating-profile validation.
 - Current Postgres commerce reads, immutable solution snapshots, revision history, and row-locked state transitions.
 - Proposal-first consultative lifecycle: incomplete Sales handoff, explicit approval, customer acceptance, then test Checkout; recurring service is included in payback.
 - Test-only hosted Stripe Checkout, signed webhook and server reconciliation. Missing sandbox configuration fails closed.
@@ -19,12 +19,12 @@ Fresh local evidence for this revision is recorded in [Consultative Revision Ver
 
 ## Verification evidence
 
-- Unit coverage includes all three presets versus equivalent custom organizations, uncertainty, unsupported applications, provider fallback, unsafe request bodies, signed webhook validation and PDF generation.
-- Three real-Postgres integration tests passed: duplicate actions, immutable scope, foreign and expired sessions, invalid payments, competing decisions, approved snapshots and private prepared-fixture provenance. They create and delete exact test-owned session UUIDs; they do not modify shared catalog rows.
+- Unit coverage includes isolated named fixtures versus equivalent custom organizations, uncertainty, unsupported applications, provider fallback, unsafe request bodies, signed webhook validation and PDF generation.
+- Three real-Postgres integration tests passed: duplicate actions, immutable scope, foreign and expired sessions, invalid payments, competing decisions, approved snapshots and private internal-fixture provenance. They create and delete exact test-owned session UUIDs; they do not modify shared catalog rows.
 - The baseline eight Playwright cases passed across desktop Chromium and a mobile Chromium viewport. The consultative revision has separate local customer, Sales-help, and public-surface checks; no real sandbox payment is claimed for those automated tests.
-- Connected Chrome manually verified the latest preview across the public home/widget, catalog, Customer Experience, Sales Team Experience, Demo Hub, Portuguese discovery, AirFlame draft handoff, session audit, and app-origin console behavior.
+- Connected Chrome manually verified the latest preview across the public home/widget, catalog, Customer Experience, Sales Team Experience, Demo Hub, Portuguese discovery, custom draft handoff, session audit, and app-origin console behavior.
 - Two-page PDF fixtures were rendered and visually inspected, including long names and unsupported font characters. No clipping or overlap was observed. This is template verification, not proof of a real sandbox payment.
-- The baseline production AirFlame journey completed Stripe sandbox Checkout before approval. That ordering is intentionally superseded by the consultative revision and must be reverified after deployment.
+- The baseline production scenario completed Stripe sandbox Checkout before approval. That ordering is intentionally superseded by the consultative revision and must be reverified after deployment.
 - The downloaded two-page proposal was rendered and visually inspected. Both pages contain the `DEMO - NOT A VALID QUOTE OR CONTRACT` watermark, synthetic terms, approval evidence, and consistent unclipped layout.
 - A separate baseline production checkout was cancelled from Stripe and returned to an unchanged draft. The consultative revision keeps an accepted request unpaid on cancellation and adds revision/acceptance race coverage.
 - Live production checks completed French, Chinese, and Hindi discovery. Together with the earlier same-revision protected-preview evidence for English, Spanish, Italian, German, Polish, and Portuguese, every primary evaluation language passed HTTP/schema assertions and semantic review while preserving unknown fields and technical-review status.

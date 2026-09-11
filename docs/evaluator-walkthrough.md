@@ -9,7 +9,7 @@ For a narrated end-to-end example with dialogue and expected system states, see
 
 1. Open the Tankroy home page, browse a product and open **Ask TankFit AI**.
 2. Describe a fictional monitoring problem in your preferred language. Answer discovery questions, then follow **Review facts and continue the customer journey**.
-3. Alternatively open `/demo/customer`, select **AirFlame Fuels**, and review its editable technical facts. The example covers 500 tanks but only a five-unit pilot.
+3. Alternatively open `/demo/customer` and describe your own fictional operation. The guided fields let you review and edit technical facts without loading a named customer.
 4. Select **Confirm requirements**. Inspect the deterministic match, database-backed price/stock/lead time and illustrative ROI. You can edit assumptions and recalculate before creating an order.
 5. Optionally enter a business objective, timeline and pilot criteria. **Request Sales help** saves an incomplete private opportunity without an order or payment. Unknown facts remain unknown.
 6. For a confirmed compatible configuration, select **Submit pilot for Sales review**. The request is frozen as a revision in `pending_approval`; continue to Sales Team Experience.
@@ -20,7 +20,7 @@ For a narrated end-to-end example with dialogue and expected system states, see
 ## Sales Team Experience
 
 1. Open `/demo/sales` in the same browser session. Review the conversation, confirmed requirements, ROI assumptions, order and audit.
-2. A fresh session can explicitly **Load prepared AirFlame opportunity**. This creates a private request awaiting review. An incomplete customer handoff instead shows pending evidence and the business brief; no commercial approval is possible yet.
+2. A fresh session starts empty. Return to Customer Experience to create a private opportunity through the normal custom-scenario flow. An incomplete customer handoff shows pending evidence and the business brief; no commercial approval is possible yet.
 3. An eligible validated request exposes **Enter Demo Staff Mode** before payment. This is a short-lived token for this session/request, not general administrator access.
 4. Enter a fictional decision note and approve, request changes or reject. Only approval permits **Download fictional proposal**.
 5. Verify the two-page document's `DEMO - NOT A VALID QUOTE OR CONTRACT` marking. Return to the customer perspective for acceptance and test Checkout. A change request returns to the customer for revision. **Reset demo** removes the session's records.

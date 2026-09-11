@@ -4,8 +4,8 @@
 | ------------ | ------------------------------------------------------------------------------- |
 | Product      | TankFit AI                                                                      |
 | Version      | 1.0                                                                             |
-| Status       | Completion revision under implementation and verification; owner review pending |
-| Date         | September 6, 2026                                                              |
+| Status       | Custom-first revision implemented; hosted verification and owner review pending |
+| Date         | September 11, 2026                                                              |
 | Owner        | Davi Almeida                                                                    |
 | Product type | Public portfolio prototype                                                      |
 
@@ -102,16 +102,16 @@ The MVP will not:
 ### 7.1 Primary Persona: Operations Manager
 
 **Name:** Jordan Blake  
-**Organization:** AirFlame Fuels, a fictional regional heating-fuel distributor  
-**Need:** Reduce run-outs and unnecessary deliveries across hundreds of customer tanks  
+**Organization:** A fictional organization described by the visitor
+**Need:** Reduce run-outs and unnecessary deliveries across the organization's tanks
 **Knowledge:** Understands operations and customer service but not sensor-selection details  
 **Success:** Leaves with a credible recommended configuration, ROI assumptions, and proposal request
 
 ### 7.2 Secondary Persona: Industrial Facility Manager
 
 **Name:** Priya Nair  
-**Organization:** AgricuFlow Cooperative, a fictional operator of remote agricultural sites  
-**Need:** Replace manual water-tank inspections and receive reliable level alerts despite inconsistent connectivity  
+**Organization:** A fictional operator of remote sites described by the visitor
+**Need:** Replace manual tank inspections and receive reliable level alerts despite inconsistent connectivity
 **Knowledge:** Understands site operations but needs guidance on measurement methods and connectivity  
 **Success:** Identifies compatible monitoring categories and the questions requiring technical review
 
@@ -160,27 +160,30 @@ The primary catalog will be stored in the application database. A read-only JSON
 
 The MVP is one responsive public web application with two intentionally separated surfaces:
 
-1. **Public Tankroy website:** home, use cases, catalog, product details, and an embedded TankFit AI assistant. Anonymous visitors can browse without an account and start a custom or preset discovery flow.
+1. **Public Tankroy website:** home, use cases, catalog, product details, and an embedded TankFit AI assistant. Anonymous visitors can browse without an account and start a custom discovery flow.
 2. **Demo Hub:** an explicitly labeled `/demo` entry point lets evaluators choose Customer Experience or Sales Team Experience.
 3. **Sales workspace:** requirements review, deterministic evidence, pilot request, approval, proposal, acceptance, test checkout, and audit. The public competition build exposes this through `/demo/sales`; state-changing staff controls still require session- and order-scoped `Demo Staff Mode`.
 
 Both surfaces share one Next.js deployment, database, catalog, compatibility engine, provider router, and security boundary. They are not separate products or backends. Telegram, WhatsApp, native mobile applications, a CMS, and a real authenticated staff portal are future possibilities, not MVP requirements.
 
-### 8.4 Entry Modes
+### 8.4 Entry Mode
 
-The public Tankroy landing page will provide two equally valid ways to begin:
-
-1. **Sample scenario:** select one of the three editable presets in Section 20.
-2. **Custom scenario:** describe a new fictional organization and operational need in free text.
-
-The presets are onboarding aids, portfolio demonstrations, and repeatable test fixtures. They do not limit the application to three customers or three exact conversations. Custom scenarios may vary freely within the six supported application categories and the deterministic catalog. Requests outside that supported universe must return an honest `out_of_scope` or `technical_review_required` result rather than an invented solution.
+The public Tankroy website starts with a custom fictional scenario. The visitor
+may name an organization or leave the name generic, then describe the
+operational need in free text. The advisor and guided fields expose unknowns
+instead of preloading technical evidence. Internal named scenarios may remain
+as repeatable regression fixtures, but they are not public onboarding choices
+and do not influence compatibility. Custom scenarios may vary freely within
+the six supported application categories and the deterministic catalog.
+Requests outside that supported universe must return an honest `out_of_scope`
+or `technical_review_required` result rather than an invented solution.
 
 ## 9. End-to-End User Journey
 
 1. The visitor opens the public Tankroy website without creating an account.
 2. The application clearly states that the company, products, data, prices, and transaction are fictional.
 3. The visitor browses the catalog or opens the floating `Ask TankFit AI` assistant from a public page.
-4. The visitor describes a custom fictional operational need in natural language or selects and optionally edits a sample scenario.
+4. The visitor describes a custom fictional operational need in natural language.
 5. TankFit AI adapts discovery to the visitor's knowledge. Unknown technical facts may be handed to Sales for clarification through an explicit private opportunity request.
 6. The rules engine filters the catalog and returns only compatible products.
 7. The AI explains the primary recommendation, constraints, evidence, and compatible alternatives.
@@ -197,7 +200,12 @@ The presets are onboarding aids, portfolio demonstrations, and repeatable test f
 18. The visitor returns to Customer Experience, downloads and reviews the approved proposal, explicitly accepts that revision, then completes Stripe test Checkout. Only a verified test payment records `paid`. Before acceptance, changes create a new revision while preserving prior snapshots, decisions and conversation.
 19. The anonymous demo session and its generated artifacts expire automatically after 24 hours.
 
-An evaluator may also open the Demo Hub first. Customer Experience starts the public journey. Sales Team Experience either continues the evaluator's current synthetic opportunity or, after an explicit action, creates a private AirFlame fixture in that evaluator's own session. A prepared fixture is never a shared mutable customer or a shortcut around deterministic validation.
+An evaluator may also open the Demo Hub first. Customer Experience starts the
+public journey. Sales Team Experience continues only an eligible opportunity
+created by that evaluator's current session. If no opportunity exists, it shows
+an empty state and directs the evaluator to Customer Experience. Test fixtures
+are internal setup data and are never shared mutable customers or shortcuts
+around deterministic validation.
 
 The authoritative state and revision contract is [Consultative Sales](specs/consultative-sales.md), with rationale in [ADR-0011](adrs/0011-consultative-sales-lifecycle.md). The target is consultative tank-monitoring qualification, not universal coverage of business sales processes. Pilot evaluation criteria are captured as hypotheses; fulfillment and actual measurement remain outside the MVP.
 
@@ -214,7 +222,7 @@ The authoritative state and revision contract is [Consultative Sales](specs/cons
 - Visitor-facing responses must not expose internal enum values, status identifiers, or rule versions unless the visitor explicitly requests technical traceability.
 - The advisor should avoid repeating disclaimers already visible in the interface and should direct the visitor to the guided form only when review or confirmation is the relevant next step.
 - The visitor must be able to review and edit the extracted requirements.
-- The system must support custom fictional scenarios that are not pre-associated with AirFlame Fuels, AgricuFlow Cooperative, or Boreal Beverage Group.
+- The system must support custom fictional scenarios without requiring a named organization or a pre-associated scenario.
 - The system must classify unsupported materials or applications as `out_of_scope` and incomplete or uncertain supported applications as `technical_review_required`.
 
 ### FR-2: Deterministic Compatibility
@@ -279,14 +287,14 @@ The authoritative state and revision contract is [Consultative Sales](specs/cons
 - The document must be marked `DEMO - NOT A VALID QUOTE OR CONTRACT` on every page.
 - The proposal must include the requirements, recommended configuration, assumptions, fictional pricing, and approval record.
 
-### FR-10: Preset and Custom Demo Scenarios
+### FR-10: Custom Demo Scenarios
 
-- The landing page must offer the three approved prebuilt scenarios defined in Section 20.
-- The landing page must also offer a clearly visible `Describe your own situation` entry path.
-- Preset fields must remain editable and must pass through the same discovery, compatibility, commerce, approval, and audit rules as custom scenarios.
-- A custom scenario must not receive hidden compatibility advantages or hard-coded answers derived from a preset.
+- The landing page must offer a clearly visible `Describe your own situation` entry path without loading a customer or recommendation.
+- The advisor must start with neutral fictional requirements and preserve unknown technical fields until the visitor supplies or confirms them.
+- Custom scenarios must pass through the same discovery, compatibility, commerce, approval, and audit rules.
+- A custom scenario must not receive hidden compatibility advantages or hard-coded answers derived from any internal fixture.
 - A visitor must be able to complete the experience without entering personal information.
-- Sample personas and test checkout values must be available in the interface.
+- Fictional examples may be used in copy, but the interface must not require a named customer or prebuilt scenario.
 - The visitor must be able to simulate the complete customer, checkout, approval, and proposal journey.
 - The role-switching interface must clearly state which fictional role is active.
 - Public demo access must be scoped to the current session and must not expose cross-session data.
@@ -313,7 +321,7 @@ The authoritative state and revision contract is [Consultative Sales](specs/cons
 - `/demo/customer` must exercise the same public Tankroy components, embedded TankFit AI behavior, catalog, session, and deterministic domain pipeline as the normal customer surface.
 - `/demo/sales` must show only the current anonymous session's synthetic opportunity.
 - If the current session has an eligible customer-created opportunity, Sales Team Experience must offer to continue it.
-- If no eligible opportunity exists, the evaluator may explicitly create a prepared AirFlame opportunity scoped to the current session. Loading the fixture must use a validated server-side mutation, run the normal deterministic and commercial validation, and record its origin in the audit trail.
+- If no eligible opportunity exists, Sales Team Experience must show an empty state and direct the evaluator to Customer Experience. Test-only fixtures may be created by integration setup and must run the normal deterministic and commercial validation.
 - Selecting a mode, changing a route, or modifying a query parameter must never grant staff authorization. Approval controls still require a short-lived token scoped to the current session and order.
 - Both modes must provide a clear path back to the Demo Hub without mixing customer and staff navigation.
 
@@ -447,7 +455,7 @@ Cost and availability controls must include:
 
 **Qualified recommendation completion rate:** percentage of started supported sessions that reach a compatible recommendation or an explicit `technical_review_required` outcome with all mandatory discovery fields captured.
 
-Target for the public MVP: **80% or higher** across the three presets and a maintained custom-scenario evaluation set.
+Target for the public MVP: **80% or higher** across the maintained custom-scenario evaluation set.
 
 ### 15.2 Quality Guardrails
 
@@ -483,7 +491,7 @@ The MVP is ready for public release when:
 13. The public interface and generated proposal display the synthetic-data, independent-project, and competition disclaimers.
 14. Automated tests and repository checks pass on the default branch.
 15. A new developer can run the project by following the public README without private organizational resources.
-16. A visitor can start a custom fictional scenario, edit extracted requirements, and receive a grounded compatible, `technical_review_required`, or `out_of_scope` result without preset-specific logic.
+16. A visitor can start a custom fictional scenario with no preloaded customer, edit extracted requirements, and receive a grounded compatible, `technical_review_required`, or `out_of_scope` result without fixture-specific logic.
 17. Negative security tests verify prompt/tool boundary enforcement, schema validation, SQL parameterization, output encoding, CSRF and same-origin enforcement, session isolation, outbound-request allowlisting, artifact authorization, and request limits.
 18. The deployed application passes a documented security review with no unresolved critical or high-severity finding in the MVP threat model.
 19. The AI replies in the visitor's reliably identified language while preserving immutable catalog facts and evidence fields.
@@ -496,7 +504,7 @@ The MVP is ready for public release when:
 26. The public and workspace surfaces share one deployment and one authoritative catalog and deterministic domain pipeline.
 27. `/demo` offers separate Customer Experience and Sales Team Experience entry points with clear fictional-role labels.
 28. Sales Team Experience can continue the current session's eligible customer-created opportunity without copying or exposing another session.
-29. An evaluator without an eligible opportunity can explicitly create a private prepared AirFlame opportunity that passes through normal deterministic and commercial validation.
+29. An evaluator without an eligible opportunity sees no approval controls and is directed to create an opportunity through Customer Experience; internal fixtures are unavailable through public routes.
 30. Direct navigation or a client-controlled mode value cannot grant staff authorization or expose approval controls.
 
 ## 17. Constraints and Dependencies
@@ -548,7 +556,7 @@ Any future decision to split the backend into independently deployed services mu
 | Automated abuse exhausts compute or AI quotas                         | Demo outage or unexpected cost                                                | Request limits, body limits, provider caps, timeouts, circuit breakers, staged firewall rules                                                                                          |
 | Vulnerable dependency or leaked secret enters the repository          | Supply-chain compromise or account exposure                                   | Minimal dependencies, automated updates and scanning, secret scanning, review gates, server-only secrets                                                                               |
 | Customer and staff experiences are confused                           | Visitors may see internal controls or misunderstand the synthetic demo        | Separate route and navigation contracts, explicit role labels, server authorization, surface-specific E2E checks, and visible fiction notices                                          |
-| Prepared sales fixture becomes a privileged shortcut or shared record | Evaluation could bypass deterministic controls or leak state between visitors | Create the fixture only through an explicit server mutation, clone it into the current session, run normal validation, record provenance, and forbid shared mutable demo opportunities |
+| Internal fixture becomes a public shortcut or shared record | Evaluation could bypass discovery or leak state between visitors | Keep fixtures out of public routes, create test data only in isolated setup, run normal validation, and forbid shared mutable demo opportunities |
 
 ## 19. Release Strategy
 
@@ -556,12 +564,12 @@ Any future decision to split the backend into independently deployed services mu
 
 - Approve PRD, specifications, architecture, and initial ADRs.
 - Define the fictional catalog schema and compatibility matrix.
-- Create sample scenarios and evaluation fixtures.
+- Create the custom-scenario schema and isolated evaluation fixtures.
 
 ### Phase 2: Guided Advisor
 
 - Build the public website and structured discovery flow.
-- Implement both editable presets and the custom-scenario entry path through the same domain pipeline.
+- Implement custom-scenario discovery through the shared domain pipeline and retain isolated fixtures for regression coverage.
 - Implement deterministic compatibility and product comparison.
 - Add JSON catalog fallback and product images.
 
@@ -576,7 +584,7 @@ Any future decision to split the backend into independently deployed services mu
 - Add ROI calculation, pilot-request revisions, simulated checkout, approval workspace, and proposal generation.
 - Add audit timeline, security controls, and cost metrics.
 
-**Implementation status:** The consultative AirFlame path is implemented on the feature branch: anonymous sessions, commercial revalidation, recurring-cost ROI, revision-aware order state, fictional deposit authorization, signed Demo Staff Mode, approval decisions, customer acceptance, audit events, and on-demand proposal generation are covered by local checks. Deployment verification and owner review remain pending.
+**Implementation status:** The consultative custom-scenario path is implemented on the feature branch: anonymous sessions, commercial revalidation, recurring-cost ROI, revision-aware order state, fictional deposit authorization, signed Demo Staff Mode, approval decisions, customer acceptance, audit events, and on-demand proposal generation are covered by local checks. Deployment verification and owner review remain pending.
 
 ### Phase 5: Public Release
 
@@ -584,7 +592,7 @@ Any future decision to split the backend into independently deployed services mu
 - Complete end-to-end, accessibility, mobile, and failure-mode testing.
 - Publish the repository, demo URL, screenshots, architecture diagram, and optional demo video.
 
-**Implementation status:** The earlier AirFlame baseline is deployed. The September 5 completion revision requires fresh preview/production verification, sandbox configuration, and owner-reviewed merge. Competition publication and submission remain intentionally pending.
+**Implementation status:** The earlier scripted baseline is deployed. The custom-scenario public revision requires fresh preview/production verification, sandbox configuration, and owner-reviewed merge. Competition publication and submission remain intentionally pending.
 
 ### Phase 6: Tankroy Public Experience
 
@@ -592,33 +600,24 @@ Any future decision to split the backend into independently deployed services mu
 - Add a responsive, keyboard-accessible TankFit AI entry point that can be embedded on public pages and hand off to `/advisor`.
 - Turn `/demo` into the experience-selection hub, use `/demo/customer` for Customer Experience, and use `/demo/sales` for the session-scoped Sales Team Experience.
 - Add surface-aware navigation, disclaimers, accessibility coverage, and E2E tests proving that public pages cannot expose staff actions.
-- Support both continuation of the evaluator's own customer-created opportunity and explicit creation of a private prepared AirFlame sales fixture.
+- Support continuation of the evaluator's own customer-created opportunity; show a safe empty Sales state when no opportunity exists.
 
 **Implementation status:** Public widget, Demo Hub, Customer Experience and Sales Team Experience are implemented on this consultative revision branch; full release verification and owner-reviewed deployment remain pending. See ADR-0011 and the dated baseline verification evidence.
 
-## 20. Preset Demo Scenarios and Rationale
+## 20. Custom Scenario Rationale
 
-These presets are optional, editable starting points and repeatable evaluation fixtures. They are not exclusive customers, hidden scripts, or the only paths capable of completing the application. Every preset uses the same discovery and deterministic domain pipeline as a custom scenario.
+The public product does not present named customers or prebuilt scenarios. A
+visitor describes a fictional operation, optionally provides a fictional
+organization name, and works through the same bounded discovery fields used by
+the deterministic catalog evaluator. This exposes the real product value:
+turning an unfamiliar operational problem into a grounded recommendation or an
+honest technical-review outcome.
 
-### Scenario A: Rural Heating-Oil Distribution
-
-**Customer:** AirFlame Fuels  
-**Situation:** The company operates 500 residential heating-oil tanks across rural Ontario. Many tanks already have float gauges. The operations team wants to reduce run-outs, emergency deliveries, and unnecessary site visits.  
-**Why it is included:** This is the strongest primary scenario because it demonstrates consultative discovery, existing-equipment compatibility, fleet scale, delivery economics, ROI calculation, and a clear business outcome that is easy for a general audience to understand.
-
-### Scenario B: Remote Agricultural Water Storage
-
-**Customer:** AgricuFlow Cooperative  
-**Situation:** The cooperative manages water tanks at remote agricultural sites with inconsistent connectivity and no standardized measurement method. It needs level alerts and fewer manual inspections.  
-**Why it is included:** This scenario proves that TankFit AI is not limited to fuels. It creates a meaningful comparison between radar and hydrostatic-pressure monitoring, tests connectivity constraints, and demonstrates how the system handles incomplete technical information.
-
-### Scenario C: Beverage-Grade CO2 Inventory
-
-**Customer:** Boreal Beverage Group  
-**Situation:** The company operates beverage-production and hospitality locations that depend on CO2 inventory. It wants refill alerts, better consumption visibility, and a standardized monitoring package across sites.  
-**Why it is included:** This scenario introduces industrial gas, a different measurement approach, multi-site configuration, and a stronger need for technical review and human approval. It broadens the portfolio without making the MVP catalog unmanageably large.
-
-Together, these scenarios cover three materially different stored resources, customer types, measurement approaches, operational objectives, and risk profiles. Scenario A will be the default guided demo; Scenarios B and C will demonstrate breadth and edge cases. A visitor may instead create a fictional company D or omit a company name entirely, provided the application remains within the six supported categories and synthetic-data policy.
+Automated unit and integration tests retain isolated named fixtures where a
+stable, repeatable input is useful for compatibility edge cases, commercial
+revalidation and the approval state machine. Those fixtures are test data only,
+are not public onboarding choices, and cannot influence ranking or transaction
+eligibility.
 
 ## 21. Resolved Product Decisions
 
@@ -635,8 +634,8 @@ Together, these scenarios cover three materially different stored resources, cus
 - One staff approval will gate the final proposal after the recommendation, order, and simulated payment authorization have been assembled.
 - Anonymous demo sessions and generated artifacts will be retained for 24 hours.
 - Public visitors will be able to simulate the complete application using a signed, session-scoped Demo Staff Mode.
-- The three named scenarios are editable presets and test fixtures; public visitors may also start an independent custom fictional scenario governed by the same rules.
+- Public visitors start an independent custom fictional scenario governed by the shared discovery and deterministic rules; named fixtures are internal test data only.
 - The project will not depend on Wix or any real organization's system.
 - Tankroy's public website and the sales workspace will share one Next.js deployment, one database, one catalog, one agent, and one deterministic domain pipeline.
 - TankFit AI will be available as an embedded public assistant and as a full-page advisor; `/demo` will be the competition Demo Hub with separate Customer Experience and Sales Team Experience routes.
-- Sales Team Experience may continue the current session's opportunity or create a private prepared AirFlame fixture, but mode selection alone never grants staff authorization.
+- Sales Team Experience may continue only the current session's opportunity; an empty session directs the evaluator to Customer Experience, and mode selection alone never grants staff authorization.

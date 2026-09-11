@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AirFlameJourney } from "@/components/airflame-journey";
+import { TankFitJourney } from "@/components/airflame-journey";
 import { FictionNotice } from "@/components/fiction-notice";
 import { DiscoveryChat } from "@/components/discovery-chat";
 
@@ -15,7 +15,8 @@ export default function CustomerPage() {
         <header>
           <h1 className="text-4xl font-semibold">Customer Experience</h1>
           <p className="mt-4 text-muted-foreground">
-            Ask TankFit AI or use the guided fields. Browse the same{" "}
+            Describe your own fictional operation with TankFit AI or use the
+            guided fields. Browse the same{" "}
             <Link href="/catalog" className="underline">
               fictional Tankroy catalog
             </Link>
@@ -23,7 +24,7 @@ export default function CustomerPage() {
           </p>
         </header>
         <DiscoveryChat />
-        <AirFlameJourney mode="customer" />
+        <TankFitJourney mode="customer" />
       </section>
     </>
   );

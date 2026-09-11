@@ -1,4 +1,8 @@
-# SPEC: AirFlame Fuels Pilot Journey
+# SPEC: Internal Regression Fixture Pilot Journey
+
+> Internal test fixture only. This document is not part of the public Tankroy
+> website, public onboarding, Demo Hub choices or submission narrative. The
+> public product starts with a visitor-created fictional scenario.
 
 **Status:** Consultative revision implemented; deployment validation pending
 **Scenario:** AirFlame Fuels  

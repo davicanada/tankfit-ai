@@ -1,6 +1,6 @@
 # TankFit AI
 
-TankFit AI is a public, AI-assisted sales advisor for Tankroy Systems Inc., a fictional Canadian remote tank-monitoring company. A visitor may choose an editable sample scenario or describe a custom fictional situation. An incomplete opportunity can reach Sales for clarification. A validated pilot request passes through human approval and an issued demo proposal, then explicit customer acceptance and Stripe test Checkout. Revisions preserve history. See the [complete workflow simulation](docs/submission/full-workflow-simulation.md).
+TankFit AI is a public, AI-assisted sales advisor for Tankroy Systems Inc., a fictional Canadian remote tank-monitoring company. A visitor describes a custom fictional situation in their own words, reviews the extracted facts, and discovers whether the catalog contains a grounded fit. An incomplete opportunity can reach Sales for clarification. A validated pilot request passes through human approval and an issued demo proposal, then explicit customer acceptance and Stripe test Checkout. Revisions preserve history. See the [complete workflow simulation](docs/submission/full-workflow-simulation.md).
 
 This is an independent personal project by **Davi Almeida**, created with exclusively synthetic information for the **Jornada de Dados** competition. Every company, person, product, specification, price, inventory value, transaction, and document represented here is fictional.
 
@@ -8,7 +8,7 @@ This is an independent personal project by **Davi Almeida**, created with exclus
 
 The deployed preview contains the fictional Tankroy public site, embedded and full-page conversation, a Demo Hub, Customer Experience, Sales Team Experience, Stripe-hosted test Checkout, session-scoped approval, audit history, and on-demand demo proposal generation. The consultative-sales revision is being validated on the feature branch before it is presented as the final submission.
 
-Orders use frozen solution snapshots and serialized database transitions. Sales Team Experience can continue only the evaluator's own opportunity or explicitly create a private prepared AirFlame request. Preparing a fixture never bypasses compatibility, current commerce validation, approval, proposal acceptance, or test payment. The dated release-verification files document the earlier payment-first baseline; fresh verification of this consultative revision is required before submission.
+Orders use frozen solution snapshots and serialized database transitions. Sales Team Experience can continue only the evaluator's own opportunity. Internal named scenarios remain repeatable regression fixtures, but they are not rendered or selectable in the public experience. The dated release-verification files document the earlier payment-first baseline; fresh verification of this consultative revision is required before submission.
 
 ## Run Locally
 
@@ -21,7 +21,7 @@ npm run db:seed
 npm run dev
 ```
 
-Open `http://localhost:3000`. The catalog and compatibility laboratory do not require database or AI credentials. The complete AirFlame journey requires `DATABASE_URL` and `SESSION_SIGNING_SECRET`; AI keys are optional because discovery and advisor explanations have deterministic fallbacks. To run every repository check:
+Open `http://localhost:3000`. The catalog and guided discovery do not require database or AI credentials. The complete customer-to-Sales journey requires `DATABASE_URL` and `SESSION_SIGNING_SECRET`; AI keys are optional because discovery and advisor explanations have deterministic fallbacks. To run every repository check:
 
 ```bash
 npm run check
@@ -31,20 +31,25 @@ Browser tests: `npm run test:e2e` (install Chromium with `npx playwright install
 
 For payment configuration, follow [Stripe Test Setup](docs/stripe-test-setup.md). Never use live keys or real card details. `APP_ORIGIN` must match the exact local, preview or production URL used by Checkout.
 
-## First End-to-End Scenario
+## Public Journey
 
-The initial implementation focuses on AirFlame Fuels, a fictional heating-oil distributor evaluating a five-tank monitoring pilot across a larger rural fleet. See [`docs/specs/airflame-pilot.md`](docs/specs/airflame-pilot.md).
-
-AirFlame, AgricuFlow, and Boreal Beverage are optional presets and repeatable tests. They do not restrict the application to three customers; custom fictional scenarios pass through the same discovery and deterministic rules.
+The public journey has no preloaded customer or named scenario. Describe a
+fictional operation through the embedded assistant or full-page advisor, review
+the structured facts, and continue to Customer Experience and Sales Team
+Experience when the request is ready. Internal named scenarios are retained
+only as repeatable regression fixtures and never influence deterministic
+compatibility.
 
 ## Documentation
 
 - [Product Requirements Document](docs/prd.md)
 - [Architecture](docs/architecture.md)
-- [AirFlame Pilot SPEC](docs/specs/airflame-pilot.md)
+- [Custom Scenario Public Experience ADR](docs/adrs/0012-custom-scenario-first-public-experience.md)
+- [Internal Fixture SPEC](docs/specs/airflame-pilot.md)
 - [Consultative Sales SPEC](docs/specs/consultative-sales.md)
 - [Tankroy Public Experience SPEC](docs/specs/tankroy-public-experience.md)
 - [Architecture Decision Records](docs/adrs)
+- [Custom-first Verification Record](docs/custom-first-verification-2026-09-11.md)
 - [Engineering Process](docs/engineering-process.md)
 - [Security Threat Model](docs/security-threat-model.md)
 - [Security Policy](SECURITY.md)
